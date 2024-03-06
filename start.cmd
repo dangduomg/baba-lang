@@ -1,1 +1,0 @@
-@cmd /k "main.py test.txt"
