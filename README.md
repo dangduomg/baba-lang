@@ -2,7 +2,7 @@
 
 Your typical toy programming language, made in Python.
 
-Right now in version `0.2.5`.
+Right now in version `0.2.6`.
 
 ## Features
 - Hardcoded commands: `\print`, `\about`, `\set`, `\py_call`, `\goto`, `\py_exec`, `\call`, `\callsave`, `\sleep`, `\exit`, `\input`, `\nonlocal_set`, `\include`
