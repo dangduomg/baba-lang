@@ -8,7 +8,7 @@ Right now in version `0.2.6`.
 - Hardcoded commands: `\print`, `\about`, `\set`, `\py_call`, `\goto`, `\py_exec`, `\call`, `\callsave`, `\sleep`, `\exit`, `\input`, `\nonlocal_set`, `\include`
 - First-class function support
 - Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, unary `+`, unary `-`, function call
-- In-place operators: `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`
+- In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`
 - Control flow constructs: `goto`, `if`, `while`, `do..while`, C-style `for`, `break` and `continue`
 - Data types: integers, floats, strings, booleans
 
