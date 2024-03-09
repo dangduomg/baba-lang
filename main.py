@@ -8,7 +8,7 @@ from lark.visitors import Interpreter
 from ast import literal_eval
 
 
-VERSION = '0.2.5'
+VERSION = '0.2.6'
 ABOUT = f'''\
 this is babalang, (C) 2024
 version {VERSION}
@@ -44,16 +44,16 @@ body: stmt*
     | "\\call" expr ("," expr)* ";"                -> call_stmt
     | "\\callsave" IDENT "," expr ("," expr)* ";"  -> call_and_save_stmt
     | "\\sleep" expr ";"                           -> sleep_stmt
-    | "\\exit" expr ";"                            -> exit_stmt
-    | "\\input" IDENT "," expr ";"                 -> input_stmt
+    | "\\exit" expr? ";"                           -> exit_stmt
+    | "\\input" IDENT ("," expr)? ";"              -> input_stmt
     | "\\nonlocal_set" IDENT "," expr ";"          -> nonlocal_var_stmt
+    | "\\include" string ";"                       -> include_stmt
 
 label: IDENT ":"
 
 goto_stmt: _GOTO IDENT ";"
 
 function_stmt: _FUNCTION IDENT "(" args ")" "{" body "}"
-args: (IDENT ("," IDENT)*)?
 
 return_stmt: _RETURN expr ";"
 
@@ -75,6 +75,12 @@ expr_stmt: expr ";"
 ?expr: assign
 
 ?assign: assign_expr "=" assign
+       | assign_expr "+=" assign -> iadd
+       | assign_expr "-=" assign -> isub
+       | assign_expr "*=" assign -> imul
+       | assign_expr "/=" assign -> idiv
+       | assign_expr "%=" assign -> imod
+       | assign_expr "%/%=" assign -> ifloordiv
        | cmp
 
 ?assign_expr: IDENT -> var
@@ -112,6 +118,7 @@ expr_stmt: expr ";"
      | "(" expr ")"
 
 ?literal: string
+        | function
         | INT -> int
         | FLOAT -> float
         | _TRUE -> true
@@ -124,6 +131,9 @@ STRING_DQUOTE: "\"" _STRING_ESC_INNER "\""
 STRING_SQUOTE: "'" _STRING_ESC_INNER "'"
 _STRING_INNER: /.*?/
 _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
+
+function: _FUNCTION "(" args ")" "{" body "}"
+args: (IDENT ("," IDENT)*)?
 
 IDENT: /(?!/ RESERVED  /)/ CNAME
 
@@ -224,6 +234,15 @@ def binary_operator(f):
     def operator(self, tree):
         a, b = tree.children
         return f(self.visit(a), self.visit(b))
+    operator.__name__ = f.__name__
+    return operator
+
+def inplace_operator(f):
+    def operator(self, tree):
+        a, b = tree.children
+        new_a = f(self.visit(a), self.visit(b))
+        self._nonlocal_assign(a, new_a)
+        return new_a
     operator.__name__ = f.__name__
     return operator
 
@@ -350,13 +369,29 @@ class PLInterpreter(Interpreter):
 
     def exit_stmt(self, tree):
         '''Exits the interpreter'''
-        exitcode, = tree.children
+        if len(tree.children) == 0:
+            exitcode = 0
+        elif len(tree.children) == 1:
+            exitcode, = tree.children
+            exitcode = self.visit(exitcode)
         sys.exit(exitcode)
 
     def input_stmt(self, tree):
         '''Get input from the user'''
-        varname, prompt = tree.children
-        self.var_set(varname.value, input(self.visit(prompt)))
+        if len(tree.children) == 1:
+            varname, = tree.children
+            prompt = ''
+        elif len(tree.children) == 2:
+            varname, prompt = tree.children
+            prompt = self.visit(prompt)
+        self.var_set(varname.value, input(prompt))
+        
+    def include_stmt(self, tree):
+        '''Execute a script'''
+        filename, = tree.children
+        filename = self.visit(filename)
+        with open(filename, encoding='utf-8') as f:
+            interpret(f.read())
 
     def if_stmt(self, tree):
         '''Executes the body if the condition is true'''
@@ -422,12 +457,19 @@ class PLInterpreter(Interpreter):
         if assign_expr.data == 'var':
             name, = assign_expr.children
             self.var_set(name.value, value)
+        return value
 
     def _nonlocal_assign(self, assign_expr, value):
         if assign_expr.data == 'var':
             name, = assign_expr.children
             self.var_search_set(name.value, value)
 
+    iadd = inplace_operator(operator.add)
+    isub = inplace_operator(operator.sub)
+    imul = inplace_operator(operator.mul)
+    idiv = inplace_operator(operator.truediv)
+    imod = inplace_operator(operator.mod)
+    ifloordiv = inplace_operator(operator.floordiv)
     eq = binary_operator(operator.eq)
     ne = binary_operator(operator.ne)
     lt = binary_operator(operator.lt)
@@ -448,13 +490,13 @@ class PLInterpreter(Interpreter):
         func, *spec_args = tree.children
         func = self.visit(func)
         spec_args = [self.visit(a) for a in spec_args]
-        self._call(func, spec_args)
+        return self._call(func, spec_args)
 
     def _call(self, func, spec_args):
         if len(spec_args) < len(func.form_args):
-            raise RuntimeError('too little arguments!')
+            raise RuntimeError('Too little arguments!')
         elif len(spec_args) > len(func.form_args):
-            raise RuntimeError('too many arguments!')
+            raise RuntimeError('Too many arguments!')
         self.push_frame({}, func.env)
         for f, s in zip(func.form_args, spec_args):
             self.var_set(f, s)
@@ -478,6 +520,12 @@ class PLInterpreter(Interpreter):
         '''String type'''
         s, = tree.children
         return literal_eval(s)
+
+    def function(self, tree):
+        '''Anonymous function type'''
+        form_args, body = tree.children
+        form_args = [a.value for a in form_args.children]
+        return PLFunction('<anonymous>', form_args, body, self.call_stack[:])
 
     def int(self, tree):
         '''Integer type'''
@@ -504,16 +552,15 @@ class PLInterpreter(Interpreter):
 pl_interpreter = PLInterpreter()
 
 
-def interpret(pl_string):
-    parse_tree = pl_parser.parse(pl_string)
+def interpret(src):
+    parse_tree = pl_parser.parse(src)
     pl_interpreter.visit(parse_tree)
 
 
 def main(args):
-    
     if len(args) > 1:
         file = args[1]
-        with open(file) as f:
+        with open(file, encoding='utf-8') as f:
             interpret(f.read())
     else:
         logging.basicConfig(format='%(levelname)s: %(message)s')
