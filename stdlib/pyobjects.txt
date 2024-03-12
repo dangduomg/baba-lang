@@ -1,0 +1,48 @@
+/*
+	Support for Python data types, implemented by \py_call
+*/
+
+# list
+function pylist_new() {
+	\py_call lst, 'list';
+	return lst;
+}
+function pylist_get(lst, i) {
+	\py_call it, 'list.__getitem__', lst, i;
+	return it;
+}
+function pylist_set(lst, i, v) {
+	\py_call _, 'list.__setitem__', lst, i, v;
+}
+function pylist_push(lst, v) {
+	\py_call _, 'list.append', lst, v;
+}
+function pylist_pop(lst, i) {
+	\py_call it, 'list.pop', lst, i;
+	return it;
+}
+function pylist_size(lst) {
+	\py_call size, 'list.__len__', lst;
+	return size;
+}
+
+# dict
+function pydict_new() {
+	\py_call dct, 'dict';
+	return dct;
+}
+function pydict_get(dct, k) {
+	\py_call it, 'dict.__getitem__', dct, k;
+	return it;
+}
+function pydict_set(dct, k, v) {
+	\py_call _, 'dict.__setitem__', dct, k, v;
+}
+function pydict_pairs(dct) {
+	\py_call pairs, 'lambda x: list(dict.items(x))', dct;
+	return pairs;
+}
+function pydict_size(dct) {
+	\py_call size, 'dict.__len__', dct;
+	return size;
+}

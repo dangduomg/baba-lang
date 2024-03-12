@@ -1,0 +1,68 @@
+\print "hello world";
+\print "i am baba";
+\print "";
+
+\about;
+
+# closure test
+\print "1 + 1 =";
+function f(x) {
+	function g() {
+		\print x;
+	}
+	return g;
+}
+\callsave g, f, 1 + 1;
+\call g;
+
+# another closure test
+
+function h() {
+	\set x, 2;
+	function p() {
+		\nonlocal_set x, 3;
+	}
+	\call p;
+	\print "but it can also be";
+	\print x;
+}
+\call h;
+
+\print "";
+
+\print "it can execute python code";
+\print "\\py_evalf y, \"abs\", -5; => y =";
+\py_call y, "abs", -5;
+\print y;
+
+\print "";
+
+\print "loop test (count from 0):";
+\input upto, "how many numbers to count? ";
+\py_call upto, "int", upto;
+\set i, 0;
+loop:
+	\goto endloop if (i >= upto);
+	\print i;
+	\sleep 1;
+	\set i, i + 1;
+	\goto loop;
+endloop:
+
+\print "";
+
+\print "factorial test for recursion: fact(30) =";
+
+function fact(n) {
+  \goto step if (n > 0);
+  base:
+    return 1;
+  step:
+    \set t, n - 1;
+    \callsave t, fact, t;
+    \set t, n * t;
+    return t;
+}
+
+\callsave f30, fact, 30;
+\print f30;

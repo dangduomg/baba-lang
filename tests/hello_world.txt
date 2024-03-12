@@ -1,0 +1,9 @@
+# old-style hello world
+
+\print 'hello world';
+
+# new-style hello world
+
+\include 'stdlib/io.txt';
+
+print('hello world');
