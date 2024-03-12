@@ -1,5 +1,6 @@
 import sys
-from time import sleep
+import types
+import time
 import operator
 import logging
 
@@ -8,7 +9,7 @@ from lark.visitors import Interpreter
 from ast import literal_eval
 
 
-VERSION = '0.2.6'
+VERSION = '0.2.8'
 ABOUT = f'''\
 this is babalang, (C) 2024
 version {VERSION}
@@ -16,7 +17,10 @@ version {VERSION}
 
 
 pl_parser = Lark(r'''
-?start: body
+?start: top_body
+
+top_body: body
+fn_body: body
 
 body: stmt*
 
@@ -53,9 +57,9 @@ label: IDENT ":"
 
 goto_stmt: _GOTO IDENT ";"
 
-function_stmt: _FUNCTION IDENT "(" args ")" "{" body "}"
+function_stmt: _FUNCTION IDENT "(" args ")" "{" fn_body "}"
 
-return_stmt: _RETURN expr ";"
+return_stmt: _RETURN [expr] ";"
 
 if_stmt: _IF "(" expr ")" "{" body "}"
 
@@ -65,12 +69,14 @@ while_stmt: _WHILE "(" expr ")" "{" body "}"
 
 do_while_stmt: _DO "{" body "}" _WHILE "(" expr ")"
 
-for_stmt: _FOR "(" expr ";" expr ";" expr ")" "{" body "}"
+for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
 
 break_stmt: _BREAK ";"
 continue_stmt: _CONTINUE ";"
 
-expr_stmt: expr ";"
+?expr_stmt: exprs ";"
+
+?exprs: expr ("," expr)*
 
 ?expr: assign
 
@@ -105,12 +111,10 @@ expr_stmt: expr ";"
 
 ?prefix: "+" prefix -> pos
        | "-" prefix -> neg
-       | power
+       | postfix
 
-?power: postfix "**" prefix -> pow
-      | postfix
-
-?postfix: postfix "(" (expr ("," expr)*)? ")" -> call
+?postfix: postfix "**" prefix -> pow
+        | postfix "(" (expr ("," expr)*)? ")" -> call
         | atom
 
 ?atom: literal
@@ -132,7 +136,7 @@ STRING_SQUOTE: "'" _STRING_ESC_INNER "'"
 _STRING_INNER: /.*?/
 _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
-function: _FUNCTION "(" args ")" "{" body "}"
+function: _FUNCTION "(" args ")" "{" fn_body "}"
 args: (IDENT ("," IDENT)*)?
 
 IDENT: /(?!/ RESERVED  /)/ CNAME
@@ -183,6 +187,9 @@ class PLBreak(PLCtrlException):
 class PLContinue(PLCtrlException):
     pass
 
+class PLError(Exception):
+    pass
+
 
 class PLFrame:
     def __init__(self, vars, env):
@@ -196,7 +203,7 @@ class PLFrame:
             if name in scope.vars:
                 return scope.vars[name]
         else:
-            raise RuntimeError(f'Can\'t find variable {name}!')
+            raise PLError(f'Can\'t find variable {name}!')
 
     def var_set(self, name, value):
         self.vars[name] = value
@@ -209,7 +216,7 @@ class PLFrame:
             if name in scope.vars:
                 return scope.var_set(name, value)
         else:
-            raise RuntimeError(f'Can\'t find variable {name}!')
+            raise PLError(f'Can\'t find variable {name}!')
 
 
 class PLFunction:
@@ -270,6 +277,32 @@ class PLInterpreter(Interpreter):
 
     # ---- interpreter callbacks -----
 
+    def top_body(self, tree):
+        '''Top-level body in a script. Used for handling leaked control exceptions.'''
+        body, = tree.children
+        try:
+            self.visit(body)
+        except PLBreak:
+            raise PLError("'break' not in a loop")
+        except PLContinue:
+            raise PLError("'continue' not in a loop")
+        except PLReturn:
+            raise PLError("'return' not in a function")
+        except Exception as e:
+            raise e
+
+    def fn_body(self, tree):
+        '''Top-level body in a function. Used for handling leaked control exceptions.'''
+        body, = tree.children
+        try:
+            self.visit(body)
+        except PLBreak:
+            raise PLError("'break' not in a loop")
+        except PLContinue:
+            raise PLError("'continue' not in a loop")
+        except Exception as e:
+            raise e
+
     def body(self, tree):
         '''Collect labels and run statements sequentially'''
         stmts = tree.children
@@ -288,7 +321,7 @@ class PLInterpreter(Interpreter):
                 if label in labels:
                     pc = labels[label]
                 else:
-                    raise RuntimeError(f'label "{label}" does not exist')
+                    raise PLError(f'label "{label}" does not exist')
             except Exception as e:
                 raise e
             else:
@@ -360,12 +393,12 @@ class PLInterpreter(Interpreter):
     def return_stmt(self, tree):
         '''Raises an exception to return control'''
         value, = tree.children
-        raise PLReturn(self.visit(value))
+        raise PLReturn(self.visit(value) if value else None)
 
     def sleep_stmt(self, tree):
         '''Sleeps for a certain amount of time'''
-        time, = tree.children
-        sleep(self.visit(time))
+        t, = tree.children
+        time.sleep(self.visit(t))
 
     def exit_stmt(self, tree):
         '''Exits the interpreter'''
@@ -421,7 +454,8 @@ class PLInterpreter(Interpreter):
     def for_stmt(self, tree):
         '''C for loop'''
         start, cond, step, body = tree.children
-        self.visit(start)
+        if start:
+            self.visit(start)
         self._loop(cond, body, step)
 
     def break_stmt(self, tree):
@@ -433,7 +467,7 @@ class PLInterpreter(Interpreter):
         raise PLContinue
 
     def _loop(self, cond, body, step=None):
-        while self.visit(cond):
+        while self.visit(cond) if cond else True:
             try:
                 self.visit(body)
             except PLBreak:
@@ -446,10 +480,11 @@ class PLInterpreter(Interpreter):
                 if step:
                     self.visit(step)
 
-    def expr_stmt(self, tree):
-        '''Expression statement'''
-        expr, = tree.children
-        return self.visit(expr)
+    def exprs(self, tree):
+        '''Multiple expressions by use of sequence operator'''
+        for expr in tree.children:
+            res = self.visit(expr)
+        return res
 
     def assign(self, tree):
         assign_expr, value = tree.children
@@ -470,21 +505,24 @@ class PLInterpreter(Interpreter):
     idiv = inplace_operator(operator.truediv)
     imod = inplace_operator(operator.mod)
     ifloordiv = inplace_operator(operator.floordiv)
+
     eq = binary_operator(operator.eq)
     ne = binary_operator(operator.ne)
     lt = binary_operator(operator.lt)
     le = binary_operator(operator.le)
     gt = binary_operator(operator.gt)
     ge = binary_operator(operator.ge)
+
     add = binary_operator(operator.add)
     sub = binary_operator(operator.sub)
     mul = binary_operator(operator.mul)
     div = binary_operator(operator.truediv)
     floordiv = binary_operator(operator.floordiv)
     mod = binary_operator(operator.mod)
+    pow = binary_operator(operator.pow)
+
     pos = unary_operator(operator.pos)
     neg = unary_operator(operator.neg)
-    pow = binary_operator(operator.pow)
 
     def call(self, tree):
         func, *spec_args = tree.children
@@ -493,13 +531,12 @@ class PLInterpreter(Interpreter):
         return self._call(func, spec_args)
 
     def _call(self, func, spec_args):
-        if len(spec_args) < len(func.form_args):
-            raise RuntimeError('Too little arguments!')
-        elif len(spec_args) > len(func.form_args):
-            raise RuntimeError('Too many arguments!')
+        if not isinstance(func, PLFunction):
+            return func(*spec_args)
+        decoded_args = self._decode_args(func.form_args, spec_args)
         self.push_frame({}, func.env)
-        for f, s in zip(func.form_args, spec_args):
-            self.var_set(f, s)
+        for k, v in decoded_args.items():
+            self.var_set(k, v)
         retval = None
         try:
             self.visit(func.body)
@@ -510,6 +547,13 @@ class PLInterpreter(Interpreter):
         finally:
             self.pop_frame()
         return retval
+
+    def _decode_args(self, form_args, spec_args):
+        if len(spec_args) < len(form_args):
+            raise PLError('Too little arguments!')
+        if len(spec_args) > len(form_args):
+            raise PLError('Too many arguments!')
+        return dict(zip(form_args, spec_args))
 
     def var(self, tree):
         '''Variable reference'''
