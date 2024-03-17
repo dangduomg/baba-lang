@@ -2,7 +2,7 @@
 
 Your typical toy programming language, made in Python.
 
-Right now in version `0.2.8`.
+Right now in version `0.2.9`.
 
 ## Features
 - Hardcoded commands: `\print`, `\about`, `\set`, `\py_call`, `\goto`, `\py_exec`, `\call`, `\callsave`, `\sleep`, `\exit`, `\input`, `\nonlocal_set`, `\include`
@@ -10,13 +10,13 @@ Right now in version `0.2.8`.
 - Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, unary `+`, unary `-`, function call
 - In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`
 - Control flow constructs: `goto`, `if`, `while`, `do..while`, C-style `for`, `break` and `continue`
-- Data types: integers, floats, strings, booleans, `list` and `dict` (via `stdlib/pyobjects.txt`)
+- Data types: integers, floats, strings, booleans, list, `dict` (via `stdlib/pyobjects.txt`)
 
 For the specifics of the language, please look at the source code.
 
 ## To-do list
 - Bitwise and logical operators
-- Syntax for `list` and `dict`
+- Syntax for `dict`
 - Rest and keyword arguments
 - Better Python interface
 - OOP
