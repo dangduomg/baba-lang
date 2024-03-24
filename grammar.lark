@@ -42,16 +42,15 @@ continue_stmt: _CONTINUE ";"
 
 ?expr: assign
 
-?assign: pattern "=" assign
-       | pattern "+=" assign   -> iadd
-       | pattern "-=" assign   -> isub
-       | pattern "*=" assign   -> imul
-       | pattern "/=" assign   -> idiv
-       | pattern "%=" assign   -> imod
-       | pattern "%/%=" assign -> ifloordiv
+?assign: IDENT "=" assign
+       | IDENT "+=" assign   -> iadd
+       | IDENT "-=" assign   -> isub
+       | IDENT "*=" assign   -> imul
+       | IDENT "/=" assign   -> idiv
+       | IDENT "%=" assign   -> imod
+       | IDENT "%/%=" assign -> ifloordiv
        | cmp
 
-?pattern: IDENT -> var_pattern
 
 ?cmp: sum "==" sum -> eq
     | sum "!=" sum -> ne
