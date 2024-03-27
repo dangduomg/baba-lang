@@ -9,7 +9,7 @@ from lark.visitors import Interpreter
 from ast import literal_eval
 
 
-VERSION = '0.2.8'
+VERSION = '0.2.10'
 ABOUT = f'''\
 this is babalang, (C) 2024
 version {VERSION}
@@ -422,6 +422,11 @@ class PLInterpreter(Interpreter):
     def list(self, tree):
         '''List type'''
         return [self.visit(e) for e in tree.children]
+    
+    def dict(self, tree):
+        '''Dictionary type'''
+        pairs = [p.children for p in tree.children]
+        return {self.visit(k): self.visit(v) for k, v in pairs}
 
     def function(self, tree):
         '''Anonymous function type'''
