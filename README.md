@@ -10,7 +10,7 @@ Right now in version `0.2.10`.
 - Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, unary `+`, unary `-`, function call, subscripting
 - In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`
 - Control flow constructs: `goto`, `if`, `while`, `do..while`, C-style `for`, `break` and `continue`
-- Data types: integers, floats, strings, booleans, list, `dict`
+- Data types: integers, floats, strings, booleans, lists, dictionaries
 
 ## To-do list
 - Bitwise and logical operators
