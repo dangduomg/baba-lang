@@ -111,6 +111,7 @@ var: IDENT
 ?literal: string
         | function
 		| "[" (expr ("," expr)*)? "]"   -> list
+		| "{" (pair ("," pair)*)? "}"   -> dict
         | INT                           -> int
         | FLOAT                         -> float
         | _TRUE                         -> true
@@ -126,6 +127,8 @@ _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
 function: _FUNCTION "(" args ")" "{" fn_body "}"
 args: (IDENT ("," IDENT)*)?
+
+pair: expr ":" expr
 
 IDENT: /(?!/ RESERVED  /)/ CNAME
 
