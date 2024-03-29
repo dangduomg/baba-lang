@@ -106,3 +106,27 @@ Searches for a variable (even ones outside the scope) then set it.
 ```
 Evaluate the file `file` (must be a string) as if it were literally included into the current source file.
 
+## Block statements
+Block statements are statements having code blocks `{ ... }`. They don't end in `;`.
+
+Block statements include:
+
+### if
+```
+if (<condition>) { <code> }
+if (<condition>) { <then_code> } else { <else_code> }
+```
+In the first variant, if `condition` is true, `code` is executed.
+In the second variant, also called `if..else`, if `condition` is true, `then_code` is executed. Otherwise, `else_code` is executed.
+`if..else` statements can be chained together as in (excerpt from tests/fizzbuzz.txt)
+```
+if (i % 15 == 0) {
+  print(str(i) + ": fizzbuzz");
+} else if (i % 5 == 0) {
+  print(str(i) + ": buzz");
+} else if (i % 3 == 0) {
+  print(str(i) + ": fizz");
+} else {
+  print(str(i) + ":");
+}
+```
