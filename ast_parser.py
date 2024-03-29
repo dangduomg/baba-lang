@@ -11,26 +11,26 @@ parser = Lark.open('grammar.lark', parser='lalr')
 
 @v_args(inline=True)
 class ToAst(Transformer):
-    def literal(self, v):
-        return ast_classes.Value(v)
-
+    def IDENT(self, v):
+        return str(v)
+    
     def INT(self, v):
         return literal_eval(v)
     
     def FLOAT(self, v):
         return literal_eval(v)
     
-    def string(self, v):
+    def STRING(self, v):
         return literal_eval(v)
     
     def true(self):
-        return ast_classes.Value(True)
+        return ast_classes.Bool(True)
     
     def false(self):
-        return ast_classes.Value(False)
+        return ast_classes.Bool(False)
     
     def null(self):
-        return ast_classes.Value(None)
+        return ast_classes.Null()
 
 
 transformer = ast_utils.create_transformer(ast_classes, ToAst())

@@ -3,7 +3,6 @@
 body: stmt*
 
 ?stmt: cmd
-     | function_stmt
      | if_stmt
      | if_else_stmt
      | while_stmt
@@ -15,11 +14,7 @@ body: stmt*
      | expr_stmt
 
 ?cmd: "\\print" expr ";"                           -> print_stmt
-    | "\\py_call" IDENT "," string ("," expr)* ";" -> python_call_stmt
-    | "\\nonlocal_set" IDENT "," expr ";"          -> nonlocal_var_stmt
     | "\\include" string ";"                       -> include_stmt
-
-function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
 
 return_stmt: _RETURN [expr] ";"
 
@@ -42,15 +37,17 @@ continue_stmt: _CONTINUE ";"
 
 ?expr: assign
 
-?assign: IDENT "=" assign
-       | IDENT "+=" assign   -> iadd
-       | IDENT "-=" assign   -> isub
-       | IDENT "*=" assign   -> imul
-       | IDENT "/=" assign   -> idiv
-       | IDENT "%=" assign   -> imod
-       | IDENT "%/%=" assign -> ifloordiv
+?assign: pattern "=" assign
+       | pattern "+=" assign   -> iadd
+       | pattern "-=" assign   -> isub
+       | pattern "*=" assign   -> imul
+       | pattern "/=" assign   -> idiv
+       | pattern "%=" assign   -> imod
+       | pattern "%/%=" assign -> ifloordiv
+	   | pattern "**=" assign  -> ipow
        | cmp
 
+?pattern: IDENT -> var_pattern
 
 ?cmp: sum "==" sum -> eq
     | sum "!=" sum -> ne
@@ -82,17 +79,19 @@ spec_args: _comma_list{expr}?
 
 ?atom: literal
      | IDENT -> var
+	 | "$" STRING -> py_function
      | "(" expr ")"
 
-literal: string
-       | function
-       | INT
-       | FLOAT
-       | _TRUE    -> true
-       | _FALSE   -> false
-       | _NULL    -> null
+?literal: string
+        | function
+        | INT      -> int
+        | FLOAT    -> float
+        | _TRUE    -> true
+        | _FALSE   -> false
+        | _NULL    -> null
 
-string: STRING_DQUOTE
+string: STRING
+STRING: STRING_DQUOTE
       | STRING_SQUOTE
 STRING_DQUOTE: "\"" _STRING_ESC_INNER "\""
 STRING_SQUOTE: "'" _STRING_ESC_INNER "'"
@@ -107,9 +106,9 @@ _comma_list{e}: e ("," e)*
 IDENT: /(?!/ RESERVED  /)/ CNAME
 
 RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE
-_TRUE: "True"
-_FALSE: "False"
-_NULL: "None"
+_TRUE: "true"
+_FALSE: "false"
+_NULL: "null"
 _FUNCTION: "function"
 _RETURN: "return"
 _IF: "if"
