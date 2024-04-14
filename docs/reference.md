@@ -12,7 +12,7 @@ Statements usually end with `;` (Block statements and labels do not end with `;`
 ## Commands
 Commands are statements that start with `\`. They end with `;`. They are hardcoded and are a way to implement primitive actions.
 
-As of 0.2.6, commands include: `\print`, `\about`, `\set`, `\py_call`, `\py_exec`, `\goto`, `\call`, `\callsave`, `\sleep`, `\exit`, `\input`, `\nonlocal_set`, `\include`
+As of 0.2.10, commands include: `\print`, `\about`, `\set`, `\py_call`, `\py_exec`, `\goto`, `\call`, `\callsave`, `\sleep`, `\exit`, `\input`, `\nonlocal_set`, `\include`
 
 ### \print
 ```
@@ -107,7 +107,7 @@ Searches for a variable (even ones outside the scope) then set it.
 Evaluate the file `file` (must be a string) as if it were literally included into the current source file.
 
 ## Block statements
-Block statements are statements having code blocks `{ ... }`. They don't end in `;`.
+Block statements are statements having code blocks `{ ... }`. They usually don't end in `;`.
 
 Block statements include:
 
@@ -130,3 +130,33 @@ if (i % 15 == 0) {
   print(str(i) + ":");
 }
 ```
+
+### while, do..while
+```
+while (<condition>) { <code> }
+do { <code> } while (<condition>);
+```
+In the first variant, while `condition` is true, `code` is executed (i.e. it repeats until `condition` is false or terminated early by `break` or `return`).
+In the second variant, also called `do..while`, `code` is executed before `condition` is checked.
+
+### for
+```
+for ([<init>]; [<condition>]; [<update>]) { <code> }
+```
+Is basically equivalent to:
+```
+<init>;
+while (<condition>) {
+  <code>;
+  <update>;
+}
+```
+`init` and `update` are expressions.
+
+When `condition` is omitted, it defaults to `true`, meaning the loop will run forever (unless terminated early by `break` or `return`).
+
+### function
+```
+function <name>(<args 0>, <args 1>, ...) { <code> }
+```
+Creates a named function.
