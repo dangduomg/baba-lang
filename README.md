@@ -1,8 +1,13 @@
 # baba-lang
 
-Yet another programming language, made in Python.
+Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
 Right now in version `0.2.10`.
+
+## How to use
+1. Prerequisites: Python 3, Lark
+2. Download the repository
+3. Run `main.py` without arguments to open an interactive prompt. To run a source file, enter `main.py <file>`.
 
 ## Features
 - Hardcoded commands: `\print`, `\about`, `\set`, `\py_call`, `\goto`, `\py_exec`, `\call`, `\callsave`, `\sleep`, `\exit`, `\input`, `\nonlocal_set`, `\include`
@@ -19,7 +24,3 @@ Right now in version `0.2.10`.
 - OOP
 - Exceptions
 - Modules
-
-## Requirements
-- Python 3
-- Lark
