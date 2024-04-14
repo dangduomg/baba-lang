@@ -159,4 +159,44 @@ When `condition` is omitted, it defaults to `true`, meaning the loop will run fo
 ```
 function <name>(<args 0>, <args 1>, ...) { <code> }
 ```
-Creates a named function.
+Creates a named function `name`.
+
+## Labels and other statements
+
+### Labels
+```
+<name>:
+```
+Does nothing as a statement, but acts as target points for `goto` statements.
+
+### goto
+```
+goto <label>;
+```
+Jumps to `label`. There are restrictions over where `goto` can jump to:
+- Cannot jump to labels nested deeper than the `goto` itself
+- Cannot jump out of or into functions
+
+### break
+```
+break;
+```
+Breaks from a loop.
+
+### continue
+```
+continue;
+```
+Skips the rest of the loop body in a loop. Update expressions are still executed when `continue`ing.
+
+### return
+```
+return <value>;
+```
+Returns a `value` from a function.
+
+## Expressions
+
+All operators in baba-lang are: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, unary `+`, unary `-`, function call, subscripting.
+
+All types in baba-lang are: integers, floats, strings, booleans, lists, dictionaries.
