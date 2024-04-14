@@ -48,7 +48,7 @@ if_else_stmt: _IF "(" expr ")" "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" 
 
 while_stmt: _WHILE "(" expr ")" "{" body "}"
 
-do_while_stmt: _DO "{" body "}" _WHILE "(" expr ")"
+do_while_stmt: _DO "{" body "}" _WHILE "(" expr ")" ";"
 
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
 
