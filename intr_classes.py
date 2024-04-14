@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, List
+
+from state import State
 
 
 class Result:
@@ -7,7 +9,6 @@ class Result:
 
 class StmtDone(Result):
     pass
-
 
 class EarlyExit(Result):
     pass
@@ -22,7 +23,7 @@ class Continue(EarlyExit):
 
 @dataclass(frozen=True)
 class Return(EarlyExit):
-    pass
+    value: 'Value'
 
 
 # ---- values ----
@@ -34,13 +35,13 @@ class Value(Result):
         return self
     
     def print_repr(self):
-        raise RuntimeError('operation not implemented')
+        return '<value>'
     
     def eq(self, other):
-        raise RuntimeError('operation not implemented')
+        return Bool(self == other)
         
     def ne(self, other):
-        raise RuntimeError('operation not implemented')
+        return Bool(self != other)
         
     def lt(self, other):
         raise RuntimeError('operation not implemented')
@@ -81,12 +82,19 @@ class Value(Result):
     def neg(self):
         raise RuntimeError('operation not implemented')
     
+    def call(self, args):
+        raise RuntimeError('operation not implemented')
+    
 # ---- null and booleans ----
 
 @dataclass(frozen=True)
 class Null(Value):
     def print_repr(self):
         return 'null'
+    
+    def eq(self, other):
+        #pylint: disable=unused-argument
+        return True
 
 @dataclass(frozen=True)
 class Bool(Value):
@@ -194,6 +202,13 @@ class Float(Number):
 class String(Value):
     value: str
     
+    @classmethod
+    def to_bl(cls, val):
+        if isinstance(val, str):
+            return cls(val)
+        else:
+            raise ValueError
+    
     def print_repr(self):
         return self.value
     
@@ -228,3 +243,39 @@ class String(Value):
     def mul(self, other):
         res = self.value * other.value
         return self.to_bl(res)
+    
+# ---- functions ----
+
+@dataclass(frozen=True)
+class Function(Value):
+    form_args: 'FormArgs'
+    body: 'Body'
+    env: State
+    
+    def print_repr(self):
+        return '<function>'
+    
+    def call(self, state, args):
+        # decode args
+        decoded_args = self.decode_args(args)
+        # create new frame
+        state.new_scope()
+        for k, v in decoded_args.items():
+            state.new_var(k, v)
+        # evaluate the body
+        res = self.body.interp(state)
+        state.exit_scope()
+        if isinstance(res, Return):
+            return res.value
+        elif isinstance(res, StmtDone):
+            return
+        elif isinstance(res, EarlyExit):
+            raise RuntimeError('break, continue outside a loop?')
+        
+            
+    def decode_args(self, spec_args):
+        if len(spec_args) < len(self.form_args.args):
+            raise RuntimeError('Too little arguments!')
+        if len(spec_args) > len(self.form_args.args):
+            raise RuntimeError('Too many arguments!')
+        return dict(zip(self.form_args.args, spec_args))

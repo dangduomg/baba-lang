@@ -12,6 +12,17 @@ class State:
     def __init__(self):
         self.scopes = [{}]
         
+    def copy(self) -> 'State':
+        new_state = State()
+        new_state.scopes = self.scopes[:]
+        return new_state
+        
+    def new_scope(self) -> None:
+        self.scopes.append({})
+        
+    def exit_scope(self) -> None:
+        self.scopes.pop()
+        
     def resolve_var(self, name: str) -> Cell:
         for scope in reversed(self.scopes):
             if name in scope:

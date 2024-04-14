@@ -94,6 +94,10 @@ class WhileStmt(_Stmt):
             res = self.body.interp(state)
             if isinstance(res, intr_classes.Break):
                 return intr_classes.StmtDone()
+            elif isinstance(res, intr_classes.Continue):
+                pass
+            elif isinstance(res, intr_classes.EarlyExit):
+                return res
         return intr_classes.StmtDone()
 
 @dataclass(frozen=True)
@@ -105,10 +109,18 @@ class DoWhileStmt(_Stmt):
         res = self.body.interp(state)
         if isinstance(res, intr_classes.Break):
             return intr_classes.StmtDone()
+        elif isinstance(res, intr_classes.Continue):
+            pass
+        elif isinstance(res, intr_classes.EarlyExit):
+            return res
         while self.cond.interp(state).value:
             res = self.body.interp(state)
             if isinstance(res, intr_classes.Break):
                 return intr_classes.StmtDone()
+            elif isinstance(res, intr_classes.Continue):
+                pass
+            elif isinstance(res, intr_classes.EarlyExit):
+                return res
         return intr_classes.StmtDone()
 
 @dataclass(frozen=True)
@@ -120,7 +132,7 @@ class ForStmt(_Stmt):
     
     def interp(self, state):
         if self.start:
-            start_res = self.start.interp(state)
+            self.start.interp(state)
         while True:
             if self.cond:
                 cond_res = self.cond.interp(state)
@@ -128,9 +140,13 @@ class ForStmt(_Stmt):
                     return intr_classes.StmtDone()
             body_res = self.body.interp(state)
             if self.step:
-                step_res = self.step.interp(state)
+                self.step.interp(state)
             if isinstance(body_res, intr_classes.Break):
                 return intr_classes.StmtDone()
+            elif isinstance(res, intr_classes.Continue):
+                pass
+            elif isinstance(res, intr_classes.EarlyExit):
+                return res
 
 
 # ---- other statements ----
@@ -139,6 +155,8 @@ class ForStmt(_Stmt):
 @dataclass(frozen=True)
 class ReturnStmt(_Stmt):
     value: _Expr
+    def interp(self, state):
+        return intr_classes.Return(self.value.interp(state))
     
 @dataclass(frozen=True)
 class BreakStmt(_Stmt):
@@ -338,11 +356,20 @@ class Neg(_UnaryOp):
 @dataclass(frozen=True)
 class SpecArgs(_Ast, _AsList):
     args: List[_Expr]
+    
+    def interp(self, state):
+        return [arg.interp(state) for arg in self.args]
 
 @dataclass(frozen=True)
 class Call(_Expr):
     func: _Expr
     spec_args: SpecArgs
+    
+    def interp(self, state):
+        return self.func.interp(state).call(state, self.spec_args.interp(state))
+    
+class PyFunction(_Expr):
+    code: str
 
 
 # ---- variable get ----
@@ -358,15 +385,19 @@ class Var(_Expr):
 
 # ---- values ----
     
-# ---- null ----
+# ---- constants ----
 
 @dataclass(frozen=True)
 class Null(_Expr):
-    pass
-
+    def interp(self, state):
+        return intr_classes.Null()
+    
 @dataclass(frozen=True)
 class Bool(_Expr):
     value: bool
+    
+    def interp(self, state):
+        return intr_classes.Bool(value)
     
 # ---- numeric types ----
 
@@ -397,9 +428,12 @@ class String(_Expr):
 
 @dataclass(frozen=True)
 class FormArgs(_Ast, _AsList):
-    args: List[object]
+    args: List[str]
     
-@dataclass
+@dataclass(frozen=True)
 class Function(_Expr):
     form_args: FormArgs
     body: Body
+    
+    def interp(self, state):
+        return intr_classes.Function(self.form_args, self.body, state.copy())
