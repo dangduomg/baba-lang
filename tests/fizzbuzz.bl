@@ -1,0 +1,15 @@
+fizzbuzz = function(start, stop, step) {
+	for (i = start; i <= stop; i += step) {
+		if (i % 15 == 0) {
+			\print 'fizzbuzz';
+		} else if (i % 5 == 0) {
+			\print 'buzz';
+		} else if (i % 3 == 0) {
+			\print 'fizz';
+		} else {
+			\print i;
+		}
+	}
+};
+
+fizzbuzz(1, 15, 1);
