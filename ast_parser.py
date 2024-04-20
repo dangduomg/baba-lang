@@ -11,6 +11,10 @@ parser = Lark.open('grammar.lark', parser='lalr')
 
 @v_args(inline=True)
 class ToAst(Transformer):
+    def include_stmt(self, file):
+        with open(file, encoding='utf-8') as f:
+            return ast_compile(f.read())
+    
     def IDENT(self, v):
         return str(v)
     

@@ -15,16 +15,16 @@ _AsList = ast_utils.AsList
 class _Stmt(_Ast):
     def interp(self, state):
         #pylint: disable=unused-argument
-        return
+        pass
 
 class _Expr(_Stmt):
     def interp(self, state):
-        return
+        pass
 
 # ---- the body ----
 
 
-@dataclass
+@dataclass(frozen=True)
 class Body(_Ast, _AsList):
     stmts: List[_Stmt]
     
@@ -34,6 +34,12 @@ class Body(_Ast, _AsList):
             if isinstance(res, intr_classes.EarlyExit):
                 return res
         return intr_classes.StmtDone()
+    
+class TopBody(Body):
+    def interp(self, state):
+        res = super().interp(state)
+        if isinstance(res, intr_classes.EarlyExit):
+            raise RuntimeError('early exit statements at script\'s top level')
 
 
 # ---- commands ----
@@ -47,10 +53,35 @@ class PrintStmt(_Stmt):
         res = self.expr.interp(state)
         print(res.print_repr())
         return intr_classes.StmtDone()
-
+    
 @dataclass(frozen=True)
-class IncludeStmt(_Stmt):
-    file: str
+class InputStmt(_Stmt):
+    varname: str
+    prompt: _Expr
+    
+    def interp(self, state):
+        prompt = self.prompt.interp(state).print_repr()
+        state.new_var(intr_classes.String(input(prompt)))
+        return intr_classes.StmtDone()
+    
+@dataclass(frozen=True)
+class ExitStmt(_Stmt):
+    code: _Expr
+    
+    def interp(self, state):
+        sys.exit(self.code.interp(state))
+        
+@dataclass(frozen=True)
+class PushStmt(_Stmt):
+    container: _Expr
+    item: _Expr
+    
+    def interp(self, state):
+        container = self.container.interp(state)
+        item = self.item.interp(state)
+        if isinstance(container, intr_classes.List_):
+            container.elems.append(item)
+            return intr_classes.StmtDone()
 
 
 # ---- block statements ----
@@ -143,11 +174,10 @@ class ForStmt(_Stmt):
                 self.step.interp(state)
             if isinstance(body_res, intr_classes.Break):
                 return intr_classes.StmtDone()
-            elif isinstance(res, intr_classes.Continue):
+            elif isinstance(body_res, intr_classes.Continue):
                 pass
-            elif isinstance(res, intr_classes.EarlyExit):
-                return res
-
+            elif isinstance(body_res, intr_classes.EarlyExit):
+                return body_res
 
 # ---- other statements ----
 
@@ -156,7 +186,11 @@ class ForStmt(_Stmt):
 class ReturnStmt(_Stmt):
     value: _Expr
     def interp(self, state):
-        return intr_classes.Return(self.value.interp(state))
+        if self.value:
+            res = self.value.interp(state)
+        else:
+            res = intr_classes.Null()
+        return intr_classes.Return(res)
     
 @dataclass(frozen=True)
 class BreakStmt(_Stmt):
@@ -202,6 +236,19 @@ class VarPattern(_Pattern):
         
     def set_var(self, state, rhs):
         state.set_var(self.name, rhs)
+        
+@dataclass(frozen=True)
+class SubscriptPattern(_Pattern):
+    container: _Expr
+    key: _Expr
+    
+    def new_var(self, state, rhs):
+        self.set_var(state, rhs)
+        
+    def set_var(self, state, rhs):
+        container = self.container.interp(state)
+        key = self.key.interp(state)
+        container.set_item(key, rhs)
     
 @dataclass(frozen=True)
 class _AssignOp(_Expr):
@@ -210,41 +257,49 @@ class _AssignOp(_Expr):
 
 class Assign(_AssignOp):
     def interp(self, state):
-        self.pattern.new_var(state, self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        self.pattern.new_var(state, rhs)
 
 class Iadd(_AssignOp):
     def interp(self, state):
-        newvalue = self.pattern.get_var(state).add(self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).add(rhs)
         self.pattern.set_var(state, newvalue)
 
 class Isub(_AssignOp):
     def interp(self, state):
-        newvalue = self.pattern.get_var(state).sub(self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).sub(rhs)
         self.pattern.set_var(state, newvalue)
 
 class Imul(_AssignOp):
     def interp(self, state):
-        newvalue = self.pattern.get_var(state).mul(self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).mul(rhs)
         self.pattern.set_var(state, newvalue)
 
 class Idiv(_AssignOp):
     def interp(self, state):
-        newvalue = self.pattern.get_var(state).div(self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).div(rhs)
         self.pattern.set_var(state, newvalue)
 
 class Imod(_AssignOp):
     def interp(self, state):
-        newvalue = self.pattern.get_var(state).mod(self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).mod(rhs)
         self.pattern.set_var(state, newvalue)
 
 class Ifloordiv(_AssignOp):
     def interp(self, state):
-        newvalue = self.pattern.get_var(state).floordiv(self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).floordiv(rhs)
         self.pattern.set_var(state, newvalue)
         
 class Ipow(_AssignOp):
     def interp(self, state):
-        newvalue = self.pattern.get_var(state).pow(self.rhs.interp(state))
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).pow(rhs)
         self.pattern.set_var(state, newvalue)
 
 # ---- binary operations ----
@@ -339,15 +394,37 @@ class Pow(_BinaryOp):
 
 @dataclass(frozen=True)
 class _UnaryOp(_Expr):
-    operand: _Expr
+    rhs: _Expr
 
 class Pos(_UnaryOp):
     def interp(self, state):
-        return self.operand.interp(state).pos()
+        rhs = self.rhs.interp(state)
+        return rhs.pos()
 
 class Neg(_UnaryOp):
     def interp(self, state):
-        return self.operand.interp(state).neg()
+        rhs = self.rhs.interp(state)
+        return rhs.neg()
+    
+class Len(_UnaryOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        if isinstance(rhs, intr_classes.List_):
+            return intr_classes.Int(len(rhs.elems))
+    
+    
+# ---- subscripting ----
+
+
+@dataclass(frozen=True)
+class Subscript(_Expr):
+    container: _Expr
+    key: _Expr
+    
+    def interp(self, state):
+        container = self.container.interp(state)
+        key = self.key.interp(state)
+        return container.get_item(key)
 
 
 # ---- calls ----
@@ -356,9 +433,6 @@ class Neg(_UnaryOp):
 @dataclass(frozen=True)
 class SpecArgs(_Ast, _AsList):
     args: List[_Expr]
-    
-    def interp(self, state):
-        return [arg.interp(state) for arg in self.args]
 
 @dataclass(frozen=True)
 class Call(_Expr):
@@ -366,10 +440,9 @@ class Call(_Expr):
     spec_args: SpecArgs
     
     def interp(self, state):
-        return self.func.interp(state).call(state, self.spec_args.interp(state))
-    
-class PyFunction(_Expr):
-    code: str
+        func = self.func.interp(state)
+        args = [arg.interp(state) for arg in self.spec_args.args]
+        return func.call(state, args)
 
 
 # ---- variable get ----
@@ -397,7 +470,7 @@ class Bool(_Expr):
     value: bool
     
     def interp(self, state):
-        return intr_classes.Bool(value)
+        return intr_classes.Bool(self.value)
     
 # ---- numeric types ----
 
@@ -423,6 +496,30 @@ class String(_Expr):
     
     def interp(self, state):
         return intr_classes.String(self.value)
+    
+# ---- list ----
+
+@dataclass(frozen=True)
+class List_(_Expr, _AsList):
+    values: List[_Expr]
+    
+    def interp(self, state):
+        return intr_classes.List_([v.interp(state) for v in self.values])
+    
+# ---- dict ----
+
+@dataclass(frozen=True)
+class Pair(_Ast):
+    key: _Expr
+    value: _Expr
+    
+@dataclass(frozen=True)
+class Dict_(_Expr, _AsList):
+    pairs: List[Pair]
+    
+    def interp(self, state):
+        return intr_classes.Dict_({p.key.interp(state): p.value.interp(state) for p in self.pairs})
+
 
 # ---- function ----
 

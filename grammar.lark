@@ -1,4 +1,4 @@
-?start: body
+?start: body -> top_body
 
 body: stmt*
 
@@ -14,7 +14,10 @@ body: stmt*
      | expr_stmt
 
 ?cmd: "\\print" expr ";"                           -> print_stmt
+	| "\\input" IDENT "," [expr] ";"               -> input_stmt
+	| "\\exit" [expr] ";"                          -> exit_stmt
     | "\\include" string ";"                       -> include_stmt
+	| "\\push" expr "," expr ";"                   -> push_stmt
 
 return_stmt: _RETURN [expr] ";"
 
@@ -24,7 +27,7 @@ if_else_stmt: _IF "(" expr ")" "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" 
 
 while_stmt: _WHILE "(" expr ")" "{" body "}"
 
-do_while_stmt: _DO "{" body "}" _WHILE "(" expr ")"
+do_while_stmt: _DO "{" body "}" _WHILE "(" expr ")" ";"
 
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
 
@@ -47,7 +50,8 @@ continue_stmt: _CONTINUE ";"
 	   | pattern "**=" assign  -> ipow
        | cmp
 
-?pattern: IDENT -> var_pattern
+?pattern: IDENT                -> var_pattern
+		| postfix "[" expr "]" -> subscript_pattern
 
 ?cmp: sum "==" sum -> eq
     | sum "!=" sum -> ne
@@ -73,22 +77,24 @@ continue_stmt: _CONTINUE ";"
 
 ?postfix: postfix "**" prefix       -> pow
         | postfix "(" spec_args ")" -> call
+		| postfix "[" expr "]"      -> subscript
         | atom
-
 spec_args: _comma_list{expr}?
 
 ?atom: literal
      | IDENT -> var
-	 | "$" STRING -> py_function
      | "(" expr ")"
+	 | functional_cmd
 
 ?literal: string
         | function
-        | INT      -> int
-        | FLOAT    -> float
-        | _TRUE    -> true
-        | _FALSE   -> false
-        | _NULL    -> null
+		| "[" _comma_list{expr}? "]"    -> list_
+		| "{" _comma_list{pair}? "}"    -> dict_
+        | INT                           -> int
+        | FLOAT                         -> float
+        | _TRUE                         -> true
+        | _FALSE                        -> false
+        | _NULL                         -> null
 
 string: STRING
 STRING: STRING_DQUOTE
@@ -100,6 +106,10 @@ _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
 function: _FUNCTION "(" form_args ")" "{" body "}"
 form_args: _comma_list{IDENT}?
+
+pair: expr ":" expr
+
+functional_cmd: "\len" "(" expr ")" -> len
 
 _comma_list{e}: e ("," e)*
 
