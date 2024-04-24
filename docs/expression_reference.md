@@ -4,7 +4,7 @@
 All operators in baba-lang are:
 | Symbol | Name | Notes |
 | - | - | - |
-| `=` | Assignment | |
+| `=` | Assignment | If assigning variables, always create new one |
 | `+=` `-=` `*=` `/=` `%=` `%/%=` | In-place assignment | |
 | `==` | Equality | |
 | `!=` | Inequality | |
