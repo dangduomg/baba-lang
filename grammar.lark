@@ -1,14 +1,8 @@
-?start: top_body
-
-top_body: body
-fn_body: body
+?start: body -> top_body
 
 body: stmt*
 
-?stmt: cmd
-     | label
-     | goto_stmt
-     | function_stmt
+?stmt: expr_stmt
      | if_stmt
      | if_else_stmt
      | while_stmt
@@ -17,28 +11,9 @@ body: stmt*
      | break_stmt
      | continue_stmt
      | return_stmt
-     | expr_stmt
+     | include_stmt
 
-?cmd: "\\print" expr ";"                           -> print_stmt
-    | "\\about" ";"                                -> about_stmt
-    | "\\set" IDENT "," expr ";"                   -> var_stmt
-    | "\\py_call" IDENT "," string ("," expr)* ";" -> python_call_stmt
-    | "\\py_exec" string ";"                       -> python_exec_stmt
-    | "\\goto" IDENT ";"                           -> goto_stmt
-    | "\\goto" IDENT _IF "(" expr ")" ";"          -> goto_if_stmt
-    | "\\call" expr ("," expr)* ";"                -> call_stmt
-    | "\\callsave" IDENT "," expr ("," expr)* ";"  -> call_and_save_stmt
-    | "\\sleep" expr ";"                           -> sleep_stmt
-    | "\\exit" expr? ";"                           -> exit_stmt
-    | "\\input" IDENT ("," expr)? ";"              -> input_stmt
-    | "\\nonlocal_set" IDENT "," expr ";"          -> nonlocal_var_stmt
-    | "\\include" string ";"                       -> include_stmt
-
-label: IDENT ":"
-
-goto_stmt: _GOTO IDENT ";"
-
-function_stmt: _FUNCTION IDENT "(" args ")" "{" fn_body "}"
+include_stmt: "\\include" string ";"
 
 return_stmt: _RETURN [expr] ";"
 
@@ -57,21 +32,22 @@ continue_stmt: _CONTINUE ";"
 
 ?expr_stmt: exprs ";"
 
-?exprs: expr ("," expr)*
+?exprs: _comma_list{expr}
 
 ?expr: assign
 
-?assign: assign_expr "=" assign
-       | assign_expr "+=" assign   -> iadd
-       | assign_expr "-=" assign   -> isub
-       | assign_expr "*=" assign   -> imul
-       | assign_expr "/=" assign   -> idiv
-       | assign_expr "%=" assign   -> imod
-       | assign_expr "%/%=" assign -> ifloordiv
+?assign: pattern "=" assign
+       | pattern "+=" assign   -> iadd
+       | pattern "-=" assign   -> isub
+       | pattern "*=" assign   -> imul
+       | pattern "/=" assign   -> idiv
+       | pattern "%=" assign   -> imod
+       | pattern "%/%=" assign -> ifloordiv
+	     | pattern "**=" assign  -> ipow
        | cmp
 
-?assign_expr: var
-			| subscript
+?pattern: IDENT                -> var_pattern
+		    | postfix "[" expr "]" -> subscript_pattern
 
 ?cmp: sum "==" sum -> eq
     | sum "!=" sum -> ne
@@ -95,60 +71,58 @@ continue_stmt: _CONTINUE ";"
        | "-" prefix -> neg
        | postfix
 
-?postfix: postfix "**" prefix                 -> pow
-        | postfix "(" (expr ("," expr)*)? ")" -> call
-		| subscript
+?postfix: postfix "**" prefix       -> pow
+        | postfix "(" spec_args ")" -> call
+		    | postfix "[" expr "]"      -> subscript
         | atom
-		
-subscript: postfix "[" expr "]"
+spec_args: _comma_list{expr}?
 
 ?atom: literal
-     | var
+     | IDENT -> var
      | "(" expr ")"
-	 
-var: IDENT
 
 ?literal: string
         | function
-		| "[" (expr ("," expr)*)? "]"   -> list
-		| "{" (pair ("," pair)*)? "}"   -> dict
+		    | "[" _comma_list{expr}? "]"    -> list_
+		    | "{" _comma_list{pair}? "}"    -> dict_
         | INT                           -> int
         | FLOAT                         -> float
         | _TRUE                         -> true
         | _FALSE                        -> false
         | _NULL                         -> null
 
-string: STRING_DQUOTE
+string: STRING
+STRING: STRING_DQUOTE
       | STRING_SQUOTE
 STRING_DQUOTE: "\"" _STRING_ESC_INNER "\""
 STRING_SQUOTE: "'" _STRING_ESC_INNER "'"
 _STRING_INNER: /.*?/
 _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
-function: _FUNCTION "(" args ")" "{" fn_body "}"
-args: (IDENT ("," IDENT)*)?
+function: _FUNCTION "(" form_args ")" "{" body "}"
+form_args: _comma_list{IDENT}?
 
 pair: expr ":" expr
 
+_comma_list{e}: e ("," e)*
+
 IDENT: /(?!/ RESERVED  /)/ CNAME
 
-RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _GOTO | _DO | _FOR | _BREAK | _CONTINUE
-_TRUE: "True"
-_FALSE: "False"
-_NULL: "None"
+RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE
+_TRUE: "true"
+_FALSE: "false"
+_NULL: "null"
 _FUNCTION: "function"
 _RETURN: "return"
 _IF: "if"
 _ELSE: "else"
 _WHILE: "while"
-_GOTO: "goto"
 _DO: "do"
 _FOR: "for"
 _BREAK: "break"
 _CONTINUE: "continue"
 
 %import common.CNAME
-%import common.ESCAPED_STRING
 %import common.INT
 %import common.FLOAT
 %import common.SH_COMMENT
