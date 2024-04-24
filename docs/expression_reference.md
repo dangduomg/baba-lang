@@ -32,7 +32,7 @@ This is their precedence table:
 | `+`, `-` | 2 | Left |
 | `*`, `/`, `%`, `%/%` | 3 | Left |
 | unary `+`, unary `-` | 4 | |
-| ** | 5* | Right* |
+| ** | 5\* | Right\* |
 | call, subscript | 6 | |
 
-Power operator's associativity and precedence since it has lower precedence than unary operators on the right, but higher precedence than them on the left.
+\* Power operator's associativity and precedence is special since it has lower precedence than unary operators on the right, but higher precedence than them on the left.
