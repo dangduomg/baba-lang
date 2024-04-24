@@ -12,14 +12,17 @@ import operator
 
 import info
 from state import State
-from intr_classes import PythonWrapper
+import intr_classes
 
 
 state = State()
 
 
 def import_native(name):
-    return lambda f: state.new_var(name, PythonWrapper(f))
+    return lambda f: state.new_var(name, intr_classes.PythonWrapper(f))
+
+def import_native_pure(name):
+    return lambda f: state.new_var(name, intr_classes.PythonPureWrapper(f))
 
 # basic functions
 
@@ -45,20 +48,32 @@ import_native('bit_rsh')(operator.rshift)
 @import_native('py_function')
 def _py_function(m, f):
     module = __import__(m)
-    return PythonWrapper(getattr(module, f))
+    return intr_classes.PythonWrapper(getattr(module, f))
 
 # generic collection operations
 
 import_native('length')(len)
 import_native('has')(operator.contains)
-import_native('delete_')(operator.delitem)
 
 # list operations
 
-import_native('list_push')(list.append)
-import_native('list_pop')(list.pop)
+@import_native_pure('list_push')
+def _list_push(lst, item):
+    lst.elems.append(item)
+    return intr_classes.Null()
+
+@import_native_pure('list_pop')
+def _list_pop(lst, i):
+    return lst.elems.pop(i)
 
 # dict operations
 
 import_native('dict_pairs')(dict.items)
-import_native('dict_pop')(dict.pop)
+
+@import_native_pure('dict_pop')
+def _dict_pop(dct, k):
+    return dct.elems.pop(k)
+
+@import_native_pure('dict_pop_pair')
+def _dict_pop(dct):
+    return dct.elems.popitem()

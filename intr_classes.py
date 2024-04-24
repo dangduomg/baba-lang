@@ -375,19 +375,23 @@ class Function(Value):
         if len(self.form_args.args) != len(args):
             raise RuntimeError('function call must have exactly {len(self.form_args.args)} arguments')
         return dict(zip(self.form_args.args, args))
-        
+    
 @dataclass(frozen=True)
-class PythonWrapper(Value):
+class PythonPureWrapper(Value):
     function: Callable
     
     def code_repr(self):
         return '<python wrapper>'
     
     def call(self, state, args):
+        return self.function(*args)
+        
+class PythonWrapper(PythonPureWrapper):
+    def call(self, state, args):
         # converts args into native python types if possible
         unwrapped_args = self._unwrap_args(args)
         # evaluate
-        res = self.function(*unwrapped_args)
+        res = super().call(state, unwrapped_args)
         # converts python types back to BL types
         return self._wrap(res)
     
@@ -430,4 +434,4 @@ class PythonWrapper(Value):
         elif isinstance(v, Value):
             return v
         else:
-            raise RuntimeError('python function returns something that cannot be converted into babalang')
+            raise RuntimeError('python function returns something that cannot be converted into babalang values')
