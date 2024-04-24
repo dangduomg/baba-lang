@@ -43,11 +43,11 @@ continue_stmt: _CONTINUE ";"
        | pattern "/=" assign   -> idiv
        | pattern "%=" assign   -> imod
        | pattern "%/%=" assign -> ifloordiv
-	   | pattern "**=" assign  -> ipow
+	     | pattern "**=" assign  -> ipow
        | cmp
 
 ?pattern: IDENT                -> var_pattern
-		| postfix "[" expr "]" -> subscript_pattern
+		    | postfix "[" expr "]" -> subscript_pattern
 
 ?cmp: sum "==" sum -> eq
     | sum "!=" sum -> ne
@@ -73,7 +73,7 @@ continue_stmt: _CONTINUE ";"
 
 ?postfix: postfix "**" prefix       -> pow
         | postfix "(" spec_args ")" -> call
-		| postfix "[" expr "]"      -> subscript
+		    | postfix "[" expr "]"      -> subscript
         | atom
 spec_args: _comma_list{expr}?
 
@@ -83,8 +83,8 @@ spec_args: _comma_list{expr}?
 
 ?literal: string
         | function
-		| "[" _comma_list{expr}? "]"    -> list_
-		| "{" _comma_list{pair}? "}"    -> dict_
+		    | "[" _comma_list{expr}? "]"    -> list_
+		    | "{" _comma_list{pair}? "}"    -> dict_
         | INT                           -> int
         | FLOAT                         -> float
         | _TRUE                         -> true

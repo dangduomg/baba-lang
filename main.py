@@ -13,7 +13,7 @@ def interpret(src, state):
     return ast_compile(src).interp(state)
 
 
-def main(args):    
+def main(args):
     if len(args) > 1:
         file = args[1]
         with open(file, encoding='utf-8') as f:
