@@ -1,12 +1,7 @@
 # Baba-lang Reference
 
 ## Body
-Bodies are composed of multiple statements. There are four types of statements:
-- Block statements
-- Labels
-- Other statements
-
-Statements usually end with `;` (Block statements and labels do not end with `;`).
+Bodies are composed of multiple statements. Statements usually end with `;`. Most block statements however, do not end with `;`.
 
 ## Block statements
 Block statements are statements having code blocks `{ ... }`. They usually don't end in `;`.
@@ -57,21 +52,7 @@ while (<condition>) {
 
 When `condition` is omitted, it defaults to `true`, meaning the loop will run forever (unless terminated early by `break` or `return`).
 
-## Labels and other statements
-
-### Labels
-```
-<name>:
-```
-Does nothing as a statement, but acts as target points for `goto` statements.
-
-### goto
-```
-goto <label>;
-```
-Jumps to `label`. There are restrictions over where `goto` can jump to:
-- Cannot jump to labels nested deeper than the `goto` itself
-- Cannot jump out of or into functions
+## Other statements
 
 ### break
 ```
