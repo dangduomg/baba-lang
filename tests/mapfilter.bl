@@ -1,0 +1,38 @@
+map = function(f, lst) {
+	res = [];
+	for (i = 0; i < length(lst); i += 1) {
+		list_push(res, f(lst[i]));
+	}
+	return res;
+};
+
+filter = function(f, lst) {
+	res = [];
+	for (i = 0; i < length(lst); i += 1) {
+		if (f(lst[i])) {
+			list_push(res, lst[i]);
+		}
+	}
+	return res;
+};
+
+inc_range = function(start, end) {
+	res = [];
+	for (i = start; i <= end; i += 1) {
+		list_push(res, i);
+	}
+	return res;
+};
+
+
+my_lst =
+	filter(function(x) { return x % 2 != 0; },
+		map(function(x) { return x ** 2; },
+			inc_range(1, 10)
+		)
+	)
+;
+
+for (i = 0; i < length(my_lst); i += 1) {
+	print(my_lst[i]);
+}

@@ -6,4 +6,4 @@ fact = function(n) {
 	}
 };
 
-\print fact(10);
+print(fact(10));
