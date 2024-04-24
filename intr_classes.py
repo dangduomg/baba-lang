@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Callable
 
 from state import State
 
@@ -342,7 +342,7 @@ class Dict_(Value):
     def set_item(self, k, v):
         self.elems[k] = v
     
-# ---- functions ----
+# ---- callables ----
 
 @dataclass(frozen=True)
 class Function(Value):
@@ -369,12 +369,65 @@ class Function(Value):
         elif isinstance(res, StmtDone):
             return Null()
         elif isinstance(res, EarlyExit):
-            raise RuntimeError('early exit statement besides return at function\'s top level')
+            raise RuntimeError("early exit statement besides 'return' at function's top level")
         
-            
-    def _decode_args(self, spec_args):
-        if len(spec_args) < len(self.form_args.args):
-            raise RuntimeError('Too little arguments!')
-        if len(spec_args) > len(self.form_args.args):
-            raise RuntimeError('Too many arguments!')
-        return dict(zip(self.form_args.args, spec_args))
+    def _decode_args(self, args):
+        if len(self.form_args.args) != len(args):
+            raise RuntimeError('function call must have exactly {len(self.form_args.args)} arguments')
+        return dict(zip(self.form_args.args, args))
+        
+@dataclass(frozen=True)
+class PythonWrapper(Value):
+    function: Callable
+    
+    def code_repr(self):
+        return '<python wrapper>'
+    
+    def call(self, state, args):
+        # converts args into native python types if possible
+        unwrapped_args = self._unwrap_args(args)
+        # evaluate
+        res = self.function(*unwrapped_args)
+        # converts python types back to BL types
+        return self._wrap(res)
+    
+    @classmethod
+    def _unwrap_args(cls, args):
+        unwrapped_args = []
+        for a in args:
+            unwrapped_args.append(a)
+        return [cls._unwrap(a) for a in args]
+    
+    @classmethod
+    def _unwrap(cls, v):
+        if v is Null():
+            return None
+        elif isinstance(v, (Bool, Number, String)):
+            return v.value
+        elif isinstance(v, List_):
+            return [cls._unwrap(e) for e in v.elems]
+        elif isinstance(v, Dict_):
+            return {cls._unwrap(k): cls._unwrap(v) for k, v in v.elems.items()}
+        else:
+            return v
+    
+    @classmethod
+    def _wrap(cls, v):
+        if v is None:
+            return Null()
+        elif isinstance(v, bool):
+            return Bool(v)
+        elif isinstance(v, int):
+            return Int(v)
+        elif isinstance(v, float):
+            return Float(v)
+        elif isinstance(v, str):
+            return String(v)
+        elif isinstance(v, (tuple, list)):
+            return List_([cls._wrap(x) for x in v])
+        elif isinstance(v, dict):
+            return Dict_({cls._wrap(k): cls._wrap(v) for k, v in v.items()})
+        elif isinstance(v, Value):
+            return v
+        else:
+            raise RuntimeError('python function returns something that cannot be converted into babalang')

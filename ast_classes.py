@@ -1,3 +1,5 @@
+import sys
+
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -69,7 +71,7 @@ class ExitStmt(_Stmt):
     code: _Expr
     
     def interp(self, state):
-        sys.exit(self.code.interp(state))
+        sys.exit(self.code.interp(state) if code else 0)
         
 @dataclass(frozen=True)
 class PushStmt(_Stmt):

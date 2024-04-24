@@ -4,18 +4,16 @@ from dataclasses import dataclass
 
 @dataclass
 class Cell:
-    value: object
+    value: 'Value'
 
 class State:
     scopes: List[dict]
     
-    def __init__(self):
-        self.scopes = [{}]
+    def __init__(self, scopes=None):
+        self.scopes = scopes if scopes else [{}]
         
     def copy(self) -> 'State':
-        new_state = State()
-        new_state.scopes = self.scopes[:]
-        return new_state
+        return State([s.copy() for s in self.scopes])
         
     def new_scope(self) -> None:
         self.scopes.append({})
@@ -27,7 +25,7 @@ class State:
         for scope in reversed(self.scopes):
             if name in scope:
                 return scope[name]
-        raise RuntimeError(f'Can\'t find variable {name}!')
+        raise RuntimeError(f"can't find variable '{name}'")
     
     def get_var(self, name: str) -> object:
         return self.resolve_var(name).value

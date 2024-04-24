@@ -2,7 +2,7 @@
 
 body: stmt*
 
-?stmt: cmd
+?stmt: expr_stmt
      | if_stmt
      | if_else_stmt
      | while_stmt
@@ -11,13 +11,9 @@ body: stmt*
      | break_stmt
      | continue_stmt
      | return_stmt
-     | expr_stmt
+     | include_stmt
 
-?cmd: "\\print" expr ";"                           -> print_stmt
-	| "\\input" IDENT "," [expr] ";"               -> input_stmt
-	| "\\exit" [expr] ";"                          -> exit_stmt
-    | "\\include" string ";"                       -> include_stmt
-	| "\\push" expr "," expr ";"                   -> push_stmt
+include_stmt: "\\include" string ";"
 
 return_stmt: _RETURN [expr] ";"
 
@@ -84,7 +80,6 @@ spec_args: _comma_list{expr}?
 ?atom: literal
      | IDENT -> var
      | "(" expr ")"
-	 | functional_cmd
 
 ?literal: string
         | function
@@ -108,8 +103,6 @@ function: _FUNCTION "(" form_args ")" "{" body "}"
 form_args: _comma_list{IDENT}?
 
 pair: expr ":" expr
-
-functional_cmd: "\len" "(" expr ")" -> len
 
 _comma_list{e}: e ("," e)*
 
