@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Cell:
-    value: 'Value'
+    value: object
 
 class State:
     scopes: List[dict]
