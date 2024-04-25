@@ -84,4 +84,4 @@ All operators in baba-lang are: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`,
 
 All types in baba-lang are: integers, floats, strings, booleans, lists, dictionaries.
 
-For expression reference, see [expression.md](expression.md)
+For expression reference, see [Expression Reference](expression_reference.md)
