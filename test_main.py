@@ -27,3 +27,12 @@ def test_if(example_state):
         }
     """)
     assert example_state.get_var('res').eq(intr_classes.String('adult'));
+
+def test_loops(example_state):
+    main.interpret("""
+        res = [];
+        for (i = 0, i < 5; i += 2) {
+            list_push(res, i);
+        }
+    """)
+    assert example_state.get_var('res').eq(intr_classes.List_([0, 2, 4]))
