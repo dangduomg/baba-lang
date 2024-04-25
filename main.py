@@ -12,7 +12,7 @@ state = bl_init.state
 def interpret(src, state):
     return ast_compile(src).interp(state)
 
-def interpret(src, state):
+def interpret_expr(src, state):
     return ast_compile_expr(src).interp(state)
 
 
