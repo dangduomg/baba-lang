@@ -6,7 +6,7 @@ from lark import Lark, ast_utils, Transformer, v_args
 import ast_classes
 
 
-parser = Lark.open('grammar.lark', parser='lalr', start=('top_body', 'expr'))
+parser = Lark.open('grammar.lark', parser='lalr', start=['top_body', 'expr'])
 
 
 @v_args(inline=True)
