@@ -346,8 +346,8 @@ class Dict_(Value):
 
 @dataclass(frozen=True)
 class Function(Value):
-    form_args: 'FormArgs'
-    body: 'Body'
+    form_args: object
+    body: object
     env: State
     
     def code_repr(self):
