@@ -2,11 +2,10 @@ from pytest import fixture
 
 import main
 import intr_classes
-from state import State
 
 @fixture
 def example_state():
-    return State()
+    return main.state.copy()
 
 def test_expression(example_state):
     assert main.interpret_expr("1 + 1", example_state).eq(intr_classes.Int(2))
@@ -20,10 +19,12 @@ def test_if(example_state):
         age = 18;
         if (age < 0) {
             res = 'error';
-        } else if (age < 18) {
+        } else if (age >= 18) {
             res = 'adult';
-        } else (age >= 18) {
+        } else if (age < 18) {
             res = 'child';
+        } else {
+            res = 'error';
         }
     """, example_state)
     assert example_state.get_var('res').eq(intr_classes.String('adult'));
