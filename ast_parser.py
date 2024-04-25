@@ -6,7 +6,7 @@ from lark import Lark, ast_utils, Transformer, v_args
 import ast_classes
 
 
-parser = Lark.open('grammar.lark', parser='lalr')
+parser = Lark.open('grammar.lark', parser='lalr', start=('top_body', 'expr'))
 
 
 @v_args(inline=True)
@@ -41,7 +41,7 @@ transformer = ast_utils.create_transformer(ast_classes, ToAst())
 
 
 def ast_compile(src):
-    pt = parser.parse(src)
+    pt = parser.parse(src, start='top_body')
     return transformer.transform(pt)
 
 def ast_compile_expr(src):
