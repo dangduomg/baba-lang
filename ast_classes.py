@@ -44,48 +44,6 @@ class TopBody(Body):
             raise RuntimeError('early exit statements at script\'s top level')
 
 
-# ---- commands ----
-
-
-@dataclass(frozen=True)
-class PrintStmt(_Stmt):
-    expr: _Expr
-    
-    def interp(self, state):
-        res = self.expr.interp(state)
-        print(res.print_repr())
-        return intr_classes.StmtDone()
-    
-@dataclass(frozen=True)
-class InputStmt(_Stmt):
-    varname: str
-    prompt: _Expr
-    
-    def interp(self, state):
-        prompt = self.prompt.interp(state).print_repr()
-        state.new_var(intr_classes.String(input(prompt)))
-        return intr_classes.StmtDone()
-    
-@dataclass(frozen=True)
-class ExitStmt(_Stmt):
-    code: _Expr
-    
-    def interp(self, state):
-        sys.exit(self.code.interp(state) if code else 0)
-        
-@dataclass(frozen=True)
-class PushStmt(_Stmt):
-    container: _Expr
-    item: _Expr
-    
-    def interp(self, state):
-        container = self.container.interp(state)
-        item = self.item.interp(state)
-        if isinstance(container, intr_classes.List_):
-            container.elems.append(item)
-            return intr_classes.StmtDone()
-
-
 # ---- block statements ----
 
 @dataclass(frozen=True)
@@ -407,12 +365,6 @@ class Neg(_UnaryOp):
     def interp(self, state):
         rhs = self.rhs.interp(state)
         return rhs.neg()
-    
-class Len(_UnaryOp):
-    def interp(self, state):
-        rhs = self.rhs.interp(state)
-        if isinstance(rhs, intr_classes.List_):
-            return intr_classes.Int(len(rhs.elems))
     
     
 # ---- subscripting ----
