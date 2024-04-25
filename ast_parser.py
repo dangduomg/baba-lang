@@ -44,6 +44,10 @@ def ast_compile(src):
     pt = parser.parse(src)
     return transformer.transform(pt)
 
+def ast_compile_expr(src):
+    pt = parser.parse(src, start='expr')
+    return transformer.transform(pt)
+
 
 def main(args):
     if len(args) > 1:
