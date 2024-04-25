@@ -1,9 +1,9 @@
 import sys
 import logging
-from ast_parser import ast_compile
 
 import bl_init
 import info
+from ast_parser import ast_compile, ast_compile_expr
 
 
 state = bl_init.state
@@ -11,6 +11,9 @@ state = bl_init.state
 
 def interpret(src, state):
     return ast_compile(src).interp(state)
+
+def interpret(src, state):
+    return ast_compile_expr(src).interp(state)
 
 
 def main(args):
