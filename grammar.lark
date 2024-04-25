@@ -1,6 +1,8 @@
-?start: body -> top_body
+top_body: _body
 
-body: stmt*
+body: _body
+
+_body: stmt*
 
 ?stmt: expr_stmt
      | if_stmt
