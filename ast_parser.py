@@ -35,6 +35,29 @@ class ToAst(Transformer):
     
     def null(self):
         return ast_classes.Null()
+    
+    # desugaring
+    
+    def do_while_stmt(self, body, cond):
+        return ast_classes.Body([
+            body,
+            ast_classes.WhileStmt(
+                cond,
+                body,
+            ),
+        ])
+    
+    def for_stmt(self, start, cond, step, body):
+        return ast_classes.Body([
+            start,
+            ast_classes.WhileStmt(
+                cond,
+                ast_classes.Body([
+                    body,
+                    step,
+                ])
+            ),
+        ])
 
 
 transformer = ast_utils.create_transformer(ast_classes, ToAst())
