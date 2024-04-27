@@ -29,7 +29,12 @@ def main(args):
         while True:
             inpt = input('> ')
             try:
-                interpret(inpt, state)
+                try:
+                    ast = ast_compile(inpt)
+                except Exception as e:
+                    print(interpret_expr(inpt, state).code_repr())
+                else:
+                    ast.interp(state)
             except Exception as e:
                 logging.error(e)
 
