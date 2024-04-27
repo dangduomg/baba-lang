@@ -37,3 +37,17 @@ def test_loops(example_state):
         }
     """, example_state)
     assert example_state.get_var('res').eq(intr_classes.List_([0, 2, 4]))
+    
+def test_function(example_state):
+    main.interpret("""
+        function fact(n) {
+            if (n <= 0) {
+                return 1;
+            } else {
+                return n * fact(n - 1);
+            }
+        }
+        
+        res = fact(10);
+    """, example_state)
+    assert example_state.get_var('res').eq(intr_classes.Int(3628800))
