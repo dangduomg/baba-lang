@@ -1,7 +1,4 @@
-import sys
-
 from dataclasses import dataclass
-from typing import List, Optional
 
 from lark import ast_utils
 
@@ -17,18 +14,23 @@ _AsList = ast_utils.AsList
 class _Stmt(_Ast):
     def interp(self, state):
         #pylint: disable=unused-argument
-        pass
+        return intr_classes.StmtDone()
 
 class _Expr(_Stmt):
     def interp(self, state):
-        pass
+        return intr_classes.Null()
+    
+@dataclass(frozen=True)
+class FormArgs(_Ast, _AsList):
+    args: list[str]
+
 
 # ---- the body ----
 
 
 @dataclass(frozen=True)
 class Body(_Ast, _AsList):
-    stmts: List[_Stmt]
+    stmts: list[_Stmt]
     
     def interp(self, state):
         for stmt in self.stmts:
@@ -90,54 +92,16 @@ class WhileStmt(_Stmt):
             elif isinstance(res, intr_classes.EarlyExit):
                 return res
         return intr_classes.StmtDone()
-
-@dataclass(frozen=True)
-class DoWhileStmt(_Stmt):
-    body: Body
-    cond: _Expr
     
-    def interp(self, state):
-        res = self.body.interp(state)
-        if isinstance(res, intr_classes.Break):
-            return intr_classes.StmtDone()
-        elif isinstance(res, intr_classes.Continue):
-            pass
-        elif isinstance(res, intr_classes.EarlyExit):
-            return res
-        while self.cond.interp(state).value:
-            res = self.body.interp(state)
-            if isinstance(res, intr_classes.Break):
-                return intr_classes.StmtDone()
-            elif isinstance(res, intr_classes.Continue):
-                pass
-            elif isinstance(res, intr_classes.EarlyExit):
-                return res
-        return intr_classes.StmtDone()
-
 @dataclass(frozen=True)
-class ForStmt(_Stmt):
-    start: Optional[_Expr]
-    cond: Optional[_Expr]
-    step: Optional[_Expr]
+class FunctionStmt(_Stmt):
+    name: str
+    form_args: FormArgs
     body: Body
     
     def interp(self, state):
-        if self.start:
-            self.start.interp(state)
-        while True:
-            if self.cond:
-                cond_res = self.cond.interp(state)
-                if not cond_res.value:
-                    return intr_classes.StmtDone()
-            body_res = self.body.interp(state)
-            if self.step:
-                self.step.interp(state)
-            if isinstance(body_res, intr_classes.Break):
-                return intr_classes.StmtDone()
-            elif isinstance(body_res, intr_classes.Continue):
-                pass
-            elif isinstance(body_res, intr_classes.EarlyExit):
-                return body_res
+        state.new_var(self.name, intr_classes.Function(self.name, self.form_args.args, self.body, state.copy()))
+
 
 # ---- other statements ----
 
@@ -168,7 +132,7 @@ class ContinueStmt(_Stmt):
 
 @dataclass(frozen=True)
 class Exprs(_Expr, _AsList):
-    exprs: List[_Expr]
+    exprs: list[_Expr]
     
 
 # ---- assignment expressions ----
@@ -201,6 +165,11 @@ class VarPattern(_Pattern):
 class SubscriptPattern(_Pattern):
     container: _Expr
     key: _Expr
+    
+    def get_var(self, state):
+        container = self.container.interp(state)
+        key = self.key.interp(state)
+        return container.get_item(key)
     
     def new_var(self, state, rhs):
         self.set_var(state, rhs)
@@ -386,7 +355,7 @@ class Subscript(_Expr):
 
 @dataclass(frozen=True)
 class SpecArgs(_Ast, _AsList):
-    args: List[_Expr]
+    args: list[_Expr]
 
 @dataclass(frozen=True)
 class Call(_Expr):
@@ -455,7 +424,7 @@ class String(_Expr):
 
 @dataclass(frozen=True)
 class List_(_Expr, _AsList):
-    values: List[_Expr]
+    values: list[_Expr]
     
     def interp(self, state):
         return intr_classes.List_([v.interp(state) for v in self.values])
@@ -469,17 +438,13 @@ class Pair(_Ast):
     
 @dataclass(frozen=True)
 class Dict_(_Expr, _AsList):
-    pairs: List[Pair]
+    pairs: list[Pair]
     
     def interp(self, state):
         return intr_classes.Dict_({p.key.interp(state): p.value.interp(state) for p in self.pairs})
 
 
 # ---- function ----
-
-@dataclass(frozen=True)
-class FormArgs(_Ast, _AsList):
-    args: List[str]
     
 @dataclass(frozen=True)
 class Function(_Expr):
@@ -487,4 +452,4 @@ class Function(_Expr):
     body: Body
     
     def interp(self, state):
-        return intr_classes.Function(self.form_args, self.body, state.copy())
+        return intr_classes.Function('<anonymous>', self.form_args.args, self.body, state.copy())

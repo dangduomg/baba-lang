@@ -14,8 +14,9 @@ _body: stmt*
      | continue_stmt
      | return_stmt
      | include_stmt
+     | function_stmt
 
-include_stmt: "\\include" string ";"
+include_stmt: _INCLUDE string ";"
 
 return_stmt: _RETURN [expr] ";"
 
@@ -32,6 +33,8 @@ for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
 break_stmt: _BREAK ";"
 continue_stmt: _CONTINUE ";"
 
+function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
+
 ?expr_stmt: exprs ";"
 
 ?exprs: _comma_list{expr}
@@ -45,11 +48,11 @@ continue_stmt: _CONTINUE ";"
        | pattern "/=" assign   -> idiv
        | pattern "%=" assign   -> imod
        | pattern "%/%=" assign -> ifloordiv
-	     | pattern "**=" assign  -> ipow
+       | pattern "**=" assign  -> ipow
        | cmp
 
 ?pattern: IDENT                -> var_pattern
-		    | postfix "[" expr "]" -> subscript_pattern
+        | postfix "[" expr "]" -> subscript_pattern
 
 ?cmp: sum "==" sum -> eq
     | sum "!=" sum -> ne
@@ -75,7 +78,7 @@ continue_stmt: _CONTINUE ";"
 
 ?postfix: postfix "**" prefix       -> pow
         | postfix "(" spec_args ")" -> call
-		    | postfix "[" expr "]"      -> subscript
+        | postfix "[" expr "]"      -> subscript
         | atom
 spec_args: _comma_list{expr}?
 
@@ -85,8 +88,8 @@ spec_args: _comma_list{expr}?
 
 ?literal: string
         | function
-		    | "[" _comma_list{expr}? "]"    -> list_
-		    | "{" _comma_list{pair}? "}"    -> dict_
+        | "[" _comma_list{expr}? "]"    -> list_
+        | "{" _comma_list{pair}? "}"    -> dict_
         | INT                           -> int
         | FLOAT                         -> float
         | _TRUE                         -> true
@@ -110,7 +113,7 @@ _comma_list{e}: e ("," e)*
 
 IDENT: /(?!/ RESERVED  /)/ CNAME
 
-RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE
+RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE
 _TRUE: "true"
 _FALSE: "false"
 _NULL: "null"
@@ -123,6 +126,7 @@ _DO: "do"
 _FOR: "for"
 _BREAK: "break"
 _CONTINUE: "continue"
+_INCLUDE: "\\include"
 
 %import common.CNAME
 %import common.INT

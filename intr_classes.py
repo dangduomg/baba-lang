@@ -346,12 +346,13 @@ class Dict_(Value):
 
 @dataclass(frozen=True)
 class Function(Value):
-    form_args: object
+    name: str
+    form_args: list[str]
     body: object
     env: State
     
     def code_repr(self):
-        return '<function>'
+        return f'<function {self.name}({", ".join(self.form_args)})>'
     
     def call(self, state, args):
         # decode args
@@ -372,16 +373,16 @@ class Function(Value):
             raise RuntimeError("early exit statement besides 'return' at function's top level")
         
     def _decode_args(self, args):
-        if len(self.form_args.args) != len(args):
-            raise RuntimeError('function call must have exactly {len(self.form_args.args)} arguments')
-        return dict(zip(self.form_args.args, args))
+        if len(self.form_args) != len(args):
+            raise RuntimeError('expected {len(self.form_args)} arguments, got {len(args)}')
+        return dict(zip(self.form_args, args))
     
 @dataclass(frozen=True)
 class PythonPureWrapper(Value):
     function: Callable
     
     def code_repr(self):
-        return '<python wrapper>'
+        return f'<wrapper for {self.function!r}>'
     
     def call(self, state, args):
         return self.function(*args)
