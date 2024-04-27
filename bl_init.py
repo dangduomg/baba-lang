@@ -26,13 +26,16 @@ def import_native_pure(name):
 
 # basic functions
 
-import_native('print')(print)
 import_native('exit')(sys.exit)
 import_native('input')(input)
 import_native('sleep')(time.sleep)
 import_native('now')(time.asctime)
 import_native('version')(lambda: info.VERSION)
 import_native('about')(lambda: print(info.ABOUT))
+
+@import_native_pure('print')
+def print(v):
+    print(v.print_repr())
 
 # arithmetic functions
 
@@ -75,5 +78,5 @@ def _dict_pop(dct, k):
     return dct.elems.pop(k)
 
 @import_native_pure('dict_pop_pair')
-def _dict_pop(dct):
+def _dict_pop_pair(dct):
     return dct.elems.popitem()
