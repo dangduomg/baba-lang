@@ -19,7 +19,9 @@ def interpret_expr(src, state):
 
 
 def main(args):
-    if len(args) > 1:
+    if len(args) > 2:
+        print('Usage: main.py [file]')
+    elif len(args) == 2:
         file = args[1]
         with open(file, encoding='utf-8') as f:
             string = f.read()
