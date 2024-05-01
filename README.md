@@ -2,7 +2,7 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.3.0`.
+Right now in version `0.3.1`.
 
 ## How to use
 1. Prerequisites: Python 3, Lark
@@ -19,7 +19,7 @@ Right now in version `0.3.0`.
 - Python interop with `py_function`
 
 ## To-do list
-- Logical operators
+- Bitwise and logical operators
 - Rest and keyword arguments
 - OOP
 - Exceptions
