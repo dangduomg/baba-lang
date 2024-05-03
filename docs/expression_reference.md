@@ -29,10 +29,12 @@ This is their precedence table:
 | - | - | - |
 | `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=` | 0 | Right |
 | `==`, `!=`, `>`, `>=`, `<`, `<=` | 1 | None |
-| `+`, `-` | 2 | Left |
-| `*`, `/`, `%`, `%/%` | 3 | Left |
-| unary `+`, unary `-` | 4 | |
-| ** | 5\* | Right\* |
-| call, subscript | 6 | |
+| `\|`, `^` | 2 | Left |
+| `&` | 3 | Left |
+| `+`, `-` | 4 | Left |
+| `*`, `/`, `%`, `%/%` | 5 | Left |
+| unary `+`, unary `-` | 6 | |
+| ** | 7\* | Right\* |
+| call, subscript | 8 | |
 
 \* Power operator's associativity and precedence is special since it has lower precedence than unary operators on the right, but higher precedence than them on the left.

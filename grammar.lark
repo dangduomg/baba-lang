@@ -49,18 +49,34 @@ function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
        | pattern "%=" assign   -> imod
        | pattern "%/%=" assign -> ifloordiv
        | pattern "**=" assign  -> ipow
+       | pattern "&=" assign   -> iand
+       | pattern "|=" assign   -> ior
+       | pattern "^=" assign   -> ixor
+       | pattern "<<=" assign  -> ilshift
+       | pattern ">>=" assign  -> irshift
        | cmp
 
 ?pattern: IDENT                -> var_pattern
         | postfix "[" expr "]" -> subscript_pattern
 
-?cmp: sum "==" sum -> eq
-    | sum "!=" sum -> ne
-    | sum "<" sum  -> lt
-    | sum "<=" sum -> le
-    | sum ">" sum  -> gt
-    | sum ">=" sum -> ge
-    | sum
+?cmp: bit_or "==" bit_or -> eq
+    | bit_or "!=" bit_or -> ne
+    | bit_or "<" bit_or  -> lt
+    | bit_or "<=" bit_or -> le
+    | bit_or ">" bit_or  -> gt
+    | bit_or ">=" bit_or -> ge
+    | bit_or
+
+?bit_or: bit_or "|" bit_and -> bit_or
+       | bit_or "^" bit_and -> bit_xor
+       | bit_and
+
+?bit_and: bit_and "&" shift -> bit_and
+        | shift
+
+?shift: shift "<<" sum  -> lshift
+      | shift ">>" sum  -> rshift
+      | sum
 
 ?sum: sum "+" prod -> add
     | sum "-" prod -> sub
@@ -74,6 +90,7 @@ function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
 
 ?prefix: "+" prefix -> pos
        | "-" prefix -> neg
+       | "~" prefix -> bit_not
        | postfix
 
 ?postfix: postfix "**" prefix       -> pow

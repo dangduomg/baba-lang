@@ -2,7 +2,7 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.3.1`.
+Right now in version `0.3.2`.
 
 ## How to use
 1. Prerequisites: Python 3, Lark
@@ -11,15 +11,14 @@ Right now in version `0.3.1`.
 
 ## Features
 - First-class functions
-- Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, unary `+`, unary `-`, function call, subscripting
-- Bitwise operations available as functions
-- In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`
+- Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, `&`, `|`, `^`, `<<`, `>>`, `~`, unary `+`, unary `-`, function call, subscripting
+- In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`, `**=`, `&=`, `|=`, `^=`, `<<=`, `>>=`
 - Control flow constructs: `if`, `while`, `do..while`, C-style `for`, `break`, `continue`, functions
 - Data types: integers, floats, strings, booleans, lists, dictionaries
 - Python interop with `py_function`
 
 ## To-do list
-- Bitwise and logical operators
+- Logical operators
 - Rest and keyword arguments
 - OOP
 - Exceptions

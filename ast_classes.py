@@ -231,6 +231,37 @@ class Ipow(_AssignOp):
         newvalue = self.pattern.get_var(state).pow(rhs)
         self.pattern.set_var(state, newvalue)
 
+class Iand(_AssignOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).bit_and(rhs)
+        self.pattern.set_var(state, newvalue)
+
+class Ior(_AssignOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).bit_or(rhs)
+        self.pattern.set_var(state, newvalue)
+
+class Ixor(_AssignOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).bit_xor(rhs)
+        self.pattern.set_var(state, newvalue)
+
+class Ilshift(_AssignOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).lshift(rhs)
+        self.pattern.set_var(state, newvalue)
+
+class Irshift(_AssignOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        newvalue = self.pattern.get_var(state).rshift(rhs)
+        self.pattern.set_var(state, newvalue)
+
+
 # ---- binary operations ----
 
 
@@ -317,6 +348,38 @@ class Pow(_BinaryOp):
         rhs = self.rhs.interp(state)
         return lhs.pow(rhs)
 
+class BitAnd(_BinaryOp):
+    def interp(self, state):
+        lhs = self.lhs.interp(state)
+        rhs = self.rhs.interp(state)
+        return lhs.bit_and(rhs)
+
+class BitOr(_BinaryOp):
+    def interp(self, state):
+        lhs = self.lhs.interp(state)
+        rhs = self.rhs.interp(state)
+        return lhs.bit_or(rhs)
+
+class BitXor(_BinaryOp):
+    def interp(self, state):
+        lhs = self.lhs.interp(state)
+        rhs = self.rhs.interp(state)
+        return lhs.bit_xor(rhs)
+
+class Lshift(_BinaryOp):
+    def interp(self, state):
+        lhs = self.lhs.interp(state)
+        rhs = self.rhs.interp(state)
+        return lhs.lshift(rhs)
+
+class Rshift(_BinaryOp):
+    def interp(self, state):
+        lhs = self.lhs.interp(state)
+        rhs = self.rhs.interp(state)
+        return lhs.rshift(rhs)
+
+
+
 
 # ---- unary operations ----
 
@@ -334,6 +397,11 @@ class Neg(_UnaryOp):
     def interp(self, state):
         rhs = self.rhs.interp(state)
         return rhs.neg()
+
+class BitNot(_UnaryOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        return rhs.bit_not()
     
     
 # ---- subscripting ----

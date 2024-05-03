@@ -78,6 +78,24 @@ class Value(Result):
     
     def pow(self, other):
         raise RuntimeError('operation not implemented')
+
+    def bit_and(self, other):
+        raise RuntimeError('operation not implemented')
+
+    def bit_or(self, other):
+        raise RuntimeError('operation not implemented')
+
+    def bit_xor(self, other):
+        raise RuntimeError('operation not implemented')
+
+    def lshift(self, other):
+        raise RuntimeError('operation not implemented')
+
+    def rshift(self, other):
+        raise RuntimeError('operation not implemented')
+
+    def bit_not(self):
+        raise RuntimeError('operation not implemented')
     
     def pos(self):
         raise RuntimeError('operation not implemented')
@@ -124,6 +142,21 @@ class Bool(Value):
     def ne(self, other):
         res = self.value != other.value
         return Bool(res)
+
+    def bit_and(self, other):
+        res = self.value & other.value
+        return Bool(bool(res))
+
+    def bit_or(self, other):
+        res = self.value | other.value
+        return Bool(bool(res))
+
+    def bit_xor(self, other):
+        res = self.value ^ other.value
+        return Bool(bool(res))
+
+    def bit_not(self):
+        return Bool(not self.value)
 
 # ---- numeric values ----
 
@@ -215,6 +248,29 @@ class Number(Value):
 @dataclass(frozen=True)
 class Int(Number):
     value: int
+
+    def bit_and(self, other):
+        res = self.value & other.value
+        return Int(res)
+
+    def bit_or(self, other):
+        res = self.value | other.value
+        return Int(res)
+
+    def bit_xor(self, other):
+        res = self.value ^ other.value
+        return Int(res)
+
+    def lshift(self, other):
+        res = self.value << other.value
+        return Int(res)
+
+    def rshift(self, other):
+        res = self.value >> other.value
+        return Int(res)
+
+    def bit_not(self):
+        return Int(~self.value)
     
     def pos(self):
         return Int(+self.value)
