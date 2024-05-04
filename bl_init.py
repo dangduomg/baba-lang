@@ -34,7 +34,7 @@ import_native('version')(lambda: info.VERSION)
 import_native('about')(lambda: print(info.ABOUT))
 
 @import_native_pure('print')
-def print(v):
+def _print(v):
     print(v.print_repr())
 
 # import python functions
