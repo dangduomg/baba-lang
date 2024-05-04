@@ -37,15 +37,6 @@ import_native('about')(lambda: print(info.ABOUT))
 def print(v):
     print(v.print_repr())
 
-# arithmetic functions
-
-import_native('bit_and')(operator.and_)
-import_native('bit_or')(operator.or_)
-import_native('bit_xor')(operator.xor)
-import_native('bit_not')(operator.inv)
-import_native('bit_lsh')(operator.lshift)
-import_native('bit_rsh')(operator.rshift)
-
 # import python functions
 
 @import_native('py_function')
