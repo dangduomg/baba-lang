@@ -71,3 +71,13 @@ def _dict_pop(dct, k):
 @import_native_pure('dict_pop_pair')
 def _dict_pop_pair(dct):
     return dct.elems.popitem()
+
+# type conversions
+
+import_native('int')(int)
+import_native('float')(float)
+import_native('bool')(bool)
+
+@import_native_pure('str')
+def _str(v):
+    return intr_classes.String(v.code_repr())
