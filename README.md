@@ -4,6 +4,11 @@ Yet another programming language, made in Python. Has nothing to do with the vid
 
 Right now in version `0.3.2`.
 
+## Notes
+
+- baba-lang is now in its `0.x` versions. This means that later versions of baba-lang is not guaranteed to be backward compatible with the previous ones.
+- baba-lang is written for educational purposes only; it is not meant to be used in production.
+
 ## How to use
 1. Prerequisites: Python 3, Lark
 2. Download the repository
