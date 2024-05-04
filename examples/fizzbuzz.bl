@@ -1,6 +1,6 @@
 function fizzbuzz(start, stop, step) {
 	for (i = start; i <= stop; i += step) {
-		if (i % 15 == 0) {
+		if ((i % 3 == 0) & (i % 5 == 0)) {
 			print('fizzbuzz');
 		} else if (i % 5 == 0) {
 			print('buzz');
