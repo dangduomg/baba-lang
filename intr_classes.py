@@ -96,6 +96,9 @@ class Value(Result):
 
     def bit_not(self):
         raise RuntimeError('operation not implemented')
+
+    def logical_not(self):
+        raise RuntimeError('operation not implemented')
     
     def pos(self):
         raise RuntimeError('operation not implemented')
@@ -114,6 +117,7 @@ class Value(Result):
     
     
 # ---- null and booleans ----
+
 
 @dataclass(frozen=True)
 class Null(Value):
@@ -158,7 +162,12 @@ class Bool(Value):
     def bit_not(self):
         return Bool(not self.value)
 
+    def logical_not(self):
+        return Bool(not self.value)
+
+
 # ---- numeric values ----
+
 
 class Number(Value):
     value: Union[int, float]
@@ -245,29 +254,47 @@ class Number(Value):
         res = self.value ** other.value
         return self._to_bl(res)
 
+    def logical_not(self):
+        return Bool(not self.value)
+
 @dataclass(frozen=True)
 class Int(Number):
     value: int
 
     def bit_and(self, other):
-        res = self.value & other.value
-        return Int(res)
+        if isinstance(other, Int):
+            res = self.value & other.value
+            return Int(res)
+        else:
+            raise RuntimeError('Only apply bitwise operations to ints')
 
     def bit_or(self, other):
-        res = self.value | other.value
-        return Int(res)
+        if isinstance(other, Int):
+            res = self.value | other.value
+            return Int(res)
+        else:
+            raise RuntimeError('Only apply bitwise operations to ints')
 
     def bit_xor(self, other):
-        res = self.value ^ other.value
-        return Int(res)
+        if isinstance(other, Int):
+            res = self.value ^ other.value
+            return Int(res)
+        else:
+            raise RuntimeError('Only apply bitwise operations to ints')
 
     def lshift(self, other):
-        res = self.value << other.value
-        return Int(res)
+        if isinstance(other, Int):
+            res = self.value << other.value
+            return Int(res)
+        else:
+            raise RuntimeError('Only apply bitwise operations to ints')
 
     def rshift(self, other):
-        res = self.value >> other.value
-        return Int(res)
+        if isinstance(other, Int):
+            res = self.value >> other.value
+            return Int(res)
+        else:
+            raise RuntimeError('Only apply bitwise operations to ints')
 
     def bit_not(self):
         return Int(~self.value)
@@ -287,8 +314,10 @@ class Float(Number):
     
     def neg(self):
         return Float(-self.value)
-    
+
+
 # ---- strings -----
+
     
 @dataclass(frozen=True)
 class String(Value):
@@ -361,8 +390,10 @@ class String(Value):
             return self.value[other.value]
         else:
             raise RuntimeError('only index strings with integers')
-    
+
+
 # ---- lists ----
+
 
 @dataclass
 class List_(Value):
@@ -382,8 +413,10 @@ class List_(Value):
             self.elems[k.value] = v
         else:
             raise RuntimeError('only index lists with integers')
+
         
 # ---- dicts ----
+
 
 @dataclass
 class Dict_(Value):
@@ -398,7 +431,9 @@ class Dict_(Value):
     def set_item(self, k, v):
         self.elems[k] = v
     
+
 # ---- callables ----
+
 
 @dataclass(frozen=True)
 class Function(Value):
@@ -492,3 +527,12 @@ class PythonWrapper(PythonPureWrapper):
             return v
         else:
             raise RuntimeError('python function returns something that cannot be converted into babalang values')
+
+
+# ---- object orientation ----
+
+
+@dataclass
+class BLObject(Value):
+    class_: object = None
+    fields: dict[String, Value]

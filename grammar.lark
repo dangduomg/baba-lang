@@ -91,6 +91,7 @@ function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
 ?prefix: "+" prefix -> pos
        | "-" prefix -> neg
        | "~" prefix -> bit_not
+       | "!" prefix -> logical_not
        | postfix
 
 ?postfix: postfix "**" prefix       -> pow

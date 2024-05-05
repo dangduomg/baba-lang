@@ -402,6 +402,11 @@ class BitNot(_UnaryOp):
     def interp(self, state):
         rhs = self.rhs.interp(state)
         return rhs.bit_not()
+
+class LogicalNot(_UnaryOp):
+    def interp(self, state):
+        rhs = self.rhs.interp(state)
+        return rhs.logical_not()
     
     
 # ---- subscripting ----
