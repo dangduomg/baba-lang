@@ -527,12 +527,3 @@ class PythonWrapper(PythonPureWrapper):
             return v
         else:
             raise RuntimeError('python function returns something that cannot be converted into babalang values')
-
-
-# ---- object orientation ----
-
-
-@dataclass
-class BLObject(Value):
-    class_: object = None
-    fields: dict[String, Value]

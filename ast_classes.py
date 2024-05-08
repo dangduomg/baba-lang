@@ -518,7 +518,8 @@ class Dict_(_Expr, _AsList):
 
 
 # ---- function ----
-    
+
+
 @dataclass(frozen=True)
 class Function(_Expr):
     form_args: FormArgs
