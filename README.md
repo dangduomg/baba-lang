@@ -34,14 +34,14 @@ objects = ['YOU', 'KEY', 'LOCK', 'WIN'];
 
 # zipper
 for (i = 0; i < min(subjects, verbs, objects); i += 1) {
-	subject = subjects[i];
-	verb = verbs[i];
-	object = objects[i];
-	# right now & and | is the only way to combine booleans :sob:
-	if ((subject == 'BABA') & (verb == 'HAS')) {
-		verb = 'IS';
-	}
-	print(subjects[i] + ' ' + verbs[i] + ' ' + objects[i]);
+    subject = subjects[i];
+    verb = verbs[i];
+    object = objects[i];
+    # right now & and | is the only way to combine booleans :sob:
+    if ((subject == 'BABA') & (verb == 'HAS')) {
+        verb = 'IS';
+    }
+    print(subjects[i] + ' ' + verbs[i] + ' ' + objects[i]);
 }
 ```
 
