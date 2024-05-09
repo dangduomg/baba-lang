@@ -22,6 +22,29 @@ Right now in version `0.3.2`.
 - Data types: integers, floats, strings, booleans, lists, dictionaries
 - Python interop with `py_function`
 
+## Example
+Here is an example snippet to get started:
+```
+# let's import min from python
+min = py_function('builtins', 'min');
+
+subjects = ['BABA', 'KEKE', 'DOOR', 'FLAG'];
+verbs = ['HAS', 'HAS', 'IS', 'IS'];
+objects = ['YOU', 'KEY', 'LOCK', 'WIN'];
+
+# zipper
+for (i = 0; i < min(subjects, verbs, objects); i += 1) {
+	subject = subjects[i];
+	verb = verbs[i];
+	object = objects[i];
+	# right now & and | is the only way to combine booleans :sob:
+	if ((subject == 'BABA') & (verb == 'HAS')) {
+		verb = 'IS';
+	}
+	print(subjects[i] + ' ' + verbs[i] + ' ' + objects[i]);
+}
+```
+
 ## To-do list
 - Logical operators
 - Rest and keyword arguments
