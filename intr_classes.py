@@ -25,6 +25,10 @@ class Continue(EarlyExit):
 class Return(EarlyExit):
     value: 'Value'
 
+@dataclass(frozen=True)
+class Throw(EarlyExit):
+    value: 'Value'
+
 
 # ---- values ----
 
