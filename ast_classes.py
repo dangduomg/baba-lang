@@ -38,12 +38,6 @@ class Body(_Ast, _AsList):
             if isinstance(res, intr_classes.EarlyExit):
                 return res
         return intr_classes.StmtDone()
-    
-class TopBody(Body):
-    def interp(self, state):
-        res = super().interp(state)
-        if isinstance(res, intr_classes.EarlyExit):
-            raise RuntimeError('early exit statements at script\'s top level')
 
 
 # ---- block statements ----
@@ -134,6 +128,13 @@ class ContinueStmt(_Stmt):
 class Exprs(_Expr, _AsList):
     exprs: list[_Expr]
     
+    def interp(self, state):
+        for expr in exprs:
+            res = expr.interp(state)
+            if isinstance(res, Throw):
+                break
+        return res
+    
 
 # ---- assignment expressions ----
 
@@ -168,7 +169,11 @@ class SubscriptPattern(_Pattern):
     
     def get_var(self, state):
         container = self.container.interp(state)
+        if isinstance(container, intr_classes.Throw):
+            return container
         key = self.key.interp(state)
+        if isinstance(key, intr_classes.Throw):
+            return key
         return container.get_item(key)
     
     def new_var(self, state, rhs):
@@ -183,83 +188,75 @@ class SubscriptPattern(_Pattern):
 class _AssignOp(_Expr):
     pattern: _Pattern
     rhs: _Expr
+    
+    def _assign_inplace(self, state, method):
+        rhs = self.rhs.interp(state)
+        if isinstance(rhs, intr_classes.Throw):
+            return rhs
+        oldvalue = self.pattern.get_var(state)
+        if isinstance(oldvalue, intr_classes.Throw):
+            return oldvalue
+        newvalue = getattr(oldvalue, method)(rhs)
+        if isinstance(newvalue, intr_classes.Throw):
+            return newvalue
+        self.pattern.set_var(state, newvalue)
+        return rhs
 
 class Assign(_AssignOp):
     def interp(self, state):
         rhs = self.rhs.interp(state)
+        if isinstance(rhs, intr_classes.Throw):
+            return rhs
         self.pattern.new_var(state, rhs)
+        return rhs
 
 class Iadd(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).add(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'add')
 
 class Isub(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).sub(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'sub')
 
 class Imul(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).mul(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'mul')
 
 class Idiv(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).div(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'div')
 
 class Imod(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).mod(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'mod')
 
 class Ifloordiv(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).floordiv(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'floordiv')
         
 class Ipow(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).pow(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'pow')
 
 class Iand(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).bit_and(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'bit_and')
 
 class Ior(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).bit_or(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'bit_or')
 
 class Ixor(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).bit_xor(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'bit_xor')
 
 class Ilshift(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).lshift(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'lshift')
 
 class Irshift(_AssignOp):
     def interp(self, state):
-        rhs = self.rhs.interp(state)
-        newvalue = self.pattern.get_var(state).rshift(rhs)
-        self.pattern.set_var(state, newvalue)
+        return self._assign_inplace(state, 'rshift')
 
 
 # ---- binary operations ----
@@ -269,30 +266,31 @@ class Irshift(_AssignOp):
 class _BinaryOp(_Expr):
     lhs: _Expr
     rhs: _Expr
+    
+    def _eval(self, state, method):
+        lhs = self.lhs.interp(state)
+        if isinstance(lhs, intr_classes.Throw):
+            return lhs
+        rhs = self.rhs.interp(state)
+        if isinstance(rhs, intr_classes.Throw):
+            return rhs
+        return getattr(lhs, method)(rhs)
 
 class Eq(_BinaryOp):
     def interp(self, state):
-        lhs = self.lhs.interp(state)
-        rhs = self.rhs.interp(state)
-        return lhs.eq(rhs)
+        return self._eval(state, 'eq')
 
 class Ne(_BinaryOp):
     def interp(self, state):
-        lhs = self.lhs.interp(state)
-        rhs = self.rhs.interp(state)
-        return lhs.ne(rhs)
+        return self._eval(state, 'ne')
 
 class Lt(_BinaryOp):
     def interp(self, state):
-        lhs = self.lhs.interp(state)
-        rhs = self.rhs.interp(state)
-        return lhs.lt(rhs)
+        return self._eval(state, 'lt')
 
 class Le(_BinaryOp):
     def interp(self, state):
-        lhs = self.lhs.interp(state)
-        rhs = self.rhs.interp(state)
-        return lhs.le(rhs)
+        return self._eval(state, 'le')
 
 class Gt(_BinaryOp):
     def interp(self, state):
@@ -377,8 +375,6 @@ class Rshift(_BinaryOp):
         lhs = self.lhs.interp(state)
         rhs = self.rhs.interp(state)
         return lhs.rshift(rhs)
-
-
 
 
 # ---- unary operations ----

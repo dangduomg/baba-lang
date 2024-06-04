@@ -1,5 +1,3 @@
-top_body: _body
-
 body: _body
 
 _body: stmt*

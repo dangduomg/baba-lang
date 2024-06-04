@@ -4,46 +4,9 @@ from typing import Union, List, Dict, Callable
 from state import State
 
 
+# ---- result type ----
+
 class Result:
-    pass
-
-class StmtDone(Result):
-    pass
-
-class EarlyExit(Result):
-    pass
-
-@dataclass(frozen=True)
-class Break(EarlyExit):
-    pass
-
-@dataclass(frozen=True)
-class Continue(EarlyExit):
-    pass
-
-@dataclass(frozen=True)
-class Return(EarlyExit):
-    value: 'Value'
-
-@dataclass(frozen=True)
-class Throw(EarlyExit):
-    value: 'Value'
-
-
-# ---- values ----
-
-
-class Value(Result):
-    def interp(self, state):
-        #pylint: disable=unused-argument
-        return self
-    
-    def print_repr(self):
-        return self.code_repr()
-    
-    def code_repr(self):
-        return '<value>'
-    
     def eq(self, other):
         return Bool(self == other)
         
@@ -118,6 +81,44 @@ class Value(Result):
     
     def set_item(self, k, v):
         raise RuntimeError('operation not implemented')
+
+
+class StmtDone(Result):
+    pass
+
+class EarlyExit(Result):
+    pass
+
+@dataclass(frozen=True)
+class Break(EarlyExit):
+    pass
+
+@dataclass(frozen=True)
+class Continue(EarlyExit):
+    pass
+
+@dataclass(frozen=True)
+class Return(EarlyExit):
+    value: 'Value'
+
+@dataclass(frozen=True)
+class Throw(EarlyExit):
+    value: 'Value'
+    
+
+# ---- values ----
+
+
+class Value(Result):
+    def interp(self, state):
+        #pylint: disable=unused-argument
+        return self
+    
+    def print_repr(self):
+        return self.code_repr()
+    
+    def code_repr(self):
+        return '<value>'
     
     
 # ---- null and booleans ----
@@ -133,7 +134,7 @@ class Null(Value):
             cls._singleton = super().__new__(cls)
         return cls._singleton
     
-    def print_repr(self):
+    def code_repr(self):
         return 'null'
 
 @dataclass(frozen=True)
@@ -299,6 +300,9 @@ class Int(Number):
             return Int(res)
         else:
             raise RuntimeError('Only apply bitwise operations to ints')
+        
+    def div(self, other):
+        return Float(self.value).div(other)
 
     def bit_not(self):
         return Int(~self.value)
@@ -312,6 +316,16 @@ class Int(Number):
 @dataclass(frozen=True)
 class Float(Number):
     value: float
+    
+    def div(self, other):
+        if isinstance(other, Number):
+            try:
+                res = self.value / other.value
+                return Float(res)
+            except ZeroDivisionError:
+                return Throw('division by zero')
+        else:
+            return Throw('the second operand is not a number')
     
     def pos(self):
         return Float(+self.value)
@@ -331,7 +345,7 @@ class String(Value):
         return self.value
     
     def code_repr(self):
-        return f"'{self.value}'"
+        return repr(self.value)
     
     def eq(self, other):
         if isinstance(other, String):

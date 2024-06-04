@@ -36,6 +36,7 @@ import_native('about')(lambda: print(info.ABOUT))
 @import_native_pure('print')
 def _print(v):
     print(v.print_repr())
+    return intr_classes.Null()
 
 # import python functions
 

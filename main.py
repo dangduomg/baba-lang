@@ -3,6 +3,7 @@ import logging
 
 import bl_init
 import info
+import intr_classes
 from ast_parser import ast_compile, ast_compile_expr
 
 
@@ -10,10 +11,15 @@ state = bl_init.state
 
 
 def interpret(src, state):
-    return ast_compile(src).interp(state)
+    res = ast_compile(src).interp(state)
+    if isinstance(res, intr_classes.Throw):
+        raise RuntimeError(f'unhandled throw: {res}')
 
 def interpret_expr(src, state):
-    return ast_compile_expr(src).interp(state)
+    res = ast_compile_expr(src).interp(state)
+    if isinstance(res, intr_classes.Throw):
+        print(f'unhandled throw: {res}')
+    return res
 
 
 def main(args):
