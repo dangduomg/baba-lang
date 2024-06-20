@@ -129,9 +129,9 @@ class Exprs(_Expr, _AsList):
     exprs: list[_Expr]
     
     def interp(self, state):
-        for expr in exprs:
+        for expr in self.exprs:
             res = expr.interp(state)
-            if isinstance(res, Throw):
+            if isinstance(res, intr_classes.Throw):
                 break
         return res
     
