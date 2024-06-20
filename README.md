@@ -41,7 +41,7 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
     if ((subject == 'BABA') & (verb == 'HAS')) {
         verb = 'IS';
     }
-    print(subjects[i] + ' ' + verbs[i] + ' ' + objects[i]);
+    print(subject + ' ' + verb + ' ' + object);
 }
 ```
 
