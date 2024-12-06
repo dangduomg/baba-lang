@@ -1,5 +1,6 @@
 from typing import List
 from dataclasses import dataclass
+from pprint import pprint
 
 
 @dataclass
@@ -22,7 +23,7 @@ class State:
         self.scopes.pop()
 
     def resolve_var(self, name: str) -> Cell:
-        print(self.scopes)
+        pprint(self.scopes)
         for scope in reversed(self.scopes):
             if name in scope:
                 return scope[name]
