@@ -211,11 +211,19 @@ class Literal(_Expr):
     meta: Meta
     value: object
 
+
 @dataclass(frozen=True)
 class Int(_Expr):
     """Integer"""
     meta: Meta
     value: int
+
+
+# @dataclass(frozen=True)
+# class Float(_Expr):
+#     """Floating point number"""
+#     meta: Meta
+#     value: float
 
 
 @dataclass(frozen=True)
