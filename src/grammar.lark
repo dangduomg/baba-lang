@@ -1,0 +1,148 @@
+body: stmt*
+
+// Statement grammar
+
+?stmt: expr_stmt
+     | if_stmt
+     | if_else_stmt
+     | while_stmt
+     | do_while_stmt
+     | for_stmt
+     | break_stmt
+     | continue_stmt
+     | return_stmt
+     | include_stmt
+     | function_stmt
+
+include_stmt: _INCLUDE STRING ";"
+
+return_stmt: _RETURN [expr] ";"
+
+if_stmt: _IF "(" expr ")" "{" body "}"
+
+if_else_stmt: _IF "(" expr ")" "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" body "}")
+
+while_stmt: _WHILE "(" expr ")" "{" body "}"
+
+do_while_stmt: _DO "{" body "}" _WHILE "(" expr ")" ";"
+
+for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
+
+break_stmt: _BREAK ";"
+continue_stmt: _CONTINUE ";"
+
+function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
+
+?expr_stmt: exprs ";"
+
+// Expression grammar
+
+?exprs: _comma_list{expr}
+
+?expr: assign
+
+?assign: pattern "=" assign
+       | pattern INPLACE_OP assign -> inplace
+       | comp
+INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|=" | "^=" | "<<=" | ">>="
+
+?pattern: IDENT                -> var_pattern
+        | postfix "[" expr "]" -> subscript_pattern
+
+?comp: bit_or COMP_OP bit_or -> binary_op
+     | bit_or
+COMP_OP: "==" | "!=" | "<" | "<=" | ">" | ">="
+
+?bit_or: bit_or BIT_OR_OP bit_and -> binary_op
+       | bit_and
+BIT_OR_OP: "|" | "^"
+
+?bit_and: bit_and BIT_AND_OP shift -> binary_op
+        | shift
+BIT_AND_OP: "&"
+
+?shift: shift SHIFT_OP sum -> binary_op
+      | sum
+SHIFT_OP: "<<" | ">>"
+
+?sum: sum SUM_OP prod -> binary_op
+    | prod
+SUM_OP: "+" | "-"
+
+?prod: prod PROD_OP prefix -> binary_op
+     | prefix
+PROD_OP: "*" | "/" | "%/%" | "%"
+
+?prefix: PREFIX_OP prefix
+       | postfix
+PREFIX_OP: "+" | "-" | "~" | "!"
+
+?postfix: postfix POW_OP prefix     -> binary_op
+        | postfix "(" spec_args ")" -> call
+        | postfix "[" expr "]"      -> subscript
+        | atom
+spec_args: _comma_list{expr}?
+POW_OP: "**"
+
+?atom: literal
+     | IDENT -> var
+     | "(" expr ")"
+
+literal: STRING
+       | INT -> int
+       | FLOAT
+       | TRUE
+       | FALSE
+       | NULL
+       | _FUNCTION "(" form_args ")" "{" body "}" -> function_literal
+       | "[" _comma_list{expr}? "]" -> list
+       | "{" _comma_list{pair}? "}" -> dict
+
+// Misc
+
+form_args: _comma_list{IDENT}?
+
+pair: expr ":" expr
+
+// Templates
+
+_comma_list{e}: e ("," e)*
+
+// Tokens
+
+STRING: STRING_DQUOTE
+      | STRING_SQUOTE
+STRING_DQUOTE: "\"" _STRING_ESC_INNER "\""
+STRING_SQUOTE: "'" _STRING_ESC_INNER "'"
+_STRING_INNER: /.*?/
+_STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
+
+IDENT: /(?!/ RESERVED  /)/ CNAME
+
+RESERVED: TRUE | FALSE | NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE
+TRUE: "true"
+FALSE: "false"
+NULL: "null"
+_FUNCTION: "function"
+_RETURN: "return"
+_IF: "if"
+_ELSE: "else"
+_WHILE: "while"
+_DO: "do"
+_FOR: "for"
+_BREAK: "break"
+_CONTINUE: "continue"
+_INCLUDE: "\\include"
+
+%import common.CNAME
+%import common.INT
+%import common.FLOAT
+%import common.SH_COMMENT
+%import common.C_COMMENT
+%import common.CPP_COMMENT
+%import common.WS
+
+%ignore SH_COMMENT
+%ignore C_COMMENT
+%ignore CPP_COMMENT
+%ignore WS
