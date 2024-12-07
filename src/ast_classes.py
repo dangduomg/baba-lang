@@ -209,10 +209,10 @@ class Var(_Expr):
 
 
 @dataclass(frozen=True)
-class Literal(_Expr):
-    """Literal value"""
+class String(_Expr):
+    """String"""
     meta: Meta
-    value: object
+    value: str
 
 
 @dataclass(frozen=True)
