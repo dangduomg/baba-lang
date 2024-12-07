@@ -43,7 +43,7 @@ class Extras(Transformer):
         if updater is not None:
             loop_body_statements.append(updater)
         if condition is None:
-            condition = ast_classes.Literal(meta, True)
+            condition = ast_classes.TrueLiteral(meta)
         loop_body = ast_classes.Body(meta, loop_body_statements)
         loop = ast_classes.WhileStmt(meta, condition, loop_body)
         statements.append(loop)
@@ -57,15 +57,6 @@ class Extras(Transformer):
 
     def STRING(self, lexeme: str) -> str:
         return ast.literal_eval(lexeme)
-
-    def TRUE(self, lexeme: str) -> bool:
-        return True
-
-    def FALSE(self, lexeme: str) -> bool:
-        return False
-
-    def NULL(self, lexeme: str) -> None:
-        return None
 
 
 _to_ast = ast_utils.create_transformer(ast_classes, Extras())
