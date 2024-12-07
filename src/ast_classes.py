@@ -116,12 +116,15 @@ class Exprs(_Expr, AsList):
 @dataclass(frozen=True)
 class Assign(_Expr):
     """Assignment"""
+    meta: Meta
     pattern: '_Pattern'
     value: _Expr
 
 
+@dataclass(frozen=True)
 class Inplace(_Expr):
     """Inplace assignment"""
+    meta: Meta
     pattern: '_Pattern'
     op: Token
     value: _Expr
