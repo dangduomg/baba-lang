@@ -222,11 +222,29 @@ class Int(_Expr):
     value: int
 
 
-# @dataclass(frozen=True)
-# class Float(_Expr):
-#     """Floating point number"""
-#     meta: Meta
-#     value: float
+@dataclass(frozen=True)
+class Float(_Expr):
+    """Floating point number"""
+    meta: Meta
+    value: float
+
+
+@dataclass(frozen=True)
+class TrueLiteral(_Expr):
+    """True literal"""
+    meta: Meta
+
+
+@dataclass(frozen=True)
+class FalseLiteral(_Expr):
+    """False literal"""
+    meta: Meta
+
+
+@dataclass(frozen=True)
+class NullLiteral(_Expr):
+    """Null literal"""
+    meta: Meta
 
 
 @dataclass(frozen=True)
