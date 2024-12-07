@@ -17,9 +17,20 @@ class ASTInterpreter(ASTVisitor):
     def visit(self, node: ast_classes._AstNode) -> Result:
         #pylint: disable=protected-access
         match node:
+            # case ast_classes._Stmt():
+            #     return self.visit_stmt(node)
             case ast_classes._Expr():
                 return self.visit_expr(node)
         return error_not_implemented
+
+    # def visit_stmt(self, node: ast_classes._Stmt) -> Result:
+    #     #pylint: disable=protected-access
+    #     match node:
+    #         case ast_classes.Body(statements=statements):
+    #             for stmt in statements:
+    #                 self.visit(stmt)
+    #             return Success()
+    #     return error_not_implemented
 
     def visit_expr(self, node: ast_classes._Expr) -> ExpressionResult:
         """Visit an expression node"""
