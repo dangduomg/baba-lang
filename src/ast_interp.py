@@ -1,39 +1,10 @@
 """AST interpreter"""
 
 
-from dataclasses import dataclass
-
-from lark import Token
-
 import ast_classes
 from ast_base import ASTVisitor
 
-
-class Result:
-    def binary_op(self, op: Token, other: 'Result') -> 'Result':
-        match op:
-            case '+':
-                return self.add(other)
-            case _:
-                return Error_('Operation not implemented')
-
-    def add(self, other: 'Result') -> 'Result':
-        return Error_('Operation not implemented')
-
-
-@dataclass
-class Error_(Result):
-    value: object
-
-
-@dataclass(frozen=True)
-class Value(Result):
-    pass
-
-
-@dataclass(frozen=True)
-class Int(Value):
-    value: int
+from interp_classes import Result, ExpressionResult, Int, error_not_implemented
 
 
 class ASTInterpreter(ASTVisitor):
