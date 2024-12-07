@@ -88,9 +88,9 @@ POW_OP: "**"
      | IDENT -> var
      | "(" expr ")"
 
-literal: STRING
+literal: STRING -> string
        | INT -> int
-       | FLOAT
+       | FLOAT -> float
        | TRUE
        | FALSE
        | NULL
