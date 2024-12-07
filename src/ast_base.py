@@ -24,7 +24,7 @@ class ASTVisitor(ABC):
 
     @abstractmethod
     def visit(self, node: _AstNode) -> Any:
-        """Visits a node
+        """Visit a node
 
 Uses pattern matching to determine type of visited node and dispatch based on that"""
         ...
