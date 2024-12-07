@@ -77,9 +77,10 @@ PROD_OP: "*" | "/" | "%/%" | "%"
        | postfix
 PREFIX_OP: "+" | "-" | "~" | "!"
 
-?postfix: postfix POW_OP prefix     -> binary_op
+?postfix: postfix POW_OP prefix -> binary_op
         | postfix "(" spec_args ")" -> call
-        | postfix "[" expr "]"      -> subscript
+        | postfix "[" expr "]" -> subscript
+        | postfix "." CNAME -> dot
         | atom
 spec_args: _comma_list{expr}?
 POW_OP: "**"
@@ -91,9 +92,9 @@ POW_OP: "**"
 literal: STRING -> string
        | INT -> int
        | FLOAT -> float
-       | TRUE
-       | FALSE
-       | NULL
+       | _TRUE -> true_literal
+       | _FALSE -> false_literal
+       | _NULL -> null_literal
        | _FUNCTION "(" form_args ")" "{" body "}" -> function_literal
        | "[" _comma_list{expr}? "]" -> list
        | "{" _comma_list{pair}? "}" -> dict
@@ -119,10 +120,10 @@ _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
 IDENT: /(?!/ RESERVED  /)/ CNAME
 
-RESERVED: TRUE | FALSE | NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE
-TRUE: "true"
-FALSE: "false"
-NULL: "null"
+RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE
+_TRUE: "true"
+_FALSE: "false"
+_NULL: "null"
 _FUNCTION: "function"
 _RETURN: "return"
 _IF: "if"

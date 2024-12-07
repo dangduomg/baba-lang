@@ -198,6 +198,17 @@ class Subscript(_Expr):
     index: _Expr
 
 
+# Dot access
+
+
+@dataclass(frozen=True)
+class Dot(_Expr):
+    """Dot access operation"""
+    meta: Meta
+    accessee: _Expr
+    attr_name: Token
+
+
 # Atoms
 
 
