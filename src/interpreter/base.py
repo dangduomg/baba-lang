@@ -245,3 +245,4 @@ class BLError(Exit, ExpressionResult):
 # Errors
 error_not_implemented = BLError('Operation not supported')
 error_div_by_zero = BLError('Division by zero')
+error_out_of_range = BLError('Index out of range')
