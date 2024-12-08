@@ -49,27 +49,29 @@ class ExpressionResult(Result):
             case '%':
                 return self.mod(other, meta)
             case '%/%':
-                return self.floordiv(other, meta)
+                return self.floor_div(other, meta)
             case '&':
-                return self.bitand(other, meta)
+                return self.bitwise_and(other, meta)
             case '|':
-                return self.bitor(other, meta)
+                return self.bitwise_or(other, meta)
             case '^':
-                return self.bitxor(other, meta)
+                return self.bitwise_xor(other, meta)
             case '<<':
-                return self.lshift(other, meta)
+                return self.left_shift(other, meta)
+            case '>>':
+                return self.right_shift(other, meta)
             case '==':
-                return self.is_eq(other, meta)
+                return self.is_equal(other, meta)
             case '!=':
-                return self.is_ne(other, meta)
+                return self.is_not_equal(other, meta)
             case '<':
-                return self.is_lt(other, meta)
+                return self.is_less(other, meta)
             case '<=':
-                return self.is_le(other, meta)
+                return self.is_less_or_equal(other, meta)
             case '>':
-                return self.is_gt(other, meta)
+                return self.is_greater(other, meta)
             case '>=':
-                return self.is_ge(other, meta)
+                return self.is_greater_or_equal(other, meta)
         return error_not_implemented.set_meta(meta)
 
     def add(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
@@ -92,51 +94,51 @@ class ExpressionResult(Result):
         """Modulo"""
         return self.unimplemented_binary_op(other, meta)
 
-    def floordiv(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def floor_div(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Floor division"""
         return self.unimplemented_binary_op(other, meta)
 
-    def bitand(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def bitwise_and(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Bitwise and"""
         return self.unimplemented_binary_op(other, meta)
 
-    def bitor(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def bitwise_or(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Bitwise or"""
         return self.unimplemented_binary_op(other, meta)
 
-    def bitxor(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def bitwise_xor(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Bitwise xor"""
         return self.unimplemented_binary_op(other, meta)
 
-    def lshift(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def left_shift(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Bitwise left shift"""
         return self.unimplemented_binary_op(other, meta)
 
-    def rshift(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def right_shift(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Bitwise right shift"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_eq(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Equality test"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_ne(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_not_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Inequality test"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_lt(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_less(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Less than"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_le(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_less_or_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Less than or equal to"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_gt(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_greater(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Greater than"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_ge(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_greater_or_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Greater than or equal to"""
         return self.unimplemented_binary_op(other, meta)
 
@@ -151,12 +153,12 @@ class ExpressionResult(Result):
         """Unary operation"""
         match op:
             case '+':
-                return self.pos(meta)
+                return self.plus(meta)
             case '-':
                 return self.neg(meta)
         return error_not_implemented.set_meta(meta)
 
-    def pos(self, meta: Meta) -> 'ExpressionResult':
+    def plus(self, meta: Meta) -> 'ExpressionResult':
         """Unary plus"""
         return error_not_implemented.set_meta(meta)
 
@@ -204,28 +206,28 @@ class BLError(Exit, ExpressionResult):
     def mod(self, other, meta) -> Self:
         return self
 
-    def floordiv(self, other, meta) -> Self:
+    def floor_div(self, other, meta) -> Self:
         return self
 
-    def is_eq(self, other, meta) -> Self:
+    def is_equal(self, other, meta) -> Self:
         return self
 
-    def is_ne(self, other, meta) -> Self:
+    def is_not_equal(self, other, meta) -> Self:
         return self
 
-    def is_lt(self, other, meta) -> Self:
+    def is_less(self, other, meta) -> Self:
         return self
 
-    def is_le(self, other, meta) -> Self:
+    def is_less_or_equal(self, other, meta) -> Self:
         return self
 
-    def is_gt(self, other, meta) -> Self:
+    def is_greater(self, other, meta) -> Self:
         return self
 
-    def is_ge(self, other, meta) -> Self:
+    def is_greater_or_equal(self, other, meta) -> Self:
         return self
 
-    def pos(self, meta) -> Self:
+    def plus(self, meta) -> Self:
         return self
 
     def neg(self, meta) -> Self:

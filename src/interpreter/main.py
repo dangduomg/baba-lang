@@ -60,12 +60,12 @@ class ASTInterpreter(ASTVisitor):
                     if not isinstance(e_visited, values.Value):
                         return e_visited
                     elems.append(e_visited)
-                return values.List(elems)
+                return values.BLList(elems)
             case ast_classes.Dict(pairs=pairs):
                 content = {}
                 for pair in pairs:
                     k_visited = self.visit(pair.key)
                     v_visited = self.visit(pair.value)
                     content[k_visited] = v_visited
-                return values.Dict(content)
+                return values.BLDict(content)
         return error_not_implemented

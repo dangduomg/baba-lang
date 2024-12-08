@@ -13,10 +13,10 @@ from .base import ExpressionResult, error_div_by_zero
 class Value(ExpressionResult):
     """Value base class"""
 
-    def is_eq(self, other, meta) -> 'Bool':
+    def is_equal(self, other, meta) -> 'Bool':
         return BOOLS[self is other]
 
-    def is_ne(self, other, meta) -> 'Bool':
+    def is_not_equal(self, other, meta) -> 'Bool':
         return BOOLS[self is not other]
 
     def dump(self, meta) -> 'String':
@@ -41,41 +41,41 @@ class String(Value):
                 return String(self.value * times)
         return super().add(other, meta)
 
-    def is_eq(self, other, meta):
+    def is_equal(self, other, meta):
         match other:
             case String(other_val):
                 return BOOLS[self.value == other_val]
-        return super().is_eq(other, meta)
+        return super().is_equal(other, meta)
 
-    def is_ne(self, other, meta):
+    def is_not_equal(self, other, meta):
         match other:
             case String(other_val):
                 return BOOLS[self.value != other_val]
-        return super().is_ne(other, meta)
+        return super().is_not_equal(other, meta)
 
-    def is_lt(self, other, meta):
+    def is_less(self, other, meta):
         match other:
             case String(other_val):
                 return BOOLS[self.value < other_val]
-        return super().is_lt(other, meta)
+        return super().is_less(other, meta)
 
-    def is_le(self, other, meta):
+    def is_less_or_equal(self, other, meta):
         match other:
             case String(other_val):
                 return BOOLS[self.value <= other_val]
-        return super().is_le(other, meta)
+        return super().is_less_or_equal(other, meta)
 
-    def is_gt(self, other, meta):
+    def is_greater(self, other, meta):
         match other:
             case String(other_val):
                 return BOOLS[self.value > other_val]
-        return super().is_gt(other, meta)
+        return super().is_greater(other, meta)
 
-    def is_ge(self, other, meta):
+    def is_greater_or_equal(self, other, meta):
         match other:
             case String(other_val):
                 return BOOLS[self.value >= other_val]
-        return super().is_ge(other, meta)
+        return super().is_greater_or_equal(other, meta)
 
     def dump(self, meta):
         return String(f"'{self.value}'")
@@ -134,7 +134,7 @@ class Int(Value):
             return error_div_by_zero.set_meta(meta)
         return super().mod(other, meta)
 
-    def floordiv(self, other, meta):
+    def floor_div(self, other, meta):
         try:
             match other:
                 case Int(other_val):
@@ -143,75 +143,75 @@ class Int(Value):
                     return Float(self.value // other_val)
         except ZeroDivisionError:
             return error_div_by_zero.set_meta(meta)
-        return super().floordiv(other, meta)
+        return super().floor_div(other, meta)
 
-    def bitand(self, other, meta):
+    def bitwise_and(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value & other_val)
-        return super().floordiv(other, meta)
+        return super().floor_div(other, meta)
 
-    def bitor(self, other, meta):
+    def bitwise_or(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value | other_val)
-        return super().floordiv(other, meta)
+        return super().floor_div(other, meta)
 
-    def bitxor(self, other, meta):
+    def bitwise_xor(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value ^ other_val)
-        return super().floordiv(other, meta)
+        return super().floor_div(other, meta)
 
-    def lshift(self, other, meta):
+    def left_shift(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value << other_val)
-        return super().floordiv(other, meta)
+        return super().floor_div(other, meta)
 
-    def rshift(self, other, meta):
+    def right_shift(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value >> other_val)
-        return super().floordiv(other, meta)
+        return super().floor_div(other, meta)
 
-    def is_eq(self, other, meta):
+    def is_equal(self, other, meta):
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value == other_val]
-        return super().is_eq(other, meta)
+        return super().is_equal(other, meta)
 
-    def is_ne(self, other, meta):
+    def is_not_equal(self, other, meta):
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value != other_val]
-        return super().is_ne(other, meta)
+        return super().is_not_equal(other, meta)
 
-    def is_lt(self, other, meta):
+    def is_less(self, other, meta):
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value < other_val]
-        return super().is_lt(other, meta)
+        return super().is_less(other, meta)
 
-    def is_le(self, other, meta):
+    def is_less_or_equal(self, other, meta):
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value <= other_val]
-        return super().is_le(other, meta)
+        return super().is_less_or_equal(other, meta)
 
-    def is_gt(self, other, meta):
+    def is_greater(self, other, meta):
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value > other_val]
-        return super().is_gt(other, meta)
+        return super().is_greater(other, meta)
 
-    def is_ge(self, other, meta):
+    def is_greater_or_equal(self, other, meta):
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value >= other_val]
-        return super().is_ge(other, meta)
+        return super().is_greater_or_equal(other, meta)
 
-    def pos(self, meta):
+    def plus(self, meta):
         return Int(+self.value)
 
     def neg(self, meta):
@@ -263,52 +263,52 @@ class Float(Value):
                     return error_div_by_zero.set_meta(meta)
         return super().mod(other, meta)
 
-    def floordiv(self, other, meta):
+    def floor_div(self, other, meta):
         match other:
             case Float(other_val) | Int(other_val):
                 try:
                     return Float(self.value // other_val)
                 except ZeroDivisionError:
                     return error_div_by_zero.set_meta(meta)
-        return super().floordiv(other, meta)
+        return super().floor_div(other, meta)
 
-    def is_eq(self, other, meta):
+    def is_equal(self, other, meta):
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value == other_val]
-        return super().is_eq(other, meta)
+        return super().is_equal(other, meta)
 
-    def is_ne(self, other, meta):
+    def is_not_equal(self, other, meta):
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value != other_val]
-        return super().is_ne(other, meta)
+        return super().is_not_equal(other, meta)
 
-    def is_lt(self, other, meta):
+    def is_less(self, other, meta):
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value < other_val]
-        return super().is_lt(other, meta)
+        return super().is_less(other, meta)
 
-    def is_le(self, other, meta):
+    def is_less_or_equal(self, other, meta):
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value <= other_val]
-        return super().is_le(other, meta)
+        return super().is_less_or_equal(other, meta)
 
-    def is_gt(self, other, meta):
+    def is_greater(self, other, meta):
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value > other_val]
-        return super().is_gt(other, meta)
+        return super().is_greater(other, meta)
 
-    def is_ge(self, other, meta):
+    def is_greater_or_equal(self, other, meta):
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value >= other_val]
-        return super().is_ge(other, meta)
+        return super().is_greater_or_equal(other, meta)
 
-    def pos(self, meta):
+    def plus(self, meta):
         return Float(+self.value)
 
     def neg(self, meta):
@@ -345,21 +345,21 @@ NULL = Null()
 
 
 @dataclass(frozen=True)
-class List(Value):
+class BLList(Value):
     """List type"""
 
     elems: list[Value]
 
     def add(self, other, meta):
         match other:
-            case List(other_elems):
-                return List(self.elems + other_elems)
+            case BLList(other_elems):
+                return BLList(self.elems + other_elems)
         return super().add(other, meta)
 
     def mul(self, other, meta):
         match other:
             case Int(times):
-                return List(self.elems * times)
+                return BLList(self.elems * times)
         return super().add(other, meta)
 
     def get_item(self, index, meta):
@@ -373,7 +373,7 @@ class List(Value):
 
 
 @dataclass(frozen=True)
-class Dict(Value):
+class BLDict(Value):
     """Dict type"""
 
     content: dict[Value, Value]
