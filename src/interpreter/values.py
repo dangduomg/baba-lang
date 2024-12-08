@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 
-from .base import ExpressionResult, error_div_by_zero
+from .base import ExpressionResult, error_div_by_zero, error_out_of_range
 
 
 #pylint: disable=too-few-public-methods
@@ -365,7 +365,10 @@ class BLList(Value):
     def get_item(self, index, meta):
         match index:
             case Int(index_val):
-                return self.elems[index_val]
+                try:
+                    return self.elems[index_val]
+                except IndexError:
+                    return error_out_of_range.set_meta(meta)
         return super().get_item(index, meta)
 
     def dump(self, meta):
@@ -381,7 +384,10 @@ class BLDict(Value):
     def get_item(self, index, meta):
         match index:
             case Value():
-                return self.content[index]
+                try:
+                    return self.content[index]
+                except KeyError:
+                    return error_out_of_range.set_meta(meta)
         return super().get_item(index, meta)
 
     def dump(self, meta):
