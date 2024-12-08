@@ -1,7 +1,5 @@
 from pytest import fixture
 
-import main
-import intr_classes
 
 @fixture
 def example_state():
