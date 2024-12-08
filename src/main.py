@@ -12,6 +12,10 @@ from argparse import ArgumentParser
 import info
 
 
+argparser = ArgumentParser()
+argparser.add_argument('filename')
+
+
 def interpret(src: str, state):
     print('TODO')
 
@@ -21,23 +25,7 @@ def interpret_expr(src: str, state):
 
 
 def main(args: list[str]) -> None:
-    if len(args) > 2:
-        print('Usage: main.py [file]')
-    elif len(args) == 2:
-        file = args[1]
-        with open(file, encoding='utf-8') as f:
-            string = f.read()
-        interpret(string, None)
-    else:
-        logging.basicConfig(format='%(levelname)s: %(message)s')
-        print(info.ABOUT)
-        print()
-        while True:
-            inpt = input('> ')
-            try:
-                print('TODO')
-            except Exception as e:
-                logging.error(e)
+    print('TODO')
 
 if __name__ == '__main__':
     main(sys.argv)
