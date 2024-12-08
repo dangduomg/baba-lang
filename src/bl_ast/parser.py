@@ -7,7 +7,7 @@ from typing import Optional
 from lark import Lark, Transformer, ast_utils, v_args
 from lark.tree import Meta
 
-import ast_classes
+from bl_ast import nodes
 
 
 common_opts = {'grammar_filename': 'grammar.lark', 'parser': 'lalr', 'propagate_positions': True}
@@ -24,30 +24,30 @@ class Extras(Transformer):
     #pylint: disable=too-many-arguments
 
     @v_args(inline=True, meta=True)
-    def do_while_stmt(self, meta: Meta, body: ast_classes.Body, cond: ast_classes._Expr
-                      ) -> ast_classes.WhileStmt:
-        return ast_classes.WhileStmt(meta, cond, body, eval_condition_after=True)
+    def do_while_stmt(self, meta: Meta, body: nodes.Body, cond: nodes._Expr
+                      ) -> nodes.WhileStmt:
+        return nodes.WhileStmt(meta, cond, body, eval_condition_after=True)
 
     @v_args(inline=True, meta=True)
     def for_stmt(self,
         meta: Meta,
-        initializer: Optional[ast_classes._Expr],
-        condition: Optional[ast_classes._Expr],
-        updater: Optional[ast_classes._Expr],
-        body: ast_classes.Body,
-    ) -> ast_classes.Body:
+        initializer: Optional[nodes._Expr],
+        condition: Optional[nodes._Expr],
+        updater: Optional[nodes._Expr],
+        body: nodes.Body,
+    ) -> nodes.Body:
         statements = []
-        loop_body_statements: list[ast_classes._Stmt] = [body]
+        loop_body_statements: list[nodes._Stmt] = [body]
         if initializer is not None:
             statements.append(initializer)
         if updater is not None:
             loop_body_statements.append(updater)
         if condition is None:
-            condition = ast_classes.TrueLiteral(meta)
-        loop_body = ast_classes.Body(meta, loop_body_statements)
-        loop = ast_classes.WhileStmt(meta, condition, loop_body)
+            condition = nodes.TrueLiteral(meta)
+        loop_body = nodes.Body(meta, loop_body_statements)
+        loop = nodes.WhileStmt(meta, condition, loop_body)
         statements.append(loop)
-        return ast_classes.Body(meta, statements)
+        return nodes.Body(meta, statements)
 
     def INT(self, lexeme: str) -> int:
         return int(lexeme)
@@ -59,7 +59,7 @@ class Extras(Transformer):
         return ast.literal_eval(lexeme)
 
 
-_to_ast = ast_utils.create_transformer(ast_classes, Extras())
+_to_ast = ast_utils.create_transformer(nodes, Extras())
 
 
 def parse_to_ast(src: str, parser: Lark = body_parser) -> ast_utils.Ast:

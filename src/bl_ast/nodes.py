@@ -1,4 +1,4 @@
-"""AST classes"""
+"""AST node classes"""
 
 
 from dataclasses import dataclass
@@ -8,7 +8,7 @@ from lark import Token
 from lark.ast_utils import AsList
 from lark.tree import Meta
 
-from ast_base import _AstNode
+from .base import _AstNode
 
 
 #pylint: disable=too-few-public-methods
