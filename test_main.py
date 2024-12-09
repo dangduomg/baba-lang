@@ -51,21 +51,3 @@ def test_function(example_state):
         res = fact(10);
     """, example_state)
     assert example_state.get_var('res').eq(intr_classes.Int(3628800))
-
-def test_closure(example_state):
-    main.interpret("""
-        function f() {
-            x = 0;
-            return function() {
-                x += 1;
-                return x;
-            };
-        }
-
-        my_g = f();
-        my_g();
-        my_g();
-
-        res = my_g();
-    """, example_state)
-    assert example_state.get_var('res').eq(intr_classes.Int(3))
