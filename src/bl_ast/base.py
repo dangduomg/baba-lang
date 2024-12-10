@@ -14,10 +14,6 @@ from lark.ast_utils import Ast, WithMeta
 class _AstNode(Ast, WithMeta):
     """AST node base class"""
 
-    def accept(self, visitor: 'ASTVisitor') -> Any:
-        """Accept a visitor"""
-        return visitor.visit(self)
-
 
 class ASTVisitor(ABC):
     """AST visitor interface"""
