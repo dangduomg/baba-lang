@@ -3,7 +3,8 @@
 
 from dataclasses import dataclass
 
-from .base import ExpressionResult, error_div_by_zero, error_out_of_range
+from .base import ExpressionResult, error_div_by_zero, error_out_of_range, \
+                  error_key_nonexistent
 
 
 #pylint: disable=too-few-public-methods
@@ -21,6 +22,9 @@ class Value(ExpressionResult):
 
     def dump(self, meta) -> 'String':
         return String('<value>')
+
+    def to_string(self, meta) -> 'String':
+        return self.dump(meta)
 
 
 @dataclass(frozen=True)
@@ -368,7 +372,7 @@ class BLList(Value):
                 try:
                     return self.elems[index_val]
                 except IndexError:
-                    return error_out_of_range.set_meta(meta)
+                    return error_out_of_range.fill_args(index_val).set_meta(meta)
         return super().get_item(index, meta)
 
     def dump(self, meta):
@@ -387,7 +391,7 @@ class BLDict(Value):
                 try:
                     return self.content[index]
                 except KeyError:
-                    return error_out_of_range.set_meta(meta)
+                    return error_key_nonexistent.fill_args(index.dump(meta).value).set_meta(meta)
         return super().get_item(index, meta)
 
     def dump(self, meta):

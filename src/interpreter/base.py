@@ -194,6 +194,12 @@ class BLError(Exit, ExpressionResult):
         self.meta = meta
         return self
 
+    def fill_args(self, *args, **kwargs) -> Self:
+        """Fill in the arguments to the error value, if the error value is a string"""
+        if isinstance(self.value, str):
+            self.value = self.value.format(*args, **kwargs)
+        return self
+
     def add(self, other, meta) -> Self:
         return self
 
@@ -245,4 +251,5 @@ class BLError(Exit, ExpressionResult):
 # Errors
 error_not_implemented = BLError('Operation not supported')
 error_div_by_zero = BLError('Division by zero')
-error_out_of_range = BLError('Index out of range')
+error_out_of_range = BLError('Index out of range: {}')
+error_key_nonexistent = BLError('Non-existent key: {}')
