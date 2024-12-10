@@ -80,7 +80,6 @@ PREFIX_OP: "+" | "-" | "~" | "!"
 ?postfix: postfix POW_OP prefix -> binary_op
         | postfix "(" spec_args ")" -> call
         | postfix "[" expr "]" -> subscript
-        | postfix "." CNAME -> dot
         | atom
 spec_args: _comma_list{expr}?
 POW_OP: "**"
