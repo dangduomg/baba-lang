@@ -170,6 +170,16 @@ class ExpressionResult(Result):
         """Get an item in a container"""
         return self.unimplemented_binary_op(index, meta)
 
+    def set_item(self, index: 'ExpressionResult', value: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+        """Set an item in a container"""
+        match index:
+            case BLError():
+                return index
+        match value:
+            case BLError():
+                return value
+        return error_not_implemented.set_meta(meta)
+
     def dump(self, meta: Meta) -> 'ExpressionResult':
         """Conversion to representation for debugging"""
         return error_not_implemented.set_meta(meta)
@@ -242,6 +252,9 @@ class BLError(Exit, ExpressionResult):
     def get_item(self, index, meta) -> Self:
         return self
 
+    def set_item(self, index, value, meta) -> Self:
+        return self
+
     def dump(self, meta) -> Self:
         return self
 
@@ -253,3 +266,4 @@ error_not_implemented = BLError('Operation not supported')
 error_div_by_zero = BLError('Division by zero')
 error_out_of_range = BLError('Index out of range: {}')
 error_key_nonexistent = BLError('Non-existent key: {}')
+error_var_nonexistent = BLError('Variable {} is undefined')
