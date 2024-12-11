@@ -127,7 +127,7 @@ class Inplace(_Expr):
     meta: Meta
     pattern: '_Pattern'
     op: Token
-    value: _Expr
+    by: _Expr
 
 
 class _Pattern(_AstNode):
