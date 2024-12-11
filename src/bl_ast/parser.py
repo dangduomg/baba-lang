@@ -2,15 +2,17 @@
 
 
 import ast
+from pathlib import Path
 from typing import Optional
 
 from lark import Lark, Transformer, ast_utils, v_args
 from lark.tree import Meta
 
-from bl_ast import nodes
+from . import nodes
 
 
-common_opts = {'grammar_filename': 'grammar.lark', 'parser': 'lalr', 'propagate_positions': True}
+grammar_path = Path(__file__).parent.parent / 'grammar.lark'
+common_opts = {'grammar_filename': grammar_path, 'parser': 'lalr', 'propagate_positions': True}
 body_parser = Lark.open(start='body', **common_opts)
 expr_parser = Lark.open(start='expr', **common_opts)
 
@@ -62,6 +64,6 @@ class Extras(Transformer):
 _to_ast = ast_utils.create_transformer(nodes, Extras())
 
 
-def parse_to_ast(src: str, parser: Lark = body_parser) -> ast_utils.Ast:
+def parse_to_ast(src: str, parser: Lark = body_parser) -> nodes._AstNode:
     """Parse baba-lang source code to AST"""
     return _to_ast.transform(parser.parse(src))
