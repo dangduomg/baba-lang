@@ -27,20 +27,21 @@ class ASTInterpreter(ASTVisitor):
     def visit(self, node: nodes._AstNode) -> Result:
         #pylint: disable=protected-access
         match node:
-            # case ast_classes._Stmt():
-            #     return self.visit_stmt(node)
             case nodes._Expr():
                 return self.visit_expr(node)
+            case nodes._Stmt():
+                return self.visit_stmt(node)
         return error_not_implemented
 
-    # def visit_stmt(self, node: ast_classes._Stmt) -> Result:
-    #     #pylint: disable=protected-access
-    #     match node:
-    #         case ast_classes.Body(statements=statements):
-    #             for stmt in statements:
-    #                 self.visit(stmt)
-    #             return Success()
-    #     return error_not_implemented
+    def visit_stmt(self, node: nodes._Stmt) -> Result:
+        """Visit a statement node"""
+        #pylint: disable=protected-access
+        match node:
+            case nodes.Body(statements=statements):
+                for stmt in statements:
+                    self.visit(stmt)
+                return Success()
+        return error_not_implemented
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
@@ -54,6 +55,14 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_expr(left).binary_op(op, self.visit_expr(right), meta)
             case nodes.Subscript(meta=meta, subscriptee=subscriptee, index=index):
                 return self.visit_expr(subscriptee).get_item(self.visit_expr(index), meta)
+            case nodes.Call(meta=meta, callee=callee, args=args_in_ast):
+                args = []
+                for arg in args_in_ast.args:
+                    arg_visited = self.visit_expr(arg)
+                    if not isinstance(arg_visited, Value):
+                        return arg_visited
+                    args.append(arg_visited)
+                return self.visit_expr(callee).call(args, meta)
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, meta)
             case nodes.Var(meta=meta, name=name):
