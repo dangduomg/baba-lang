@@ -4,6 +4,7 @@
 from pytest import fixture
 
 from src.main import interpret, interpret_expr
+from src.interpreter import base, values, ASTInterpreter
 from src.interpreter.base import ExpressionResult
 
 @fixture
@@ -20,6 +21,14 @@ def test_expression(example_interp: ASTInterpreter):
     res = interpret_expr("1 + 1", example_interp)
     assert isinstance(res, ExpressionResult)
     assert res.is_equal(values.Int(2), meta=None)
+
+
+def test_error(example_interp: ASTInterpreter):
+    """Test for errors"""
+    res = interpret_expr("1 / 0", example_interp)
+    assert isinstance(res, base.BLError)
+    assert res.value == base.error_div_by_zero.value
+
 
 def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
