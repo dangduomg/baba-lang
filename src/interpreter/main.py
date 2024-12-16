@@ -18,6 +18,8 @@ from .env import Env
 class ASTInterpreter(ASTVisitor):
     """AST interpreter"""
 
+    #pylint: disable=too-many-return-statements
+
     globals: Env
 
     def __init__(self):
@@ -89,7 +91,6 @@ class ASTInterpreter(ASTVisitor):
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
         #pylint: disable=too-many-locals
-        #pylint: disable=too-many-return-statements
         match node:
             case nodes.Exprs(expressions=expressions):
                 final_res = values.NULL
@@ -168,7 +169,6 @@ class ASTInterpreter(ASTVisitor):
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
         """Visit an in-place assignment node"""
-        #pylint: disable=too-many-return-statements
         rhs_result = self.visit_expr(node.right)
         if isinstance(rhs_result, BLError):
             return rhs_result
@@ -177,7 +177,7 @@ class ASTInterpreter(ASTVisitor):
             match node.pattern:
                 case nodes.VarPattern(name=name):
                     old_value_get_result = self.globals.get_var(name, node.meta)
-                    new_result = old_value_get_result.binary_op(node.op, by, node.meta)
+                    new_result = old_value_get_result.binary_op(node.op[:-1], by, node.meta)
                     match old_value_get_result, new_result:
                         case Value(), BLError():
                             return new_result
@@ -191,7 +191,7 @@ class ASTInterpreter(ASTVisitor):
                     subscriptee = self.visit_expr(subscriptee)
                     index = self.visit_expr(index)
                     old_value_get_result = subscriptee.get_item(index, node.meta)
-                    new_result = old_value_get_result.binary_op(node.op, by, node.meta)
+                    new_result = old_value_get_result.binary_op(node.op[:-1], by, node.meta)
                     match old_value_get_result, new_result:
                         case Value(), BLError():
                             return new_result
