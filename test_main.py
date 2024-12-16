@@ -3,8 +3,7 @@
 
 from pytest import fixture
 
-from src import main
-from src.interpreter import values, ASTInterpreter
+from src.main import interpret, interpret_expr
 from src.interpreter.base import ExpressionResult
 
 @fixture
@@ -18,14 +17,15 @@ def example_interp() -> ASTInterpreter:
 
 def test_expression(example_interp: ASTInterpreter):
     """Test for expression parsing"""
-    res = main.interpret_expr("1 + 1", example_interp)
+    res = interpret_expr("1 + 1", example_interp)
     assert isinstance(res, ExpressionResult)
     assert res.is_equal(values.Int(2), meta=None)
 
 def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
-    main.interpret("a = 3;", example_interp)
+    interpret("a = 3;", example_interp)
     assert example_interp.globals.get_var('a', meta=None).is_equal(values.Int(3), meta=None)
+
 
 # def test_if(example_interp: ASTInterpreter):
 #     main.interpret("""
@@ -43,6 +43,7 @@ def test_variable(example_interp: ASTInterpreter):
 #     assert example_interp.globals.get_var('res', meta=None) \
 #                                  .is_equal(values.String('adult'), meta=None);
 
+
 # def test_loops(example_interp: ASTInterpreter):
 #     main.interpret("""
 #         res = [];
@@ -52,6 +53,7 @@ def test_variable(example_interp: ASTInterpreter):
 #     """, example_interp)
 #     target_list = values.BLList([values.Int(0), values.Int(2), values.Int(4)])
 #     assert example_interp.globals.get_var('res', meta=None).is_equal(target_list, meta=None)
+
 
 # def test_function(example_interp: ASTInterpreter):
 #     main.interpret("""
