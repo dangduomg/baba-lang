@@ -181,6 +181,10 @@ class ExpressionResult(Result):
                 return value
         return error_not_implemented.set_meta(meta)
 
+    def call(self, args: list['Value'], meta: Meta) -> 'ExpressionResult':
+        """Call self as a function"""
+        return error_not_implemented.set_meta(meta)
+
     def dump(self, meta: Meta) -> 'ExpressionResult':
         """Conversion to representation for debugging"""
         return error_not_implemented.set_meta(meta)
@@ -254,6 +258,9 @@ class BLError(Exit, ExpressionResult):
         return self
 
     def set_item(self, index, value, meta) -> Self:
+        return self
+
+    def call(self, args, meta) -> Self:
         return self
 
     def dump(self, meta) -> Self:
