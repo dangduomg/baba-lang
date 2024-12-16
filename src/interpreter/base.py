@@ -1,4 +1,4 @@
-"""Base and error classes"""
+"""Base, error and essential value classes"""
 
 
 from typing import Optional, Self
@@ -9,6 +9,7 @@ from lark.tree import Meta
 
 
 #pylint: disable=too-few-public-methods
+#pylint: disable=too-many-public-methods
 #pylint: disable=unused-argument
 
 
