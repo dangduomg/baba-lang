@@ -8,7 +8,7 @@ from lark.tree import Meta
 from bl_ast import nodes
 from bl_ast.base import ASTVisitor
 
-from . import values
+from . import values, exits
 from .base import Result, ExpressionResult, Success, BLError, \
                   error_not_implemented
 from .values import Value, PythonFunction
@@ -41,8 +41,49 @@ class ASTInterpreter(ASTVisitor):
         match node:
             case nodes.Body(statements=statements):
                 for stmt in statements:
-                    self.visit(stmt)
+                    match res := self.visit(stmt):
+                        case exits.Exit():
+                            return res
                 return Success()
+            case nodes.IfStmt(meta=meta, condition=condition, body=body):
+                match cond := self.visit_expr(condition).to_bool(meta):
+                    case BLError():
+                        return cond
+                    case values.Bool(True):
+                        return self.visit_stmt(body)
+                    case values.Bool(False):
+                        return Success()
+            case nodes.IfElseStmt(meta=meta, condition=condition, then_body=then_body, else_body=else_body):
+                match cond := self.visit_expr(condition).to_bool(meta):
+                    case BLError():
+                        return cond
+                    case values.Bool(True):
+                        return self.visit_stmt(then_body)
+                    case values.Bool(False):
+                        return self.visit_stmt(else_body)
+            case nodes.WhileStmt(meta=meta, condition=condition, body=body, eval_condition_after=eval_condition_after):
+                while True:
+                    if not eval_condition_after:
+                        match cond := self.visit_expr(condition).to_bool(meta):
+                            case BLError():
+                                return cond
+                            case values.Bool(False):
+                                return Success()
+                    match res := self.visit_stmt(body):
+                        case exits.Continue():
+                            pass
+                        case exits.Exit():
+                            return res
+                    if eval_condition_after:
+                        match cond := self.visit_expr(condition).to_bool(meta):
+                            case BLError():
+                                return cond
+                            case values.Bool(False):
+                                return Success()
+            case nodes.BreakStmt():
+                return exits.Break()
+            case nodes.ContinueStmt():
+                return exits.Continue()
         return error_not_implemented
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
@@ -50,6 +91,15 @@ class ASTInterpreter(ASTVisitor):
         #pylint: disable=too-many-locals
         #pylint: disable=too-many-return-statements
         match node:
+            case nodes.Exprs(expressions=expressions):
+                final_res = values.NULL
+                for expr in expressions:
+                    match res := self.visit_expr(expr):
+                        case BLError():
+                            return res
+                        case Value():
+                            final_res = res
+                return final_res
             case nodes.Assign():
                 return self.visit_assign(node)
             case nodes.Inplace():
@@ -101,11 +151,11 @@ class ASTInterpreter(ASTVisitor):
 
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
         """Visit an assignment node"""
-        value_eval_result = self.visit_expr(node.value)
-        if isinstance(value_eval_result, BLError):
-            return value_eval_result
-        if isinstance(value_eval_result, Value):
-            value = value_eval_result
+        rhs_result = self.visit_expr(node.right)
+        if isinstance(rhs_result, BLError):
+            return rhs_result
+        if isinstance(rhs_result, Value):
+            value = rhs_result
             match node.pattern:
                 case nodes.VarPattern(name=name):
                     self.globals.new_var(name, value)
@@ -118,36 +168,37 @@ class ASTInterpreter(ASTVisitor):
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
         """Visit an in-place assignment node"""
-        by_eval_result = self.visit_expr(node.by)
-        if isinstance(by_eval_result, BLError):
-            return by_eval_result
-        if isinstance(by_eval_result, Value):
-            by = by_eval_result
+        #pylint: disable=too-many-return-statements
+        rhs_result = self.visit_expr(node.right)
+        if isinstance(rhs_result, BLError):
+            return rhs_result
+        if isinstance(rhs_result, Value):
+            by = rhs_result
             match node.pattern:
                 case nodes.VarPattern(name=name):
                     old_value_get_result = self.globals.get_var(name, node.meta)
-                    value_eval_result = old_value_get_result.binary_op(node.op, by, node.meta)
-                    match old_value_get_result, value_eval_result:
+                    new_result = old_value_get_result.binary_op(node.op, by, node.meta)
+                    match old_value_get_result, new_result:
                         case Value(), BLError():
-                            return value_eval_result
+                            return new_result
                         case BLError(), _:
                             return old_value_get_result
                         case _, Value():
-                            value = value_eval_result
+                            value = new_result
                             self.globals.set_var(name, value, node.meta)
                             return value
-                case nodes.SubscriptPattern(subscriptee=subscriptee_, index=index_):
-                    subscriptee = self.visit_expr(subscriptee_)
-                    index = self.visit_expr(index_)
+                case nodes.SubscriptPattern(subscriptee=subscriptee, index=index):
+                    subscriptee = self.visit_expr(subscriptee)
+                    index = self.visit_expr(index)
                     old_value_get_result = subscriptee.get_item(index, node.meta)
-                    value_eval_result = old_value_get_result.binary_op(node.op, by, node.meta)
-                    match old_value_get_result, value_eval_result:
+                    new_result = old_value_get_result.binary_op(node.op, by, node.meta)
+                    match old_value_get_result, new_result:
                         case Value(), BLError():
-                            return value_eval_result
+                            return new_result
                         case BLError(), _:
                             return old_value_get_result
                         case _, Value():
-                            value = value_eval_result
+                            value = new_result
                             subscriptee.set_item(index, value, node.meta)
                             return value
         return error_not_implemented.set_meta(node.meta)
