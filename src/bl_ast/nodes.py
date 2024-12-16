@@ -118,7 +118,7 @@ class Assign(_Expr):
     """Assignment"""
     meta: Meta
     pattern: '_Pattern'
-    value: _Expr
+    right: _Expr
 
 
 @dataclass(frozen=True)
@@ -127,7 +127,7 @@ class Inplace(_Expr):
     meta: Meta
     pattern: '_Pattern'
     op: Token
-    by: _Expr
+    right: _Expr
 
 
 class _Pattern(_AstNode):
