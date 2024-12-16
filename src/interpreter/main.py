@@ -23,6 +23,10 @@ class ASTInterpreter(ASTVisitor):
 
     def __init__(self):
         self.globals = Env()
+        # Populate some builtins
+        self.globals.new_var('print', PythonFunction(self._print))
+        self.globals.new_var('print_dump', PythonFunction(self._print_dump))
+
 
     def visit(self, node: nodes._AstNode) -> Result:
         #pylint: disable=protected-access
@@ -148,3 +152,13 @@ class ASTInterpreter(ASTVisitor):
                             subscriptee.set_item(index, value, node.meta)
                             return value
         return error_not_implemented.set_meta(node.meta)
+
+    # Builtins
+
+    def _print(self, meta: Meta, /, *args: Value) -> values.Null:
+        print(*(arg.to_string(meta).value for arg in args))
+        return values.NULL
+
+    def _print_dump(self, meta: Meta, /, *args: Value) -> values.Null:
+        print(*(arg.dump(meta) for arg in args))
+        return values.NULL
