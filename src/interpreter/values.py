@@ -1,6 +1,8 @@
 """Interpreter value classes"""
 
 
+from typing import Protocol
+from abc import abstractmethod
 from dataclasses import dataclass
 
 from lark.tree import Meta
@@ -87,3 +89,29 @@ class BLDict(Value):
         for k, v in self.content.items():
             pair_str_list.append(f'{k.dump(meta).value}: {v.dump(meta).value}')
         return String(f'{{{', '.join(pair_str_list)}}}')
+
+
+class SupportsWrappedByPythonFunction(Protocol):
+    """Protocol for functions that support being wrapped by PythonFunction"""
+
+    __name__: str
+
+    @abstractmethod
+    def __call__(self, meta: Meta, /, *args: Value) -> ExpressionResult:
+        ...
+
+
+@dataclass(frozen=True)
+class PythonFunction(Value):
+    """Python function wrapper type"""
+
+    function: SupportsWrappedByPythonFunction
+
+    def call(self, args, meta):
+        return self.function(meta, *args)
+
+    def dump(self, meta):
+        return String(f'<python function: {self.function!r}>')
+
+    def to_string(self, meta):
+        return String(f'<python function: {self.function.__name__}>')
