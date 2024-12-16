@@ -100,6 +100,8 @@ class BLDict(Value):
 class SupportsWrappedByPythonFunction(Protocol):
     """Protocol for functions that support being wrapped by PythonFunction"""
 
+    #pylint: disable=too-few-public-methods
+
     __name__: str
 
     @abstractmethod
