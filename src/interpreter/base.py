@@ -170,7 +170,8 @@ class ExpressionResult(Result):
         """Get an item in a container"""
         return self.unimplemented_binary_op(index, meta)
 
-    def set_item(self, index: 'ExpressionResult', value: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def set_item(self, index: 'ExpressionResult', value: 'ExpressionResult', meta: Meta
+                 ) -> 'ExpressionResult':
         """Set an item in a container"""
         match index:
             case BLError():
