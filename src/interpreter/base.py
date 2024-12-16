@@ -35,7 +35,7 @@ class Exit(Result):
 class ExpressionResult(Result):
     """Expression result base class"""
 
-    def binary_op(self, op: Token, other: 'ExpressionResult', meta: Optional[Meta]
+    def binary_op(self, op: str | Token, other: 'ExpressionResult', meta: Optional[Meta]
                   ) -> 'ExpressionResult':
         """Binary operation"""
         #pylint: disable=too-many-return-statements
