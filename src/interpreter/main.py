@@ -15,9 +15,6 @@ from .values import Value, PythonFunction
 from .env import Env
 
 
-#pylint: disable=too-many-return-statements
-
-
 class ASTInterpreter(ASTVisitor):
     """AST interpreter"""
 
@@ -41,7 +38,6 @@ class ASTInterpreter(ASTVisitor):
 
     def visit_stmt(self, node: nodes._Stmt) -> Result:
         """Visit a statement node"""
-        #pylint: disable=protected-access
         match node:
             case nodes.Body(statements=statements):
                 for stmt in statements:
@@ -52,6 +48,7 @@ class ASTInterpreter(ASTVisitor):
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
         #pylint: disable=too-many-locals
+        #pylint: disable=too-many-return-statements
         match node:
             case nodes.Assign():
                 return self.visit_assign(node)
