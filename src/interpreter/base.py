@@ -34,7 +34,8 @@ class Exit(Result):
 class ExpressionResult(Result):
     """Expression result base class"""
 
-    def binary_op(self, op: Token, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def binary_op(self, op: Token, other: 'ExpressionResult', meta: Optional[Meta]
+                  ) -> 'ExpressionResult':
         """Binary operation"""
         #pylint: disable=too-many-return-statements
         match op:
@@ -74,82 +75,84 @@ class ExpressionResult(Result):
                 return self.is_greater_or_equal(other, meta)
         return error_not_implemented.set_meta(meta)
 
-    def add(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def add(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Addition"""
         return self.unimplemented_binary_op(other, meta)
 
-    def subtract(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def subtract(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Subtraction"""
         return self.unimplemented_binary_op(other, meta)
 
-    def multiply(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def multiply(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Multiplication"""
         return self.unimplemented_binary_op(other, meta)
 
-    def divide(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def divide(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Division"""
         return self.unimplemented_binary_op(other, meta)
 
-    def mod(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def mod(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Modulo"""
         return self.unimplemented_binary_op(other, meta)
 
-    def floor_div(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def floor_div(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Floor division"""
         return self.unimplemented_binary_op(other, meta)
 
-    def bitwise_and(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def bitwise_and(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Bitwise and"""
         return self.unimplemented_binary_op(other, meta)
 
-    def bitwise_or(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def bitwise_or(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Bitwise or"""
         return self.unimplemented_binary_op(other, meta)
 
-    def bitwise_xor(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def bitwise_xor(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Bitwise xor"""
         return self.unimplemented_binary_op(other, meta)
 
-    def left_shift(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def left_shift(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Bitwise left shift"""
         return self.unimplemented_binary_op(other, meta)
 
-    def right_shift(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def right_shift(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Bitwise right shift"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_equal(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Equality test"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_not_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_not_equal(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Inequality test"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_less(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_less(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Less than"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_less_or_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_less_or_equal(self, other: 'ExpressionResult', meta: Optional[Meta]
+                         ) -> 'ExpressionResult':
         """Less than or equal to"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_greater(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_greater(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Greater than"""
         return self.unimplemented_binary_op(other, meta)
 
-    def is_greater_or_equal(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def is_greater_or_equal(self, other: 'ExpressionResult', meta: Optional[Meta]
+                            ) -> 'ExpressionResult':
         """Greater than or equal to"""
         return self.unimplemented_binary_op(other, meta)
 
-    def unimplemented_binary_op(self, other: 'ExpressionResult', meta: Meta) -> 'BLError':
+    def unimplemented_binary_op(self, other: 'ExpressionResult', meta: Optional[Meta]) -> 'BLError':
         """Unimplemented binary operation stub"""
         match other:
             case BLError():
                 return other
         return error_not_implemented.set_meta(meta)
 
-    def unary_op(self, op: Token, meta: Meta) -> 'ExpressionResult':
+    def unary_op(self, op: Token, meta: Optional[Meta]) -> 'ExpressionResult':
         """Unary operation"""
         match op:
             case '+':
@@ -158,19 +161,19 @@ class ExpressionResult(Result):
                 return self.neg(meta)
         return error_not_implemented.set_meta(meta)
 
-    def plus(self, meta: Meta) -> 'ExpressionResult':
+    def plus(self, meta: Optional[Meta]) -> 'ExpressionResult':
         """Unary plus"""
         return error_not_implemented.set_meta(meta)
 
-    def neg(self, meta: Meta) -> 'ExpressionResult':
+    def neg(self, meta: Optional[Meta]) -> 'ExpressionResult':
         """Negation"""
         return error_not_implemented.set_meta(meta)
 
-    def get_item(self, index: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def get_item(self, index: 'ExpressionResult', meta: Optional[Meta]) -> 'ExpressionResult':
         """Get an item in a container"""
         return self.unimplemented_binary_op(index, meta)
 
-    def set_item(self, index: 'ExpressionResult', value: 'ExpressionResult', meta: Meta
+    def set_item(self, index: 'ExpressionResult', value: 'ExpressionResult', meta: Optional[Meta]
                  ) -> 'ExpressionResult':
         """Set an item in a container"""
         match index:
@@ -181,15 +184,15 @@ class ExpressionResult(Result):
                 return value
         return error_not_implemented.set_meta(meta)
 
-    def call(self, args: list['Value'], meta: Meta) -> 'ExpressionResult':
+    def call(self, args: list['Value'], meta: Optional[Meta]) -> 'ExpressionResult':
         """Call self as a function"""
         return error_not_implemented.set_meta(meta)
 
-    def dump(self, meta: Meta) -> 'ExpressionResult':
+    def dump(self, meta: Optional[Meta]) -> 'ExpressionResult':
         """Conversion to representation for debugging"""
         return error_not_implemented.set_meta(meta)
 
-    def to_string(self, meta: Meta) -> 'ExpressionResult':
+    def to_string(self, meta: Optional[Meta]) -> 'ExpressionResult':
         """Conversion to string"""
         return self.dump(meta)
 
@@ -204,7 +207,7 @@ class BLError(Exit, ExpressionResult):
     value: object
     meta: Optional[Meta] = None
 
-    def set_meta(self, meta: Meta) -> Self:
+    def set_meta(self, meta: Optional[Meta]) -> Self:
         """Set meta attribute to error"""
         self.meta = meta
         return self

@@ -1,7 +1,7 @@
 """Interpreter value classes"""
 
 
-from typing import Protocol
+from typing import Optional, Protocol
 from abc import abstractmethod
 from dataclasses import dataclass
 
@@ -97,7 +97,7 @@ class SupportsWrappedByPythonFunction(Protocol):
     __name__: str
 
     @abstractmethod
-    def __call__(self, meta: Meta, /, *args: Value) -> ExpressionResult:
+    def __call__(self, meta: Optional[Meta], /, *args: Value) -> ExpressionResult:
         ...
 
 

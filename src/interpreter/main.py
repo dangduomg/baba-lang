@@ -1,6 +1,8 @@
 """AST interpreter"""
 
 
+from typing import Optional
+
 from lark.tree import Meta
 
 from bl_ast import nodes
@@ -155,10 +157,10 @@ class ASTInterpreter(ASTVisitor):
 
     # Builtins
 
-    def _print(self, meta: Meta, /, *args: Value) -> values.Null:
+    def _print(self, meta: Optional[Meta], /, *args: Value) -> values.Null:
         print(*(arg.to_string(meta).value for arg in args))
         return values.NULL
 
-    def _print_dump(self, meta: Meta, /, *args: Value) -> values.Null:
+    def _print_dump(self, meta: Optional[Meta], /, *args: Value) -> values.Null:
         print(*(arg.dump(meta) for arg in args))
         return values.NULL
