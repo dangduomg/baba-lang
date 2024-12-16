@@ -41,11 +41,11 @@ class ExpressionResult(Result):
             case '+':
                 return self.add(other, meta)
             case '-':
-                return self.sub(other, meta)
+                return self.subtract(other, meta)
             case '*':
-                return self.mul(other, meta)
+                return self.multiply(other, meta)
             case '/':
-                return self.div(other, meta)
+                return self.divide(other, meta)
             case '%':
                 return self.mod(other, meta)
             case '%/%':
@@ -78,15 +78,15 @@ class ExpressionResult(Result):
         """Addition"""
         return self.unimplemented_binary_op(other, meta)
 
-    def sub(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def subtract(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Subtraction"""
         return self.unimplemented_binary_op(other, meta)
 
-    def mul(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def multiply(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Multiplication"""
         return self.unimplemented_binary_op(other, meta)
 
-    def div(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
+    def divide(self, other: 'ExpressionResult', meta: Meta) -> 'ExpressionResult':
         """Division"""
         return self.unimplemented_binary_op(other, meta)
 
@@ -213,10 +213,10 @@ class BLError(Exit, ExpressionResult):
     def add(self, other, meta) -> Self:
         return self
 
-    def sub(self, other, meta) -> Self:
+    def subtract(self, other, meta) -> Self:
         return self
 
-    def mul(self, other, meta) -> Self:
+    def multiply(self, other, meta) -> Self:
         return self
 
     def mod(self, other, meta) -> Self:

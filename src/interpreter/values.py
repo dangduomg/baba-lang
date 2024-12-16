@@ -362,7 +362,7 @@ class BLList(Value):
                 return BLList(self.elems + other_elems)
         return super().add(other, meta)
 
-    def mul(self, other, meta):
+    def multiply(self, other, meta):
         match other:
             case Int(times):
                 return BLList(self.elems * times)
