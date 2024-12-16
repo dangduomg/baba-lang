@@ -24,7 +24,7 @@ Right now in version `0.4.0`.
 
 ## Example
 Here is an example snippet to get started:
-```
+```js
 # let's import min from python
 min = py_function('builtins', 'min');
 
