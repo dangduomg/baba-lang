@@ -7,12 +7,12 @@ from dataclasses import dataclass
 
 from lark.tree import Meta
 
-from .base import ExpressionResult, Value, Int, String, \
+from .base import ExpressionResult, Value, Int, String, BOOLS, \
                   error_out_of_range, error_key_nonexistent
 
 #pylint: disable=unused-import
 #ruff: noqa: F401
-from .base import Float, Bool, BOOLS, Null, NULL
+from .base import Float, Bool, Null, NULL
 
 
 #pylint: disable=unused-argument
@@ -58,6 +58,9 @@ class BLList(Value):
     def dump(self, meta):
         return String(f'[{', '.join(e.dump(meta).value for e in self.elems)}]')
 
+    def to_bool(self, meta):
+        return BOOLS[bool(self.elems)]
+
 
 @dataclass(frozen=True)
 class BLDict(Value):
@@ -89,6 +92,9 @@ class BLDict(Value):
         for k, v in self.content.items():
             pair_str_list.append(f'{k.dump(meta).value}: {v.dump(meta).value}')
         return String(f'{{{', '.join(pair_str_list)}}}')
+
+    def to_bool(self, meta):
+        return BOOLS[bool(self.content)]
 
 
 class SupportsWrappedByPythonFunction(Protocol):

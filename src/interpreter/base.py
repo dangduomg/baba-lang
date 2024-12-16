@@ -196,6 +196,10 @@ class ExpressionResult(Result):
         """Conversion to string"""
         return self.dump(meta)
 
+    def to_bool(self, meta: Optional[Meta]) -> 'ExpressionResult':
+        """Conversion to boolean"""
+        return error_not_implemented.set_meta(meta)
+
 
 # ---- Error type ----
 
@@ -298,6 +302,9 @@ class Value(ExpressionResult):
     def to_string(self, meta) -> 'String':
         return self.dump(meta)
 
+    def to_bool(self, meta) -> 'Bool':
+        return BOOLS[True]
+
 
 @dataclass(frozen=True)
 class Bool(Value):
@@ -310,6 +317,9 @@ class Bool(Value):
             return String('true')
         return String('false')
 
+    def to_bool(self, meta):
+        return self
+
 
 BOOLS = Bool(False), Bool(True)
 
@@ -320,6 +330,9 @@ class Null(Value):
 
     def dump(self, meta):
         return String('null')
+
+    def to_bool(self, meta):
+        return BOOLS[False]
 
 
 NULL = Null()
@@ -384,6 +397,9 @@ class String(Value):
 
     def to_string(self, meta):
         return self
+
+    def to_bool(self, meta):
+        return BOOLS[bool(self.value)]
 
 
 @dataclass(frozen=True)
@@ -522,6 +538,9 @@ class Int(Value):
     def dump(self, meta):
         return String(str(self.value))
 
+    def to_bool(self, meta):
+        return BOOLS[bool(self.value)]
+
 
 @dataclass(frozen=True)
 class Float(Value):
@@ -618,3 +637,6 @@ class Float(Value):
 
     def dump(self, meta):
         return String(str(self.value))
+
+    def to_bool(self, meta):
+        return BOOLS[bool(self.value)]
