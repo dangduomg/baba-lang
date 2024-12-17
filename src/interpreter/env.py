@@ -23,8 +23,11 @@ class Env:
     vars: dict[str, Var]
     parent: Optional['Env']
 
-    def __init__(self, parent: Optional['Env'] = None):
-        self.vars = {}
+    def __init__(self, vars_: Optional[dict[str, Var]] = None, parent: Optional['Env'] = None):
+        if vars_ is None:
+            self.vars = {}
+        else:
+            self.vars = vars_
         self.parent = parent
 
     def new_var(self, name: str, value: Value) -> None:
