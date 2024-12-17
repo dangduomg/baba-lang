@@ -213,7 +213,7 @@ class ExpressionResult(Result):
 class BLError(Exit, ExpressionResult):
     """Error"""
 
-    value: object
+    value: str
     meta: Optional[Meta] = None
 
     def set_meta(self, meta: Optional[Meta]) -> Self:
@@ -287,6 +287,7 @@ error_div_by_zero = BLError('Division by zero')
 error_out_of_range = BLError('Index out of range: {}')
 error_key_nonexistent = BLError('Non-existent key: {}')
 error_var_nonexistent = BLError('Variable {} is undefined')
+error_wrong_argc = BLError('Function {} needs exactly {} arguments')
 
 
 # ---- Essential value types ----
