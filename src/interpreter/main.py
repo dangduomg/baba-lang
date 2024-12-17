@@ -29,6 +29,7 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var('print', PythonFunction(self._print))
         self.globals.new_var('print_dump', PythonFunction(self._print_dump))
         self.globals.new_var('input', PythonFunction(self._input))
+        self.globals.new_var('int', PythonFunction(self._int))
 
     def visit(self, node: nodes._AstNode) -> Result:
         #pylint: disable=protected-access
@@ -238,5 +239,17 @@ class ASTInterpreter(ASTVisitor):
 
     def _input(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
               ) -> values.String:
+    def _int(
+        self,
+        meta: Optional[Meta],
+        interpreter: 'ASTInterpreter',
+        /,
+        *args: Value
+    ) -> values.Int | BLError:
         #pylint: disable=unused-argument
-        return values.String(input(args[0] if args else ''))
+        match args[0]:
+            case values.String(value=value):
+                return values.Int(int(value))
+            case values.Int():
+                return args[0]
+        return error_not_implemented.set_meta(meta)
