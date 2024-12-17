@@ -9,8 +9,7 @@ import sys
 from argparse import ArgumentParser
 
 from bl_ast import parse_to_ast, expr_parser
-from interpreter import ASTInterpreter
-from interpreter.base import Result
+from interpreter import ASTInterpreter, Result, BLError
 
 
 argparser = ArgumentParser()
