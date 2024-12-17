@@ -18,13 +18,13 @@ include_stmt: _INCLUDE STRING ";"
 
 return_stmt: _RETURN [expr] ";"
 
-if_stmt: _IF "(" expr ")" "{" body "}"
+if_stmt: _IF expr "{" body "}"
 
-if_else_stmt: _IF "(" expr ")" "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" body "}")
+if_else_stmt: _IF expr "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" body "}")
 
-while_stmt: _WHILE "(" expr ")" "{" body "}"
+while_stmt: _WHILE expr "{" body "}"
 
-do_while_stmt: _DO "{" body "}" _WHILE "(" expr ")" ";"
+do_while_stmt: _DO "{" body "}" _WHILE expr ";"
 
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
 
@@ -117,13 +117,13 @@ STRING_SQUOTE: "'" _STRING_ESC_INNER "'"
 _STRING_INNER: /.*?/
 _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
-IDENT: /(?!/ RESERVED  /)/ CNAME
+IDENT: /(?!/ RESERVED  /)/ CNAME /\b/
 
 RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE
 _TRUE: "true"
 _FALSE: "false"
 _NULL: "null"
-_FUNCTION: "function"
+_FUNCTION: "fun"
 _RETURN: "return"
 _IF: "if"
 _ELSE: "else"
