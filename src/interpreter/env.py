@@ -59,3 +59,7 @@ class Env:
         if self.parent is not None:
             return self.parent.resolve_var(name, meta)
         return error_var_nonexistent.fill_args(name).set_meta(meta)
+
+    def copy(self) -> 'Env':
+        """Copy the environment (for capturing variables in closures)"""
+        return Env(self.vars.copy(), self.parent)

@@ -165,7 +165,8 @@ class ASTInterpreter(ASTVisitor):
                     content[k_visited] = v_visited
                 return values.BLDict(content)
             case nodes.FunctionLiteral(form_args=form_args, body=body):
-                return values.BLFunction(form_args, body)
+                env = None if self.locals is None else self.locals.copy()
+                return values.BLFunction('<anonymous>', form_args, body, env)
         return error_not_implemented
 
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
