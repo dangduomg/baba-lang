@@ -51,6 +51,11 @@ class Extras(Transformer):
         statements.append(loop)
         return nodes.Body(meta, statements)
 
+    @v_args(inline=True, meta=True)
+    def include_stmt(self, meta: Meta, path: str) -> nodes._AstNode:
+        with open(path, encoding='utf=8') as f:
+            return parse_to_ast(f.read())
+
     def INT(self, lexeme: str) -> int:
         return int(lexeme)
 
