@@ -1,13 +1,14 @@
 """Base, error and essential value classes"""
 
 
-from typing import Optional, Self
+from typing import Optional, Self, TYPE_CHECKING
 from dataclasses import dataclass
 
 from lark import Token
 from lark.tree import Meta
 
-from .main import ASTInterpreter
+if TYPE_CHECKING:
+    from .main import ASTInterpreter
 
 
 #pylint: disable=too-few-public-methods
@@ -187,7 +188,8 @@ class ExpressionResult(Result):
                 return value
         return error_not_implemented.set_meta(meta)
 
-    def call(self, args: list['Value'], interpreter: ASTInterpreter, meta: Optional[Meta]) -> 'ExpressionResult':
+    def call(self, args: list['Value'], interpreter: 'ASTInterpreter', meta: Optional[Meta]
+             ) -> 'ExpressionResult':
         """Call self as a function"""
         return error_not_implemented.set_meta(meta)
 

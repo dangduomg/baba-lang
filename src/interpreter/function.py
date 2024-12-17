@@ -2,11 +2,17 @@
 
 
 from dataclasses import dataclass
+from typing import Optional, Protocol, TYPE_CHECKING
+
+from lark.tree import Meta
 
 from bl_ast.nodes import FormArgs, Body
 
 from .base import Value, NULL
 from .env import Env
+
+if TYPE_CHECKING:
+    from .main import ASTInterpreter
 
 
 @dataclass(frozen=True)
