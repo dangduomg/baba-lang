@@ -1,6 +1,7 @@
 """baba-lang function type"""
 
 
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Protocol, TYPE_CHECKING
 
@@ -8,7 +9,9 @@ from lark.tree import Meta
 
 from bl_ast.nodes import FormArgs, Body
 
-from .base import Value, NULL
+from .base import ExpressionResult, Value, Success, String, NULL, \
+                  error_not_implemented, error_wrong_argc
+from .exits import Return
 from .env import Env
 
 if TYPE_CHECKING:
@@ -17,20 +20,57 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class BLFunction(Value):
+    """baba-lang function type"""
+
+    name: str
     form_args: FormArgs
     body: Body
+    env: Optional[Env] = None
 
     def call(self, args, interpreter, meta):
         # Create an environment (call frame)
-        parent = interpreter.locals
-        env = Env(parent=parent)
+        old_env = interpreter.locals
+        env = Env(parent=self.env)
         # Populate it with arguments
         form_args = self.form_args.args
-        for farg, arg in zip(form_args, args):
-            env.new_var(farg, arg)
+        try:
+            for farg, arg in zip(form_args, args, strict=True):
+                env.new_var(farg, arg)
+        except ValueError:
+            return error_wrong_argc.fill_args(self.name, len(form_args)) \
+                                   .set_meta(meta)
         # Run the body
         interpreter.locals = env
-        interpreter.visit_stmt(self.body)
+        res = interpreter.visit_stmt(self.body)
         # Clean it up
         interpreter.locals = parent
         return NULL
+
+
+class SupportsWrappedByPythonFunction(Protocol):
+    """Protocol for functions that support being wrapped by PythonFunction"""
+
+    #pylint: disable=too-few-public-methods
+
+    __name__: str
+
+    @abstractmethod
+    def __call__(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
+                 ) -> ExpressionResult:
+        ...
+
+
+@dataclass(frozen=True)
+class PythonFunction(Value):
+    """Python function wrapper type"""
+
+    function: SupportsWrappedByPythonFunction
+
+    def call(self, args, interpreter, meta):
+        return self.function(meta, interpreter, *args)
+
+    def dump(self, meta):
+        return String(f'<python function {self.function!r}>')
+
+    def to_string(self, meta):
+        return String(f"<python function '{self.function.__name__}'>")
