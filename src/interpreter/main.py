@@ -89,6 +89,16 @@ class ASTInterpreter(ASTVisitor):
                 return exits.Break()
             case nodes.ContinueStmt():
                 return exits.Continue()
+            case nodes.ReturnStmt(value=value):
+                res = None if value is None else self.visit_expr(value)
+                if isinstance(res, BLError):
+                    return res
+                if isinstance(res, Value):
+                    return exits.Return(res)
+            case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
+                env = None if self.locals is None else self.locals.copy()
+                self.globals.new_var(name, values.BLFunction(str(name), form_args, body, env))
+                return Success()
         return error_not_implemented
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
@@ -123,6 +133,9 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, meta)
             case nodes.Var(meta=meta, name=name):
+                if self.locals is not None:
+                    if isinstance(res := self.locals.get_var(name, meta), Value):
+                        return res
                 return self.globals.get_var(name, meta)
             case nodes.String(value=value):
                 return values.String(value)

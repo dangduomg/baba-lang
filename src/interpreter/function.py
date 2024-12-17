@@ -43,8 +43,17 @@ class BLFunction(Value):
         interpreter.locals = env
         res = interpreter.visit_stmt(self.body)
         # Clean it up
-        interpreter.locals = parent
-        return NULL
+        interpreter.locals = old_env
+        # Return!
+        match res:
+            case Success():
+                return NULL
+            case Return(value=value):
+                return value
+        return error_not_implemented.set_meta(meta)
+
+    def dump(self, meta):
+        return String(f"<function '{self.name}'>")
 
 
 class SupportsWrappedByPythonFunction(Protocol):
