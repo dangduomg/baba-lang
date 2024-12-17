@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from lark import Token
 from lark.tree import Meta
 
+from .main import ASTInterpreter
+
 
 #pylint: disable=too-few-public-methods
 #pylint: disable=too-many-public-methods
@@ -185,7 +187,7 @@ class ExpressionResult(Result):
                 return value
         return error_not_implemented.set_meta(meta)
 
-    def call(self, args: list['Value'], meta: Optional[Meta]) -> 'ExpressionResult':
+    def call(self, args: list['Value'], interpreter: ASTInterpreter, meta: Optional[Meta]) -> 'ExpressionResult':
         """Call self as a function"""
         return error_not_implemented.set_meta(meta)
 
@@ -268,7 +270,7 @@ class BLError(Exit, ExpressionResult):
     def set_item(self, index, value, meta) -> Self:
         return self
 
-    def call(self, args, meta) -> Self:
+    def call(self, args, interpreter, meta) -> Self:
         return self
 
     def dump(self, meta) -> Self:

@@ -21,13 +21,14 @@ class ASTInterpreter(ASTVisitor):
     #pylint: disable=too-many-return-statements
 
     globals: Env
+    locals: Optional[Env] = None
 
     def __init__(self):
         self.globals = Env()
         # Populate some builtins
         self.globals.new_var('print', PythonFunction(self._print))
         self.globals.new_var('print_dump', PythonFunction(self._print_dump))
-
+        self.globals.new_var('input', PythonFunction(self._input))
 
     def visit(self, node: nodes._AstNode) -> Result:
         #pylint: disable=protected-access
@@ -55,7 +56,8 @@ class ASTInterpreter(ASTVisitor):
                         return self.visit_stmt(body)
                     case values.Bool(False):
                         return Success()
-            case nodes.IfElseStmt(meta=meta, condition=condition, then_body=then_body, else_body=else_body):
+            case nodes.IfElseStmt(meta=meta, condition=condition,
+                                  then_body=then_body, else_body=else_body):
                 match cond := self.visit_expr(condition).to_bool(meta):
                     case BLError():
                         return cond
@@ -63,7 +65,8 @@ class ASTInterpreter(ASTVisitor):
                         return self.visit_stmt(then_body)
                     case values.Bool(False):
                         return self.visit_stmt(else_body)
-            case nodes.WhileStmt(meta=meta, condition=condition, body=body, eval_condition_after=eval_condition_after):
+            case nodes.WhileStmt(meta=meta, condition=condition, body=body,
+                                 eval_condition_after=eval_condition_after):
                 while True:
                     if not eval_condition_after:
                         match cond := self.visit_expr(condition).to_bool(meta):
@@ -116,7 +119,7 @@ class ASTInterpreter(ASTVisitor):
                     if not isinstance(arg_visited, Value):
                         return arg_visited
                     args.append(arg_visited)
-                return self.visit_expr(callee).call(args, meta)
+                return self.visit_expr(callee).call(args, self, meta)
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, meta)
             case nodes.Var(meta=meta, name=name):
@@ -148,6 +151,8 @@ class ASTInterpreter(ASTVisitor):
                     v_visited = self.visit(pair.value)
                     content[k_visited] = v_visited
                 return values.BLDict(content)
+            case nodes.FunctionLiteral(form_args=form_args, body=body):
+                return values.BLFunction(form_args, body)
         return error_not_implemented
 
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
@@ -205,10 +210,19 @@ class ASTInterpreter(ASTVisitor):
 
     # Builtins
 
-    def _print(self, meta: Optional[Meta], /, *args: Value) -> values.Null:
+    def _print(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
+               ) -> values.Null:
+        #pylint: disable=unused-argument
         print(*(arg.to_string(meta).value for arg in args))
         return values.NULL
 
-    def _print_dump(self, meta: Optional[Meta], /, *args: Value) -> values.Null:
+    def _print_dump(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
+                    ) -> values.Null:
+        #pylint: disable=unused-argument
         print(*(arg.dump(meta) for arg in args))
         return values.NULL
+
+    def _input(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
+              ) -> values.String:
+        #pylint: disable=unused-argument
+        return values.String(input(args[0] if args else ''))
