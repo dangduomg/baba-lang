@@ -45,9 +45,8 @@ class ASTInterpreter(ASTVisitor):
         match node:
             case nodes.Body(statements=statements):
                 for stmt in statements:
-                    match res := self.visit(stmt):
-                        case exits.Exit():
-                            return res
+                    if isinstance(res := self.visit(stmt), exits.Exit):
+                        return res
                 return Success()
             case nodes.IfStmt(meta=meta, condition=condition, body=body):
                 match cond := self.visit_expr(condition).to_bool(meta):
@@ -68,24 +67,21 @@ class ASTInterpreter(ASTVisitor):
                         return self.visit_stmt(else_body)
             case nodes.WhileStmt(meta=meta, condition=condition, body=body,
                                  eval_condition_after=eval_condition_after):
+                eval_condition = not eval_condition_after
                 while True:
-                    if not eval_condition_after:
+                    if eval_condition:
                         match cond := self.visit_expr(condition).to_bool(meta):
                             case BLError():
                                 return cond
                             case values.Bool(False):
                                 return Success()
-                    match res := self.visit_stmt(body):
-                        case exits.Continue():
-                            pass
-                        case exits.Exit():
-                            return res
+                    res = self.visit_stmt(body)
+                    if isinstance(res, exits.Continue):
+                        pass
+                    elif isinstance(res, exits.Exit):
+                        return res
                     if eval_condition_after:
-                        match cond := self.visit_expr(condition).to_bool(meta):
-                            case BLError():
-                                return cond
-                            case values.Bool(False):
-                                return Success()
+                        eval_condition = True
             case nodes.BreakStmt():
                 return exits.Break()
             case nodes.ContinueStmt():
@@ -109,11 +105,11 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Exprs(expressions=expressions):
                 final_res = values.NULL
                 for expr in expressions:
-                    match res := self.visit_expr(expr):
-                        case BLError():
-                            return res
-                        case Value():
-                            final_res = res
+                    res = self.visit_expr(expr)
+                    if isinstance(res, BLError):
+                        return res
+                    if isinstance(res, Value):
+                        final_res = res
                 return final_res
             case nodes.Assign():
                 return self.visit_assign(node)
@@ -173,6 +169,7 @@ class ASTInterpreter(ASTVisitor):
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
         """Visit an assignment node"""
         rhs_result = self.visit_expr(node.right)
+        meta = node.meta
         if isinstance(rhs_result, BLError):
             return rhs_result
         if isinstance(rhs_result, Value):
@@ -184,61 +181,83 @@ class ASTInterpreter(ASTVisitor):
                 case nodes.SubscriptPattern(subscriptee=subscriptee_, index=index_):
                     subscriptee = self.visit_expr(subscriptee_)
                     index = self.visit_expr(index_)
-                    return subscriptee.set_item(index, value, node.meta)
-        return error_not_implemented.set_meta(node.meta)
+                    return subscriptee.set_item(index, value, meta)
+        return error_not_implemented.set_meta(meta)
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
         """Visit an in-place assignment node"""
+        meta = node.meta
         rhs_result = self.visit_expr(node.right)
         if isinstance(rhs_result, BLError):
             return rhs_result
-        if isinstance(rhs_result, Value):
-            by = rhs_result
-            match node.pattern:
-                case nodes.VarPattern(name=name):
-                    old_value_get_result = self.globals.get_var(name, node.meta)
-                    new_result = old_value_get_result.binary_op(node.op[:-1], by, node.meta)
-                    match old_value_get_result, new_result:
-                        case Value(), BLError():
-                            return new_result
-                        case BLError(), _:
-                            return old_value_get_result
-                        case _, Value():
-                            value = new_result
-                            self.globals.set_var(name, value, node.meta)
-                            return value
-                case nodes.SubscriptPattern(subscriptee=subscriptee, index=index):
-                    subscriptee = self.visit_expr(subscriptee)
-                    index = self.visit_expr(index)
-                    old_value_get_result = subscriptee.get_item(index, node.meta)
-                    new_result = old_value_get_result.binary_op(node.op[:-1], by, node.meta)
-                    match old_value_get_result, new_result:
-                        case Value(), BLError():
-                            return new_result
-                        case BLError(), _:
-                            return old_value_get_result
-                        case _, Value():
-                            value = new_result
-                            subscriptee.set_item(index, value, node.meta)
-                            return value
-        return error_not_implemented.set_meta(node.meta)
+        if not isinstance(rhs_result, Value):
+            return error_not_implemented.set_meta(meta)
+        by = rhs_result
+        pattern = node.pattern
+        if isinstance(pattern, nodes.VarPattern):
+            name = pattern.name
+            old_value_get_result = self.globals.get_var(name, meta)
+            new_result = old_value_get_result.binary_op(node.op[:-1], by, meta)
+            match old_value_get_result, new_result:
+                case Value(), BLError():
+                    return new_result
+                case BLError(), _:
+                    return old_value_get_result
+                case _, Value():
+                    value = new_result
+                    self.globals.set_var(name, value, node.meta)
+                    return value
+        if isinstance(pattern, nodes.SubscriptPattern):
+            subscriptee = self.visit_expr(pattern.subscriptee)
+            index = self.visit_expr(pattern.index)
+            old_value_get_result = subscriptee.get_item(index, meta)
+            new_result = old_value_get_result.binary_op(node.op[:-1], by, meta)
+            match old_value_get_result, new_result:
+                case Value(), BLError():
+                    return new_result
+                case BLError(), _:
+                    return old_value_get_result
+                case _, Value():
+                    value = new_result
+                    subscriptee.set_item(index, value, meta)
+                    return value
+        return error_not_implemented.set_meta(meta)
+
 
     # Builtins
 
-    def _print(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
-               ) -> values.Null:
+    def _print(
+        self,
+        meta: Optional[Meta],
+        interpreter: 'ASTInterpreter',
+        /,
+        *args: Value
+    ) -> values.Null:
         #pylint: disable=unused-argument
         print(*(arg.to_string(meta).value for arg in args))
         return values.NULL
 
-    def _print_dump(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
-                    ) -> values.Null:
+    def _print_dump(
+        self,
+        meta: Optional[Meta],
+        interpreter: 'ASTInterpreter',
+        /,
+        *args: Value
+    ) -> values.Null:
         #pylint: disable=unused-argument
         print(*(arg.dump(meta) for arg in args))
         return values.NULL
 
-    def _input(self, meta: Optional[Meta], interpreter: 'ASTInterpreter', /, *args: Value
-              ) -> values.String:
+    def _input(
+        self,
+        meta: Optional[Meta],
+        interpreter: 'ASTInterpreter',
+        /,
+        *args: Value
+    ) -> values.String:
+        #pylint: disable=unused-argument
+        return values.String(input(args[0].to_string(meta).value if args else ''))
+
     def _int(
         self,
         meta: Optional[Meta],
