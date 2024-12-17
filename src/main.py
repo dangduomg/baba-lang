@@ -8,6 +8,8 @@ video game "Baba is You".
 import sys
 from argparse import ArgumentParser
 
+from lark.tree import Meta
+
 from bl_ast import parse_to_ast, expr_parser
 from interpreter import ASTInterpreter, Result, BLError
 
@@ -28,12 +30,24 @@ default_interp = ASTInterpreter()
 
 def interpret(src: str, interpreter: ASTInterpreter = default_interp) -> Result:
     """Interpret a script"""
-    return interpreter.visit(parse_to_ast(src))
+    match res := interpreter.visit(parse_to_ast(src)):
+        case BLError(value=msg, meta=meta):
+            match meta:
+                case Meta(line=line, column=column):
+                    raise RuntimeError(f'Error at line {line}, column {column}: {msg}')
+                case None:
+                    raise RuntimeError(f'Error: {msg}')
+        case _:
+            return res
 
 
 def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp) -> Result:
     """Interpret an expression"""
-    return interpreter.visit(parse_to_ast(src, expr_parser))
+    match res := interpreter.visit(parse_to_ast(src, expr_parser)):
+        case BLError(value=msg):
+            raise RuntimeError(f'Error: {msg}')
+        case _:
+            return res
 
 
 def main() -> None:
