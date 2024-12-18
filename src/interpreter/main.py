@@ -6,7 +6,7 @@ from typing import Optional
 from bl_ast import nodes
 from bl_ast.base import ASTVisitor
 
-from . import values, exits, builtins as builtins_
+from . import built_ins, values, exits, colls
 from .base import Result, ExpressionResult, Success, BLError, \
                   error_not_implemented
 from .values import Value, PythonFunction
@@ -24,13 +24,18 @@ class ASTInterpreter(ASTVisitor):
     def __init__(self):
         self.globals = Env()
         # Populate some builtins
-        self.globals.new_var('print', PythonFunction(builtins_.print_))
-        self.globals.new_var('print_dump', PythonFunction(builtins_.print_dump))
-        self.globals.new_var('input', PythonFunction(builtins_.input_))
-        self.globals.new_var('int', PythonFunction(builtins_.int_))
-        self.globals.new_var('float', PythonFunction(builtins_.float_))
-        self.globals.new_var('bool', PythonFunction(builtins_.bool_))
-        self.globals.new_var('str', PythonFunction(builtins_.str_))
+        self.globals.new_var("print", PythonFunction(built_ins.print_))
+        self.globals.new_var("print_dump",
+                             PythonFunction(built_ins.print_dump))
+        self.globals.new_var("input", PythonFunction(built_ins.input_))
+        self.globals.new_var("int", PythonFunction(built_ins.int_))
+        self.globals.new_var("float", PythonFunction(built_ins.float_))
+        self.globals.new_var("bool", PythonFunction(built_ins.bool_))
+        self.globals.new_var("str", PythonFunction(built_ins.str_))
+        self.globals.new_var("list_len", PythonFunction(colls.list_len))
+        self.globals.new_var("list_insert", PythonFunction(colls.list_insert))
+        self.globals.new_var("list_remove_at",
+                             PythonFunction(colls.list_remove_at))
 
     def visit(self, node: nodes._AstNode) -> Result:
         #pylint: disable=protected-access
