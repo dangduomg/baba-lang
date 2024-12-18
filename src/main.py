@@ -10,8 +10,9 @@ from argparse import ArgumentParser
 
 from lark.tree import Meta
 
-from bl_ast import parse_to_ast, expr_parser
-from interpreter import ASTInterpreter, Result, BLError
+from bl_ast import parse_to_ast, parse_expr_to_ast
+from interpreter import ASTInterpreter, Result, ExpressionResult, BLError, \
+                        Value
 
 
 VERSION = '0.4.0'
@@ -42,14 +43,17 @@ argparser.add_argument(
 default_interp = ASTInterpreter()
 
 
-def interpret(src: str, interpreter: ASTInterpreter = default_interp) -> Result:
+def interpret(src: str, interpreter: ASTInterpreter = default_interp
+              ) -> Result:
     """Interpret a script"""
     return interpreter.visit(parse_to_ast(src))
 
 
-def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp) -> Result:
+def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp
+                   ) -> ExpressionResult:
     """Interpret an expression"""
-    return interpreter.visit(parse_to_ast(src, expr_parser))
+    return interpreter.visit_expr(parse_expr_to_ast(src))
+
 
 def main() -> None:
     """Main function"""
@@ -68,9 +72,15 @@ def main() -> None:
         case BLError(value=msg, meta=meta):
             match meta:
                 case Meta(line=line, column=column):
-                    raise RuntimeError(f'Error at line {line}, column {column}: {msg}')
+                    raise RuntimeError(
+                        f'Error at line {line}, column {column}: {msg}'
+                    )
                 case None:
                     raise RuntimeError(f'Error: {msg}')
+        case Value():
+            if args.expression:
+                print(res.dump(None).value)
+
 
 if __name__ == '__main__':
     main()

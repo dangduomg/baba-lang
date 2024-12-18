@@ -1,6 +1,5 @@
 """AST parser"""
 
-
 import ast
 from pathlib import Path
 from typing import Optional
@@ -11,27 +10,33 @@ from lark.tree import Meta
 from . import nodes
 
 
-grammar_path = Path(__file__).parent.parent / 'grammar.lark'
-common_opts = {'grammar_filename': grammar_path, 'parser': 'lalr', 'propagate_positions': True}
-body_parser = Lark.open(start='body', **common_opts)
-expr_parser = Lark.open(start='expr', **common_opts)
+grammar_path = Path(__file__).parent.parent / "grammar.lark"
+common_opts = {
+    "grammar_filename": grammar_path,
+    "parser": "lalr",
+    "propagate_positions": True,
+}
+body_parser = Lark.open(start="body", **common_opts)
+expr_parser = Lark.open(start="expr", **common_opts)
 
 
 class Extras(Transformer):
     """Transformer for transforming syntactic sugars and tokens"""
 
-    #pylint: disable=invalid-name
-    #pylint: disable=missing-function-docstring
-    #pylint: disable=unused-argument
-    #pylint: disable=too-many-arguments
+    # pylint: disable=invalid-name
+    # pylint: disable=missing-function-docstring
+    # pylint: disable=unused-argument
+    # pylint: disable=too-many-arguments
 
     @v_args(inline=True, meta=True)
-    def do_while_stmt(self, meta: Meta, body: nodes.Body, cond: nodes._Expr
-                      ) -> nodes.WhileStmt:
+    def do_while_stmt(
+        self, meta: Meta, body: nodes.Body, cond: nodes._Expr
+    ) -> nodes.WhileStmt:
         return nodes.WhileStmt(meta, cond, body, eval_condition_after=True)
 
     @v_args(inline=True, meta=True)
-    def for_stmt(self,
+    def for_stmt(
+        self,
         meta: Meta,
         initializer: Optional[nodes._Expr],
         condition: Optional[nodes._Expr],
@@ -53,7 +58,7 @@ class Extras(Transformer):
 
     @v_args(inline=True, meta=True)
     def include_stmt(self, meta: Meta, path: str) -> nodes._AstNode:
-        with open(path, encoding='utf=8') as f:
+        with open(path, encoding="utf=8") as f:
             return parse_to_ast(f.read())
 
     def INT(self, lexeme: str) -> int:
@@ -72,3 +77,8 @@ _to_ast = ast_utils.create_transformer(nodes, Extras())
 def parse_to_ast(src: str, parser: Lark = body_parser) -> nodes._AstNode:
     """Parse baba-lang source code to AST"""
     return _to_ast.transform(parser.parse(src))
+
+
+def parse_expr_to_ast(src: str) -> nodes._Expr:
+    """Parse baba-lang expression to AST"""
+    return _to_ast.transform(expr_parser.parse(src))
