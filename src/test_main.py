@@ -3,9 +3,9 @@
 
 from pytest import fixture
 
-from src.main import interpret, interpret_expr
-from src.interpreter import base, values, ASTInterpreter
-from src.interpreter.base import ExpressionResult
+from main import interpret, interpret_expr
+from interpreter import base, values, ASTInterpreter
+from interpreter.base import ExpressionResult
 
 @fixture
 def example_interp() -> ASTInterpreter:
@@ -57,13 +57,12 @@ def test_if(example_interp: ASTInterpreter):
 def test_loops(example_interp: ASTInterpreter):
     """Loop test"""
     interpret("""
-        res = [];
-        for (i = 0; i < 5; i += 2) {
-            list_push(res, i);
+        res = 0;
+        for (i = 1; i < 10; i += 1) {
+            res += i;
         }
     """, example_interp)
-    target_list = values.BLList([values.Int(0), values.Int(2), values.Int(4)])
-    assert example_interp.globals.get_var('res', meta=None).is_equal(target_list, meta=None)
+    assert example_interp.globals.get_var('res', meta=None).is_equal(values.Int(45), meta=None)
 
 
 def test_function(example_interp: ASTInterpreter):
