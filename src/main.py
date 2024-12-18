@@ -14,10 +14,19 @@ from bl_ast import parse_to_ast, expr_parser
 from interpreter import ASTInterpreter, Result, BLError
 
 
-argparser = ArgumentParser()
+VERSION = '0.4.0'
+
+
+argparser = ArgumentParser(prog='baba-lang')
 argparser.add_argument(
     'filename',
     nargs='?',
+)
+argparser.add_argument(
+    '-v', '--version',
+    dest='show version',
+    action='version',
+    version=f'%(prog)s {VERSION}'
 )
 argparser.add_argument(
     '-e', '--expression',
