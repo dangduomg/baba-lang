@@ -23,7 +23,8 @@ class Env:
     vars: dict[str, Var]
     parent: Optional['Env']
 
-    def __init__(self, vars_: Optional[dict[str, Var]] = None, parent: Optional['Env'] = None):
+    def __init__(self, vars_: Optional[dict[str, Var]] = None,
+                 parent: Optional['Env'] = None):
         if vars_ is None:
             self.vars = {}
         else:
@@ -43,7 +44,8 @@ class Env:
             case BLError():
                 return resolve_result
 
-    def set_var(self, name: str, value: Value, meta: Optional[Meta]) -> Optional[BLError]:
+    def set_var(self, name: str, value: Value, meta: Optional[Meta]
+                ) -> Optional[BLError]:
         """Assign to an existing variable name"""
         resolve_result = self.resolve_var(name, meta)
         match resolve_result:

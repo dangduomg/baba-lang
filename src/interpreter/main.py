@@ -1,6 +1,5 @@
 """AST interpreter"""
 
-
 from typing import Optional
 
 from bl_ast import nodes
@@ -16,7 +15,7 @@ from .env import Env
 class ASTInterpreter(ASTVisitor):
     """AST interpreter"""
 
-    #pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-return-statements
 
     globals: Env
     locals: Optional[Env] = None
@@ -38,7 +37,7 @@ class ASTInterpreter(ASTVisitor):
                              PythonFunction(colls.list_remove_at))
 
     def visit(self, node: nodes._AstNode) -> Result:
-        #pylint: disable=protected-access
+        # pylint: disable=protected-access
         match node:
             case nodes._Expr():
                 return self.visit_expr(node)
@@ -62,8 +61,10 @@ class ASTInterpreter(ASTVisitor):
                         return self.visit_stmt(body)
                     case values.Bool(False):
                         return Success()
-            case nodes.IfElseStmt(meta=meta, condition=condition,
-                                  then_body=then_body, else_body=else_body):
+            case nodes.IfElseStmt(
+                meta=meta, condition=condition,
+                then_body=then_body, else_body=else_body
+            ):
                 match cond := self.visit_expr(condition).to_bool(meta):
                     case BLError():
                         return cond
@@ -71,8 +72,12 @@ class ASTInterpreter(ASTVisitor):
                         return self.visit_stmt(then_body)
                     case values.Bool(False):
                         return self.visit_stmt(else_body)
-            case nodes.WhileStmt(meta=meta, condition=condition, body=body,
-                                 eval_condition_after=eval_condition_after):
+            case nodes.WhileStmt(
+                meta=meta,
+                condition=condition,
+                body=body,
+                eval_condition_after=eval_condition_after,
+            ):
                 eval_condition = not eval_condition_after
                 while True:
                     if eval_condition:
@@ -100,13 +105,15 @@ class ASTInterpreter(ASTVisitor):
                     return exits.Return(res)
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
-                self.globals.new_var(name, values.BLFunction(str(name), form_args, body, env))
+                self.globals.new_var(
+                    name, values.BLFunction(str(name), form_args, body, env)
+                )
                 return Success()
         return error_not_implemented
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
-        #pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals
         match node:
             case nodes.Exprs(expressions=expressions):
                 final_res = values.NULL
@@ -122,9 +129,13 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Inplace():
                 return self.visit_inplace(node)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
-                return self.visit_expr(left).binary_op(op, self.visit_expr(right), meta)
-            case nodes.Subscript(meta=meta, subscriptee=subscriptee, index=index):
-                return self.visit_expr(subscriptee).get_item(self.visit_expr(index), meta)
+                return self.visit_expr(left) \
+                           .binary_op(op, self.visit_expr(right), meta)
+            case nodes.Subscript(meta=meta, subscriptee=subscriptee,
+                                 index=index):
+                return self.visit_expr(subscriptee).get_item(
+                    self.visit_expr(index), meta
+                )
             case nodes.Call(meta=meta, callee=callee, args=args_in_ast):
                 args = []
                 for arg in args_in_ast.args:
@@ -137,7 +148,8 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_expr(operand).unary_op(op, meta)
             case nodes.Var(meta=meta, name=name):
                 if self.locals is not None:
-                    if isinstance(res := self.locals.get_var(name, meta), Value):
+                    res = self.locals.get_var(name, meta)
+                    if isinstance(res, Value):
                         return res
                 return self.globals.get_var(name, meta)
             case nodes.String(value=value):
@@ -169,7 +181,7 @@ class ASTInterpreter(ASTVisitor):
                 return values.BLDict(content)
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
-                return values.BLFunction('<anonymous>', form_args, body, env)
+                return values.BLFunction("<anonymous>", form_args, body, env)
         return error_not_implemented
 
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
@@ -184,7 +196,8 @@ class ASTInterpreter(ASTVisitor):
                 case nodes.VarPattern(name=name):
                     self.globals.new_var(name, value)
                     return value
-                case nodes.SubscriptPattern(subscriptee=subscriptee_, index=index_):
+                case nodes.SubscriptPattern(subscriptee=subscriptee_,
+                                            index=index_):
                     subscriptee = self.visit_expr(subscriptee_)
                     index = self.visit_expr(index_)
                     return subscriptee.set_item(index, value, meta)
