@@ -39,25 +39,12 @@ default_interp = ASTInterpreter()
 
 def interpret(src: str, interpreter: ASTInterpreter = default_interp) -> Result:
     """Interpret a script"""
-    match res := interpreter.visit(parse_to_ast(src)):
-        case BLError(value=msg, meta=meta):
-            match meta:
-                case Meta(line=line, column=column):
-                    raise RuntimeError(f'Error at line {line}, column {column}: {msg}')
-                case None:
-                    raise RuntimeError(f'Error: {msg}')
-        case _:
-            return res
+    return interpreter.visit(parse_to_ast(src))
 
 
 def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp) -> Result:
     """Interpret an expression"""
-    match res := interpreter.visit(parse_to_ast(src, expr_parser)):
-        case BLError(value=msg):
-            raise RuntimeError(f'Error: {msg}')
-        case _:
-            return res
-
+    return interpreter.visit(parse_to_ast(src, expr_parser))
 
 def main() -> None:
     """Main function"""
@@ -69,9 +56,16 @@ def main() -> None:
     with src_stream:
         src = src_stream.read()
     if args.expression:
-        print(interpret_expr(src))
+        res = interpret_expr(src)
     else:
-        interpret(src)
+        res = interpret(src)
+    match res:
+        case BLError(value=msg, meta=meta):
+            match meta:
+                case Meta(line=line, column=column):
+                    raise RuntimeError(f'Error at line {line}, column {column}: {msg}')
+                case None:
+                    raise RuntimeError(f'Error: {msg}')
 
 if __name__ == '__main__':
     main()
