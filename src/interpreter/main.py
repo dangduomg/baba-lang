@@ -3,12 +3,10 @@
 
 from typing import Optional
 
-from lark.tree import Meta
-
 from bl_ast import nodes
 from bl_ast.base import ASTVisitor
 
-from . import values, exits
+from . import values, exits, builtins as builtins_
 from .base import Result, ExpressionResult, Success, BLError, \
                   error_not_implemented
 from .values import Value, PythonFunction
@@ -26,10 +24,13 @@ class ASTInterpreter(ASTVisitor):
     def __init__(self):
         self.globals = Env()
         # Populate some builtins
-        self.globals.new_var('print', PythonFunction(self._print))
-        self.globals.new_var('print_dump', PythonFunction(self._print_dump))
-        self.globals.new_var('input', PythonFunction(self._input))
-        self.globals.new_var('int', PythonFunction(self._int))
+        self.globals.new_var('print', PythonFunction(builtins_.print_))
+        self.globals.new_var('print_dump', PythonFunction(builtins_.print_dump))
+        self.globals.new_var('input', PythonFunction(builtins_.input_))
+        self.globals.new_var('int', PythonFunction(builtins_.int_))
+        self.globals.new_var('float', PythonFunction(builtins_.float_))
+        self.globals.new_var('bool', PythonFunction(builtins_.bool_))
+        self.globals.new_var('str', PythonFunction(builtins_.str_))
 
     def visit(self, node: nodes._AstNode) -> Result:
         #pylint: disable=protected-access
@@ -221,54 +222,4 @@ class ASTInterpreter(ASTVisitor):
                     value = new_result
                     subscriptee.set_item(index, value, meta)
                     return value
-        return error_not_implemented.set_meta(meta)
-
-
-    # Builtins
-
-    def _print(
-        self,
-        meta: Optional[Meta],
-        interpreter: 'ASTInterpreter',
-        /,
-        *args: Value
-    ) -> values.Null:
-        #pylint: disable=unused-argument
-        print(*(arg.to_string(meta).value for arg in args))
-        return values.NULL
-
-    def _print_dump(
-        self,
-        meta: Optional[Meta],
-        interpreter: 'ASTInterpreter',
-        /,
-        *args: Value
-    ) -> values.Null:
-        #pylint: disable=unused-argument
-        print(*(arg.dump(meta) for arg in args))
-        return values.NULL
-
-    def _input(
-        self,
-        meta: Optional[Meta],
-        interpreter: 'ASTInterpreter',
-        /,
-        *args: Value
-    ) -> values.String:
-        #pylint: disable=unused-argument
-        return values.String(input(args[0].to_string(meta).value if args else ''))
-
-    def _int(
-        self,
-        meta: Optional[Meta],
-        interpreter: 'ASTInterpreter',
-        /,
-        *args: Value
-    ) -> values.Int | BLError:
-        #pylint: disable=unused-argument
-        match args[0]:
-            case values.String(value=value):
-                return values.Int(int(value))
-            case values.Int():
-                return args[0]
         return error_not_implemented.set_meta(meta)
