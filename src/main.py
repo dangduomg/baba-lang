@@ -15,6 +15,7 @@ from interpreter import ASTInterpreter, Result, BLError
 
 
 VERSION = '0.4.0'
+VERSION_STRING = f'%(prog)s {VERSION}'
 
 
 argparser = ArgumentParser(prog='baba-lang')
@@ -26,10 +27,14 @@ argparser.add_argument(
     '-v', '--version',
     dest='show version',
     action='version',
-    version=f'%(prog)s {VERSION}'
+    version=VERSION_STRING,
 )
 argparser.add_argument(
     '-e', '--expression',
+    action='store_true',
+)
+argparser.add_argument(
+    '-i', '--interactive',
     action='store_true',
 )
 
