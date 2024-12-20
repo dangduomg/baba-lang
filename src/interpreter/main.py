@@ -135,7 +135,7 @@ class ASTInterpreter(ASTVisitor):
                 with open(path, encoding='utf-8') as f:
                     src = f.read()
                     try:
-                        include_ast = parse_to_ast(path)
+                        include_ast = parse_to_ast(src)
                     except UnexpectedInput as e:
                         return error_include_syntax.fill_args(
                             f"{e.get_context(src)}\n{e}"
@@ -149,6 +149,8 @@ class ASTInterpreter(ASTVisitor):
                             return error_inside_include.fill_args(
                                 meta.line, meta.column, msg,
                             )
+                        case Success():
+                            return Success()
         return error_not_implemented.set_meta(node.meta)
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
