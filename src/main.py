@@ -31,18 +31,17 @@ argparser.add_argument(
 )
 argparser.add_argument(
     '-v', '--version',
-    dest='Show version',
     action='version',
     version=VERSION_STRING,
 )
 argparser.add_argument(
     '-e', '--expression',
-    dest='Evaluate an expression',
+    help='Evaluate an expression',
     action='store_true',
 )
 argparser.add_argument(
     '-i', '--interactive',
-    dest='Enter interactive shell',
+    help='Enter interactive shell',
     action='store_true',
 )
 
