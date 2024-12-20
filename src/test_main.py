@@ -1,11 +1,11 @@
 """Unit tests"""
 
-
 from pytest import fixture
 
 from main import interpret, interpret_expr
 from interpreter import base, values, ASTInterpreter
 from interpreter.base import ExpressionResult
+
 
 @fixture
 def example_interp() -> ASTInterpreter:
@@ -13,7 +13,7 @@ def example_interp() -> ASTInterpreter:
     return ASTInterpreter()
 
 
-#pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name
 
 
 def test_expression(example_interp: ASTInterpreter):
@@ -33,12 +33,15 @@ def test_error(example_interp: ASTInterpreter):
 def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
     interpret("a = 3;", example_interp)
-    assert example_interp.globals.get_var('a', meta=None).is_equal(values.Int(3), meta=None)
+    assert example_interp.globals.get_var("a", meta=None).is_equal(
+        values.Int(3), meta=None
+    )
 
 
 def test_if(example_interp: ASTInterpreter):
     """Test for conditional block"""
-    interpret("""
+    interpret(
+        """
         age = 18;
         if age < 0 {
             res = 'error';
@@ -49,25 +52,34 @@ def test_if(example_interp: ASTInterpreter):
         } else {
             res = 'error';
         }
-    """, example_interp)
-    assert example_interp.globals.get_var('res', meta=None) \
-                                 .is_equal(values.String('adult'), meta=None)
+    """,
+        example_interp,
+    )
+    assert example_interp.globals.get_var("res", meta=None).is_equal(
+        values.String("adult"), meta=None
+    )
 
 
 def test_loops(example_interp: ASTInterpreter):
     """Loop test"""
-    interpret("""
+    interpret(
+        """
         res = 0;
         for (i = 1; i < 10; i += 1) {
             res += i;
         }
-    """, example_interp)
-    assert example_interp.globals.get_var('res', meta=None).is_equal(values.Int(45), meta=None)
+    """,
+        example_interp,
+    )
+    assert example_interp.globals.get_var("res", meta=None).is_equal(
+        values.Int(45), meta=None
+    )
 
 
 def test_function(example_interp: ASTInterpreter):
     """Function test"""
-    interpret("""
+    interpret(
+        """
         fun fact(n) {
             if n <= 0 {
                 return 1;
@@ -76,6 +88,9 @@ def test_function(example_interp: ASTInterpreter):
             }
         }
         res = fact(10);
-    """, example_interp)
-    assert example_interp.globals.get_var('res', meta=None) \
-                                 .is_equal(values.Int(3628800), meta=None)
+    """,
+        example_interp,
+    )
+    assert example_interp.globals.get_var("res", meta=None).is_equal(
+        values.Int(3628800), meta=None
+    )
