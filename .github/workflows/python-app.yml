@@ -5,9 +5,9 @@ name: Python application
 
 on:
   push:
-    branches: [ "2nd-rewrite" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "2nd-rewrite" ]
+    branches: [ "main" ]
 
 permissions:
   contents: read
