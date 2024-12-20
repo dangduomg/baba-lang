@@ -1,0 +1,154 @@
+body: stmt*
+
+// Statement grammar
+
+?stmt: expr_stmt
+     | if_stmt
+     | if_else_stmt
+     | while_stmt
+     | do_while_stmt
+     | for_stmt
+     | break_stmt
+     | continue_stmt
+     | return_stmt
+     | include_stmt
+     | function_stmt
+     | module_stmt
+
+include_stmt: _INCLUDE STRING ";"
+
+return_stmt: _RETURN [expr] ";"
+
+if_stmt: _IF expr "{" body "}"
+
+if_else_stmt: _IF expr "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" body "}")
+
+while_stmt: _WHILE expr "{" body "}"
+
+do_while_stmt: _DO "{" body "}" _WHILE expr ";"
+
+for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
+
+break_stmt: _BREAK ";"
+continue_stmt: _CONTINUE ";"
+
+function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
+
+module_stmt: _MODULE IDENT "{" body "}"
+
+?expr_stmt: exprs ";"
+
+// Expression grammar
+
+?exprs: _comma_list{expr}
+
+?expr: assign
+
+?assign: pattern "=" assign
+       | pattern INPLACE_OP assign -> inplace
+       | comp
+INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|=" | "^=" | "<<=" | ">>="
+
+?pattern: IDENT -> var_pattern
+        | postfix "[" expr "]" -> subscript_pattern
+
+?comp: bit_or COMP_OP bit_or -> binary_op
+     | bit_or
+COMP_OP: "==" | "!=" | "<" | "<=" | ">" | ">="
+
+?bit_or: bit_or BIT_OR_OP bit_and -> binary_op
+       | bit_and
+BIT_OR_OP: "|" | "^"
+
+?bit_and: bit_and BIT_AND_OP shift -> binary_op
+        | shift
+BIT_AND_OP: "&"
+
+?shift: shift SHIFT_OP sum -> binary_op
+      | sum
+SHIFT_OP: "<<" | ">>"
+
+?sum: sum SUM_OP prod -> binary_op
+    | prod
+SUM_OP: "+" | "-"
+
+?prod: prod PROD_OP prefix -> binary_op
+     | prefix
+PROD_OP: "*" | "/" | "%/%" | "%"
+
+?prefix: PREFIX_OP prefix
+       | postfix
+PREFIX_OP: "+" | "-" | "~" | "!"
+
+?postfix: postfix POW_OP prefix -> binary_op
+        | postfix "(" spec_args ")" -> call
+        | postfix "[" expr "]" -> subscript
+        | postfix "." IDENT -> dot
+        | atom
+spec_args: _comma_list{expr}?
+POW_OP: "**"
+
+?atom: literal
+     | IDENT -> var
+     | "(" expr ")"
+
+literal: STRING -> string
+       | INT -> int
+       | FLOAT -> float
+       | _TRUE -> true_literal
+       | _FALSE -> false_literal
+       | _NULL -> null_literal
+       | _FUNCTION "(" form_args ")" "{" body "}" -> function_literal
+       | "[" _comma_list{expr}? "]" -> list
+       | "{" _comma_list{pair}? "}" -> dict
+
+// Misc
+
+form_args: _comma_list{IDENT}?
+
+pair: expr ":" expr
+
+// Templates
+
+_comma_list{e}: e ("," e)*
+
+// Tokens
+
+STRING: STRING_DQUOTE
+      | STRING_SQUOTE
+STRING_DQUOTE: "\"" _STRING_ESC_INNER "\""
+STRING_SQUOTE: "'" _STRING_ESC_INNER "'"
+_STRING_INNER: /.*?/
+_STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
+
+IDENT: /(?!/ RESERVED  /)/ CNAME /\b/
+
+RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE
+        | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE
+_TRUE: /true\b/
+_FALSE: /false\b/
+_NULL: /null\b/
+_FUNCTION: /fun\b/
+_RETURN: /return\b/
+_IF: /if\b/
+_ELSE: /else\b/
+_WHILE: /while\b/
+_DO: /do\b/
+_FOR: /for\b/
+_BREAK: /break\b/
+_CONTINUE: /continue\b/
+_INCLUDE: /include\b/
+_MODULE: /module\b/
+
+%import common.CNAME
+%import common.INT
+%import common.FLOAT
+%import common.SH_COMMENT
+%import common.C_COMMENT
+%import common.CPP_COMMENT
+%import common.WS
+
+%ignore SH_COMMENT
+%ignore C_COMMENT
+%ignore CPP_COMMENT
+%ignore WS
