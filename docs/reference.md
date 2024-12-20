@@ -72,9 +72,9 @@ return <value>;
 ```
 Returns a `value` from a function.
 
-### \include
+### include
 ```
-\include <file>;
+include <file>;
 ```
 Evaluate the file `file` (must be a string) as if it were literally included into the current source file.
 
