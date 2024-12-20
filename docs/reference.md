@@ -10,18 +10,18 @@ Block statements include:
 
 ### if
 ```
-if (<condition>) { <code> }
-if (<condition>) { <then_code> } else { <else_code> }
+if <condition> { <code> }
+if <condition> { <then_code> } else { <else_code> }
 ```
 In the first variant, if `condition` is true, `code` is executed.
 In the second variant, also called `if..else`, if `condition` is true, `then_code` is executed. Otherwise, `else_code` is executed.
-`if..else` statements can be chained together as in (excerpt from tests/fizzbuzz.txt)
+`if..else` statements can be chained together as in
 ```
-if (i % 15 == 0) {
+if i % 15 == 0 {
   print(str(i) + ": fizzbuzz");
-} else if (i % 5 == 0) {
+} else if i % 5 == 0 {
   print(str(i) + ": buzz");
-} else if (i % 3 == 0) {
+} else if i % 3 == 0 {
   print(str(i) + ": fizz");
 } else {
   print(str(i) + ":");
@@ -30,8 +30,8 @@ if (i % 15 == 0) {
 
 ### while, do..while
 ```
-while (<condition>) { <code> }
-do { <code> } while (<condition>);
+while <condition> { <code> }
+do { <code> } while <condition>;
 ```
 In the first variant, while `condition` is true, `code` is executed (i.e. it repeats until `condition` is false or terminated early by `break` or `return`).
 In the second variant, also called `do..while`, `code` is executed before `condition` is checked.
@@ -43,7 +43,7 @@ for ([<init>]; [<condition>]; [<update>]) { <code> }
 Is basically equivalent to:
 ```
 <init>;
-while (<condition>) {
+while <condition> {
   <code>;
   <update>;
 }
@@ -72,9 +72,9 @@ return <value>;
 ```
 Returns a `value` from a function.
 
-### \include
+### include
 ```
-\include <file>;
+include <file>;
 ```
 Evaluate the file `file` (must be a string) as if it were literally included into the current source file.
 
