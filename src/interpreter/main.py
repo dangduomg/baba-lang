@@ -2,12 +2,15 @@
 
 from typing import Optional
 
-from bl_ast import nodes
+from lark.exceptions import UnexpectedInput
+
+from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
 from . import built_ins, values, exits, colls
 from .base import Result, ExpressionResult, Success, BLError, \
-                  error_not_implemented
+                  error_not_implemented, error_include_syntax, \
+                  error_inside_include
 from .values import Value, PythonFunction
 from .env import Env
 
@@ -17,10 +20,14 @@ class ASTInterpreter(ASTVisitor):
 
     # pylint: disable=too-many-return-statements
 
+    path: str
+
     globals: Env
     locals: Optional[Env] = None
 
-    def __init__(self):
+    def __init__(self, path=''):
+        self.path = path
+
         self.globals = Env()
         # Populate some builtins
         self.globals.new_var("print", PythonFunction(built_ins.print_))
@@ -35,6 +42,9 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("list_insert", PythonFunction(colls.list_insert))
         self.globals.new_var("list_remove_at",
                              PythonFunction(colls.list_remove_at))
+        self.globals.new_var("dict_size", PythonFunction(colls.dict_size))
+        self.globals.new_var("dict_keys", PythonFunction(colls.dict_keys))
+        self.globals.new_var("dict_remove", PythonFunction(colls.dict_remove))
 
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access
@@ -121,6 +131,24 @@ class ASTInterpreter(ASTVisitor):
                     self.globals = self.globals.parent
                 self.globals.new_var(name, values.Module(name, vars_))
                 return Success()
+            case nodes.IncludeStmt(path=path):
+                with open(path, encoding='utf-8') as f:
+                    src = f.read()
+                    try:
+                        include_ast = parse_to_ast(path)
+                    except UnexpectedInput as e:
+                        return error_include_syntax.fill_args(
+                            f"{e.get_context(src)}\n{e}"
+                        )
+                    match res := self.visit(include_ast):
+                        case BLError(value=msg, meta=meta):
+                            if meta is None:
+                                return error_inside_include.fill_args(
+                                    "n/a", "n/a", msg,
+                                )
+                            return error_inside_include.fill_args(
+                                meta.line, meta.column, msg,
+                            )
         return error_not_implemented.set_meta(node.meta)
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
@@ -149,6 +177,7 @@ class ASTInterpreter(ASTVisitor):
                     self.visit_expr(index), meta
                 )
             case nodes.Call(meta=meta, callee=callee, args=args_in_ast):
+                # Visit all args, stop if one is an error
                 args = []
                 for arg in args_in_ast.args:
                     arg_visited = self.visit_expr(arg)
@@ -158,6 +187,8 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_expr(callee).call(args, self, meta)
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, meta)
+            case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
+                return self.visit_expr(accessee).get_attr(attr, meta)
             case nodes.Var(meta=meta, name=name):
                 if self.locals is not None:
                     res = self.locals.get_var(name, meta)
@@ -208,8 +239,10 @@ class ASTInterpreter(ASTVisitor):
                 case nodes.VarPattern(name=name):
                     self.globals.new_var(name, value)
                     return value
-                case nodes.SubscriptPattern(subscriptee=subscriptee_,
-                                            index=index_):
+                case nodes.SubscriptPattern(
+                    subscriptee=subscriptee_,
+                    index=index_,
+                ):
                     subscriptee = self.visit_expr(subscriptee_)
                     index = self.visit_expr(index_)
                     return subscriptee.set_item(index, value, meta)

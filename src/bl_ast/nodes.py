@@ -11,7 +11,7 @@ from lark.tree import Meta
 from .base import _AstNode
 
 
-#pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods
 
 
 # Statements
@@ -19,6 +19,7 @@ from .base import _AstNode
 
 class _Stmt(_AstNode):
     """Statement base class"""
+    meta: Meta
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,7 @@ class ModuleStmt(_Stmt):
 
 class _Expr(_Stmt):
     """Expression base class"""
+    meta: Meta
 
 
 @dataclass(frozen=True)
