@@ -14,6 +14,7 @@ from .base import (
     NULL,
     error_out_of_range,
     error_key_nonexistent,
+    error_module_var_nonexistent,
 )
 
 if TYPE_CHECKING:
@@ -144,3 +145,57 @@ class BLDict(Value):
 
     def to_bool(self, meta):
         return BOOLS[bool(self.content)]
+
+
+def dict_size(
+    meta: Optional[Meta],
+    interpreter: "ASTInterpreter",
+    /,
+    dict_: BLDict,
+    *_
+) -> Int:
+    """Get length (number of elements) of a dictionary"""
+    # pylint: disable=unused-argument
+    return Int(len(dict_.content))
+
+
+def dict_keys(
+    meta: Optional[Meta],
+    interpreter: "ASTInterpreter",
+    /,
+    dict_: BLDict,
+    *_
+) -> BLList:
+    """Get all keys of a dictionary as a list"""
+    # pylint: disable=unused-argument
+    return BLList(list(dict_.content))
+
+
+def dict_remove(
+    meta: Optional[Meta],
+    interpreter: "ASTInterpreter",
+    /,
+    dict_: BLDict,
+    key: Value,
+    *_
+) -> Null:
+    """Remove a key from a dictionary"""
+    # pylint: disable=unused-argument
+    del dict_.content[key]
+    return NULL
+
+
+@dataclass(frozen=True)
+class Module(Value):
+    """baba-lang module"""
+
+    name: str
+    vars: dict[str, Value]
+
+    def get_attr(self, attr, meta):
+        try:
+            return self.vars[attr]
+        except KeyError:
+            return error_module_var_nonexistent \
+                   .fill_args(self.name, str(attr)) \
+                   .set_meta(meta)

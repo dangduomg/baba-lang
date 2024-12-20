@@ -96,6 +96,14 @@ class FormArgs(_AstNode, AsList):
     args: list[Token]
 
 
+@dataclass(frozen=True)
+class ModuleStmt(_Stmt):
+    """Module"""
+    meta: Meta
+    name: Token
+    body: Body
+
+
 # Expressions
 
 

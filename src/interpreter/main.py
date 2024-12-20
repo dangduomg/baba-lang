@@ -109,7 +109,19 @@ class ASTInterpreter(ASTVisitor):
                     name, values.BLFunction(str(name), form_args, body, env)
                 )
                 return Success()
-        return error_not_implemented
+            case nodes.ModuleStmt(name=name, body=body):
+                # Create new environment
+                self.globals = Env(parent=self.globals)
+                # Evaluate the body
+                self.visit_stmt(body)
+                vars_ = {str(name): var.value
+                         for name, var in self.globals.vars.items()}
+                # Clean up
+                if self.globals.parent is not None:
+                    self.globals = self.globals.parent
+                self.globals.new_var(name, values.Module(name, vars_))
+                return Success()
+        return error_not_implemented.set_meta(node.meta)
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""

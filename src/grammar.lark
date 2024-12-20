@@ -13,6 +13,7 @@ body: stmt*
      | return_stmt
      | include_stmt
      | function_stmt
+     | module_stmt
 
 include_stmt: _INCLUDE STRING ";"
 
@@ -33,6 +34,8 @@ continue_stmt: _CONTINUE ";"
 
 function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
 
+module_stmt: _MODULE IDENT "{" body "}"
+
 ?expr_stmt: exprs ";"
 
 // Expression grammar
@@ -46,7 +49,7 @@ function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
        | comp
 INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|=" | "^=" | "<<=" | ">>="
 
-?pattern: IDENT                -> var_pattern
+?pattern: IDENT -> var_pattern
         | postfix "[" expr "]" -> subscript_pattern
 
 ?comp: bit_or COMP_OP bit_or -> binary_op
@@ -80,6 +83,7 @@ PREFIX_OP: "+" | "-" | "~" | "!"
 ?postfix: postfix POW_OP prefix -> binary_op
         | postfix "(" spec_args ")" -> call
         | postfix "[" expr "]" -> subscript
+        | postfix "." IDENT -> dot
         | atom
 spec_args: _comma_list{expr}?
 POW_OP: "**"
@@ -119,20 +123,22 @@ _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
 IDENT: /(?!/ RESERVED  /)/ CNAME /\b/
 
-RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE
-_TRUE: "true"
-_FALSE: "false"
-_NULL: "null"
-_FUNCTION: "fun"
-_RETURN: "return"
-_IF: "if"
-_ELSE: "else"
-_WHILE: "while"
-_DO: "do"
-_FOR: "for"
-_BREAK: "break"
-_CONTINUE: "continue"
-_INCLUDE: "\\include"
+RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE
+        | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE
+_TRUE: /true\b/
+_FALSE: /false\b/
+_NULL: /null\b/
+_FUNCTION: /fun\b/
+_RETURN: /return\b/
+_IF: /if\b/
+_ELSE: /else\b/
+_WHILE: /while\b/
+_DO: /do\b/
+_FOR: /for\b/
+_BREAK: /break\b/
+_CONTINUE: /continue\b/
+_INCLUDE: /include\b/
+_MODULE: /module\b/
 
 %import common.CNAME
 %import common.INT
