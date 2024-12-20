@@ -5,8 +5,10 @@ video game "Baba is You".
 """
 
 
+import os
 import sys
-import logging
+from typing import Optional
+from collections.abc import Callable
 from argparse import ArgumentParser
 
 from lark.exceptions import UnexpectedInput
@@ -24,7 +26,7 @@ VERSION_STRING = f'%(prog)s {VERSION}'
 
 argparser = ArgumentParser(prog=PROG)
 argparser.add_argument(
-    'filename',
+    'path',
     nargs='?',
 )
 argparser.add_argument(
@@ -43,9 +45,6 @@ argparser.add_argument(
 )
 
 
-logging.basicConfig()
-
-
 default_interp = ASTInterpreter()
 
 
@@ -61,37 +60,67 @@ def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp
     return interpreter.visit_expr(parse_expr_to_ast(src))
 
 
+def handle_errors(error: BLError) -> None:
+    """Print errors nicely"""
+    match error:
+        case BLError(value=msg, meta=meta):
+            match meta:
+                case Meta(line=line, column=column):
+                    print(
+                        f'Runtime error at line {line}, column {column}:',
+                        msg,
+                        sep='\n',
+                    )
+                case None:
+                    print('Error:')
+                    print(msg)
+
+
+def interp_with_error_handling(
+    interp_func: Callable,
+    src: str,
+    interpreter: Optional[ASTInterpreter] = None,
+) -> ExpressionResult | UnexpectedInput:
+    """Interpret with error handling"""
+    try:
+        if interpreter is None:
+            res = interp_func(src)
+        else:
+            res = interp_func(src, interpreter)
+    except UnexpectedInput as e:
+        print('%s', 'Syntax error:')
+        print()
+        print(e.get_context(src))
+        print(e)
+        return e
+    handle_errors(res)
+    return res
+
+
 def main() -> int:
     """Main function"""
     args = argparser.parse_args()
     if args.interactive:
         return main_interactive()
-    if args.filename is None:
+    if args.path is None:
+        path = ''
         src_stream = sys.stdin
     else:
-        src_stream = open(args.filename, encoding='utf-8')
+        path = os.path.abspath(args.path)
+        src_stream = open(args.path, encoding='utf-8')
     with src_stream:
         src = src_stream.read()
-    try:
-        if args.expression:
-            res = interpret_expr(src)
-        else:
-            res = interpret(src)
-    except UnexpectedInput as e:
-        print()
-        print(e.get_context(src))  # type: ignore
-        print(e)
-        return 1
-    match res:
-        case BLError(value=msg, meta=meta):
-            match meta:
-                case Meta(line=line, column=column):
-                    logging.error(
-                        '[line %d, column %d] %s',
-                        line, column, msg
-                    )
-                case None:
-                    logging.error('%s', msg)
+    if args.expression:
+        interp_func = interpret_expr
+    else:
+        interp_func = interpret
+    match res := interp_with_error_handling(
+        interp_func,
+        src,
+        ASTInterpreter(path)
+    ):
+        case UnexpectedInput() | BLError():
+            return 1
         case Value():
             if args.expression:
                 print(res.dump(None).value)
@@ -108,24 +137,14 @@ def main_interactive() -> int:
                 match res := interpret_expr(input_):
                     case Value():
                         print(res.dump(None).value)
-                    case BLError(value=msg):
-                        print(f'Error: {msg}')
+                    case BLError():
+                        handle_errors(res)
             except UnexpectedInput:
-                pass
-            else:
-                continue
-            match interpret(input_):
-                case BLError(value=msg):
-                    print(f'Error: {msg}')
+                interp_with_error_handling(interpret, input_, default_interp)
         except KeyboardInterrupt:
             print()
         except EOFError:
             return 0
-        except UnexpectedInput as e:
-            print()
-            print(e.get_context(input_))  # type: ignore
-            print(e)
-            return 1
 
 
 if __name__ == '__main__':
