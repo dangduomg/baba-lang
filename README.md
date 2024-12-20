@@ -38,9 +38,11 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
     subject = subjects[i];
     verb = verbs[i];
     object = objects[i];
-    # right now & and | is the only way to combine booleans :sob:
-    if ((subject == 'BABA') & (verb == 'HAS')) {
-        verb = 'IS';
+    # right now this is the only way to combine booleans :sob:
+    if subject == 'BABA' {
+        if verb == 'HAS' {
+            verb = 'IS';
+        }
     }
     print(subject + ' ' + verb + ' ' + object);
 }
