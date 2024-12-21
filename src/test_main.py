@@ -94,3 +94,26 @@ def test_function(example_interp: ASTInterpreter):
     assert example_interp.globals.get_var("res", meta=None).is_equal(
         values.Int(3628800), meta=None
     )
+
+
+def test_closure(example_interp: ASTInterpreter):
+    """Test for closure support"""
+    interpret(
+        """
+        fun counter() {
+            i = 0;
+            return fun() {
+                i += 1;
+                return i;
+            };
+        }
+        my_counter = counter();
+        my_counter();
+        my_counter();
+        res = my_counter();
+    """,
+        example_interp,
+    )
+    assert example_interp.globals.get_var("res", meta=None).is_equal(
+        values.Int(3), meta=None
+    )
