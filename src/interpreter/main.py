@@ -174,6 +174,22 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_assign(node)
             case nodes.Inplace():
                 return self.visit_inplace(node)
+            case nodes.And(left=left, op=op, right=right):
+                match left_res := self.visit_expr(left).to_bool(left.meta):
+                    case BLError():
+                        return left_res
+                    case values.Bool(True):
+                        return left_res
+                    case values.Bool(False):
+                        return self.visit_expr(right)
+            case nodes.Or(left=left, op=op, right=right):
+                match left_res := self.visit_expr(left).to_bool(left.meta):
+                    case BLError():
+                        return left_res
+                    case values.Bool(False):
+                        return left_res
+                    case values.Bool(True):
+                        return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
                 return self.visit_expr(left) \
                            .binary_op(op, self.visit_expr(right), meta)

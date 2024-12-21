@@ -198,6 +198,10 @@ class ExpressionResult(Result):
                 return self.plus(meta)
             case "-":
                 return self.neg(meta)
+            case "~":
+                return self.bit_not(meta)
+            case "!":
+                return self.logical_not(meta)
         return error_not_implemented.set_meta(meta)
 
     def plus(self, meta: Optional[Meta]) -> "ExpressionResult":
@@ -206,6 +210,14 @@ class ExpressionResult(Result):
 
     def neg(self, meta: Optional[Meta]) -> "ExpressionResult":
         """Negation"""
+        return error_not_implemented.set_meta(meta)
+
+    def bit_not(self, meta: Optional[Meta]) -> "ExpressionResult":
+        """Bitwise not"""
+        return error_not_implemented.set_meta(meta)
+
+    def logical_not(self, meta: Optional[Meta]) -> "ExpressionResult":
+        """Logical not"""
         return error_not_implemented.set_meta(meta)
 
     def get_item(
@@ -290,6 +302,21 @@ string"""
     def floor_div(self, other, meta) -> Self:
         return self
 
+    def bitwise_and(self, other, meta) -> Self:
+        return self
+
+    def bitwise_or(self, other, meta) -> Self:
+        return self
+
+    def bitwise_xor(self, other, meta) -> Self:
+        return self
+
+    def left_shift(self, other, meta) -> Self:
+        return self
+
+    def right_shift(self, other, meta) -> Self:
+        return self
+
     def is_equal(self, other, meta) -> Self:
         return self
 
@@ -312,6 +339,12 @@ string"""
         return self
 
     def neg(self, meta) -> Self:
+        return self
+
+    def bit_not(self, meta) -> Self:
+        return self
+
+    def logical_not(self, meta) -> Self:
         return self
 
     def get_item(self, index, meta) -> Self:
@@ -358,6 +391,9 @@ class Value(ExpressionResult):
 
     def is_not_equal(self, other, meta) -> "Bool":
         return BOOLS[self is not other]
+
+    def logical_not(self, meta) -> "Bool":
+        return BOOLS[not self.to_bool(meta)]
 
     def dump(self, meta) -> "String":
         return String("<value>")
@@ -597,6 +633,9 @@ class Int(Value):
 
     def neg(self, meta):
         return Int(-self.value)
+
+    def bit_not(self, meta):
+        return Int(~self.value)
 
     def dump(self, meta):
         return String(repr(self.value))

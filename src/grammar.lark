@@ -2,8 +2,7 @@ body: stmt*
 
 // Statement grammar
 
-?stmt: expr_stmt
-     | if_stmt
+?stmt: if_stmt
      | if_else_stmt
      | while_stmt
      | do_while_stmt
@@ -14,6 +13,8 @@ body: stmt*
      | include_stmt
      | function_stmt
      | module_stmt
+     | exprs ";"
+     | ";" -> nop_stmt
 
 include_stmt: _INCLUDE STRING ";"
 
@@ -36,8 +37,6 @@ function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
 
 module_stmt: _MODULE IDENT "{" body "}"
 
-?expr_stmt: exprs ";"
-
 // Expression grammar
 
 ?exprs: _comma_list{expr}
@@ -46,11 +45,20 @@ module_stmt: _MODULE IDENT "{" body "}"
 
 ?assign: pattern "=" assign
        | pattern INPLACE_OP assign -> inplace
-       | comp
-INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|=" | "^=" | "<<=" | ">>="
+       | or
+INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|="
+          | "^=" | "<<=" | ">>="
 
 ?pattern: IDENT -> var_pattern
         | postfix "[" expr "]" -> subscript_pattern
+
+?or: and OR_OP or
+   | and
+OR_OP: "||"
+
+?and: comp AND_OP and
+    | comp
+AND_OP: "&&"
 
 ?comp: bit_or COMP_OP bit_or -> binary_op
      | bit_or

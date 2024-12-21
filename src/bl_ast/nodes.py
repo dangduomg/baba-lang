@@ -163,6 +163,24 @@ class SubscriptPattern(_Pattern):
 
 
 @dataclass(frozen=True)
+class Or(_Expr):
+    """Or operation"""
+    meta: Meta
+    left: _Expr
+    op: Token
+    right: _Expr
+
+
+@dataclass(frozen=True)
+class And(_Expr):
+    """And operation"""
+    meta: Meta
+    left: _Expr
+    op: Token
+    right: _Expr
+
+
+@dataclass(frozen=True)
 class BinaryOp(_Expr):
     """Binary operations"""
     meta: Meta

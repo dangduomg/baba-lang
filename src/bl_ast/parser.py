@@ -4,7 +4,8 @@ import ast
 from pathlib import Path
 from typing import Optional
 
-from lark import Lark, Transformer, ast_utils, v_args
+from lark import Lark, ast_utils, v_args
+from lark.visitors import Transformer, Discard, _DiscardType
 from lark.tree import Meta
 
 from . import nodes
@@ -55,6 +56,9 @@ class Extras(Transformer):
         loop = nodes.WhileStmt(meta, condition, loop_body)
         statements.append(loop)
         return nodes.Body(meta, statements)
+
+    def nop_stmt(self, children: list) -> _DiscardType:
+        return Discard
 
     def INT(self, lexeme: str) -> int:
         return int(lexeme)
