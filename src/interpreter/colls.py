@@ -199,3 +199,6 @@ class Module(Value):
             return error_module_var_nonexistent \
                    .fill_args(self.name, str(attr)) \
                    .set_meta(meta)
+
+    def dump(self, meta):
+        return String(f"<module '{self.name}'>")
