@@ -43,6 +43,7 @@ argparser.add_argument(
     '-i', '--interactive',
     help='Enter interactive shell',
     action='store_true',
+    default=True,
 )
 
 
