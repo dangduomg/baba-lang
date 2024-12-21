@@ -1,0 +1,8 @@
+/*
+ * format.bl -- formatting functions
+ */
+
+
+module Format {
+    format = py_method('builtins', 'str', 'format');
+}
