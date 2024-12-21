@@ -7,7 +7,7 @@ from lark.exceptions import UnexpectedInput
 from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
-from . import built_ins, values, exits, colls
+from . import built_ins, values, exits, colls, function
 from .base import Result, ExpressionResult, Success, BLError, \
                   error_not_implemented, error_include_syntax, \
                   error_inside_include
@@ -45,6 +45,8 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("dict_size", PythonFunction(colls.dict_size))
         self.globals.new_var("dict_keys", PythonFunction(colls.dict_keys))
         self.globals.new_var("dict_remove", PythonFunction(colls.dict_remove))
+        self.globals.new_var("py_function",
+                             PythonFunction(function.py_function))
 
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access

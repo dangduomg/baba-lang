@@ -3,6 +3,8 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Protocol, TYPE_CHECKING
+from collections.abc import Callable
+from importlib import import_module
 
 from lark.tree import Meta
 
@@ -13,10 +15,16 @@ from .base import (
     Value,
     Success,
     String,
+    Int,
+    Float,
+    Bool,
+    BOOLS,
+    Null,
     NULL,
     error_not_implemented,
     error_wrong_argc,
 )
+from .colls import BLList, BLDict
 from .exits import Return
 from .env import Env
 
@@ -89,3 +97,62 @@ class PythonFunction(Value):
 
     def to_string(self, meta):
         return String(f"<python function '{self.function.__name__}'>")
+
+
+@dataclass(frozen=True)
+class PythonValue(Value):
+    """Python value. Returned by calling ConvenientPythonWrapper"""
+
+    value: object
+
+
+@dataclass(frozen=True)
+class ConvenientPythonWrapper(PythonFunction):
+    """Convenient wrapper for Python functions to baba-lang"""
+
+    function: Callable
+
+    def call(self, args, interpreter, meta):
+        # pylint: disable=too-many-return-statements
+        args_to_py = []
+        for arg in args:
+            match arg:
+                case Int(value=value) | Float(value=value) \
+                   | Bool(value=value) | String(value=value) \
+                   | BLList(elems=value) | BLDict(content=value):
+                    args_to_py.append(value)
+                case Null():
+                    args_to_py.append(None)
+                case _:
+                    return error_not_implemented.set_meta(meta)
+        res = self.function(*args_to_py)
+        if isinstance(res, int):
+            return Int(res)
+        if isinstance(res, float):
+            return Float(res)
+        if isinstance(res, bool):
+            return BOOLS[res]
+        if res is None:
+            return NULL
+        if isinstance(res, str):
+            return String(res)
+        if isinstance(res, list):
+            return BLList(res)
+        if isinstance(res, dict):
+            return BLDict(res)
+        return PythonValue(res)
+
+
+def py_function(
+    meta: Optional[Meta],
+    interpreter: "ASTInterpreter",
+    /,
+    module: String,
+    name: String,
+    *_
+) -> ConvenientPythonWrapper:
+    """Function to get a Python function from baba-lang"""
+    # pylint: disable=unused-argument
+    return ConvenientPythonWrapper(
+        getattr(import_module(module.value), name.value)
+    )
