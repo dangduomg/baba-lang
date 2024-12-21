@@ -20,12 +20,13 @@ Right now in version `0.4.0`.
 - In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`, `**=`, `&=`, `|=`, `^=`, `<<=`, `>>=`
 - Control flow constructs: `if`, `while`, `do..while`, C-style `for`, `break`, `continue`, functions
 - Data types: integers, floats, strings, booleans, lists, dictionaries
-- Python interop with `py_function`
+- Modules
+- ~~Python interop with `py_function`~~ not yet
 
 ## Example
 Here is an example snippet to get started:
 ```js
-# let's import min from python
+# let's import min from python (not supported yet, sorry!)
 min = py_function('builtins', 'min');
 
 subjects = ['BABA', 'KEKE', 'DOOR', 'FLAG'];
@@ -37,9 +38,11 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
     subject = subjects[i];
     verb = verbs[i];
     object = objects[i];
-    # right now & and | is the only way to combine booleans :sob:
-    if ((subject == 'BABA') & (verb == 'HAS')) {
-        verb = 'IS';
+    # right now this is the only way to combine booleans :sob:
+    if subject == 'BABA' {
+        if verb == 'HAS' {
+            verb = 'IS';
+        }
     }
     print(subject + ' ' + verb + ' ' + object);
 }
@@ -50,4 +53,3 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
 - Rest and keyword arguments
 - OOP
 - Exceptions
-- Modules
