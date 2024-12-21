@@ -599,7 +599,7 @@ class Int(Value):
         return Int(-self.value)
 
     def dump(self, meta):
-        return String(str(self.value))
+        return String(repr(self.value))
 
     def to_bool(self, meta):
         return BOOLS[bool(self.value)]
@@ -699,6 +699,9 @@ class Float(Value):
         return Float(-self.value)
 
     def dump(self, meta):
+        return String(repr(self.value))
+
+    def to_string(self, meta):
         return String(str(self.value))
 
     def to_bool(self, meta):

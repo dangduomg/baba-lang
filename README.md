@@ -2,7 +2,7 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.4.0`.
+Right now in version `0.4.1`.
 
 ## Notes
 
@@ -21,12 +21,11 @@ Right now in version `0.4.0`.
 - Control flow constructs: `if`, `while`, `do..while`, C-style `for`, `break`, `continue`, functions
 - Data types: integers, floats, strings, booleans, lists, dictionaries
 - Modules
-- ~~Python interop with `py_function`~~ not yet
+- Easy Python interop with `py_function` and `py_method`
 
 ## Example
 Here is an example snippet to get started:
 ```js
-# let's import min from python (not supported yet, sorry!)
 min = py_function('builtins', 'min');
 
 subjects = ['BABA', 'KEKE', 'DOOR', 'FLAG'];
