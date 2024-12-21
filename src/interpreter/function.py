@@ -156,3 +156,22 @@ def py_function(
     return ConvenientPythonWrapper(
         getattr(import_module(module.value), name.value)
     )
+
+
+def py_method(
+    meta: Optional[Meta],
+    interpreter: "ASTInterpreter",
+    /,
+    module: String,
+    class_: String,
+    name: String,
+    *_
+) -> ConvenientPythonWrapper:
+    """Function to get a Python function from baba-lang"""
+    # pylint: disable=unused-argument
+    return ConvenientPythonWrapper(
+        getattr(
+            getattr(import_module(module.value), class_.value),
+            name.value,
+        )
+    )

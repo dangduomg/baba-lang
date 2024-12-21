@@ -19,6 +19,7 @@ class ASTInterpreter(ASTVisitor):
     """AST interpreter"""
 
     # pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-locals
 
     path: str
 
@@ -47,6 +48,8 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("dict_remove", PythonFunction(colls.dict_remove))
         self.globals.new_var("py_function",
                              PythonFunction(function.py_function))
+        self.globals.new_var("py_method",
+                             PythonFunction(function.py_method))
 
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access
@@ -157,7 +160,6 @@ class ASTInterpreter(ASTVisitor):
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
-        # pylint: disable=too-many-locals
         match node:
             case nodes.Exprs(expressions=expressions):
                 final_res = values.NULL
