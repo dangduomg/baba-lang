@@ -2,7 +2,7 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.4.1`.
+Right now in version `0.4.2`.
 
 ## Notes
 
@@ -17,6 +17,7 @@ Right now in version `0.4.1`.
 ## Features
 - First-class functions
 - Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, `&`, `|`, `^`, `<<`, `>>`, `~`, unary `+`, unary `-`, function call, subscripting
+- Logical operators: `&&`, `||`, `!`
 - In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`, `**=`, `&=`, `|=`, `^=`, `<<=`, `>>=`
 - Control flow constructs: `if`, `while`, `do..while`, C-style `for`, `break`, `continue`, functions
 - Data types: integers, floats, strings, booleans, lists, dictionaries
@@ -38,17 +39,14 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
     verb = verbs[i];
     object = objects[i];
     # right now this is the only way to combine booleans :sob:
-    if subject == 'BABA' {
-        if verb == 'HAS' {
-            verb = 'IS';
-        }
+    if subject == 'BABA' && verb == 'HAS' {
+        verb = 'IS';
     }
     print(subject + ' ' + verb + ' ' + object);
 }
 ```
 
 ## To-do list
-- Logical operators
 - Rest and keyword arguments
 - OOP
 - Exceptions

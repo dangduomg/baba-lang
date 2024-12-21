@@ -20,7 +20,7 @@ from interpreter import ASTInterpreter, Result, ExpressionResult, BLError, \
 
 
 PROG = 'baba-lang'
-VERSION = '0.4.1'
+VERSION = '0.4.2'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
 
