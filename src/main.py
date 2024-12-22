@@ -15,6 +15,7 @@ from lark.exceptions import UnexpectedInput
 from lark.tree import Meta
 
 from bl_ast import parse_to_ast, parse_expr_to_ast
+from static_checker import StaticChecker, StaticError
 from interpreter import ASTInterpreter, Result, ExpressionResult, BLError, \
                         Value
 
@@ -48,22 +49,27 @@ argparser.add_argument(
 
 
 default_interp = ASTInterpreter()
+default_static_checker = StaticChecker()
 
 
 def interpret(src: str, interpreter: ASTInterpreter = default_interp
               ) -> Result:
     """Interpret a script"""
-    return interpreter.visit(parse_to_ast(src))
+    ast_ = parse_to_ast(src)
+    default_static_checker.visit(ast_)
+    return interpreter.visit(ast_)
 
 
 def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp
                    ) -> ExpressionResult:
     """Interpret an expression"""
-    return interpreter.visit_expr(parse_expr_to_ast(src))
+    ast_ = parse_expr_to_ast(src)
+    default_static_checker.visit(ast_)
+    return interpreter.visit_expr(ast_)
 
 
-def handle_errors(error: BLError) -> None:
-    """Print errors nicely"""
+def handle_runtime_errors(error: BLError) -> None:
+    """Print runtime errors nicely"""
     match error:
         case BLError(value=msg, meta=meta):
             match meta:
@@ -82,7 +88,7 @@ def interp_with_error_handling(
     interp_func: Callable,
     src: str,
     interpreter: Optional[ASTInterpreter] = None,
-) -> ExpressionResult | UnexpectedInput:
+) -> ExpressionResult | UnexpectedInput | StaticError:
     """Interpret with error handling"""
     try:
         if interpreter is None:
@@ -90,12 +96,15 @@ def interp_with_error_handling(
         else:
             res = interp_func(src, interpreter)
     except UnexpectedInput as e:
-        print('%s', 'Syntax error:')
+        print('Syntax error:')
         print()
         print(e.get_context(src))
         print(e)
         return e
-    handle_errors(res)
+    except StaticError as e:
+        print(e)
+        return e
+    handle_runtime_errors(res)
     return res
 
 
@@ -140,7 +149,7 @@ def main_interactive() -> int:
                     case Value():
                         print(res.dump(None).value)
                     case BLError():
-                        handle_errors(res)
+                        handle_runtime_errors(res)
             except UnexpectedInput:
                 interp_with_error_handling(interpret, input_, default_interp)
         except KeyboardInterrupt:

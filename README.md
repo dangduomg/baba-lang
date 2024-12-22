@@ -10,9 +10,11 @@ Right now in version `0.4.2`.
 - baba-lang is written for educational purposes only; it is not meant to be used in production.
 
 ## How to use
-1. Prerequisites: Python 3, Lark
-2. Download the repository
-3. Run `main.py` without arguments to open an interactive prompt. To run a source file, enter `main.py <file>`. Source files are of extension `.bl`
+1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt)
+2. Clone the repository
+3. (Optionally) Create a virtual environment
+3. Run `pip install -r requirements.txt`
+3. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`
 
 ## Features
 - First-class functions
@@ -49,4 +51,6 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
 ## To-do list
 - Rest and keyword arguments
 - OOP
+- Iterators
 - Exceptions
+- Package manager
