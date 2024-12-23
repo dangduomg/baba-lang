@@ -5,7 +5,7 @@ from enum import Enum
 
 from lark.tree import Meta
 
-from bl_ast.base import _AstNode, ASTVisitor
+from bl_ast.base import ASTVisitor
 from bl_ast import nodes
 
 
@@ -45,7 +45,8 @@ class StaticChecker(ASTVisitor):
     def __init__(self):
         self.modes = [BodyType.MODULE]
 
-    def visit(self, node: _AstNode) -> None:
+    def visit(self, node: nodes._AstNode) -> None:
+        # pylint: disable=too-many-locals
         # pylint: disable=protected-access
         match node:
             case (
