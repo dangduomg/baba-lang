@@ -2,9 +2,7 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Optional, Protocol, TYPE_CHECKING, runtime_checkable
-from collections.abc import Callable
-from importlib import import_module
+from typing import Optional, Protocol, TYPE_CHECKING, runtime_checkable
 
 from lark.tree import Meta
 
@@ -15,18 +13,9 @@ from .base import (
     Value,
     Success,
     String,
-    Int,
-    Float,
-    Bool,
-    BOOLS,
-    Null,
     NULL,
 )
-from .errors import (
-    error_not_implemented,
-    error_wrong_argc,
-)
-from .colls import BLList, BLDict
+from .errors import error_not_implemented, error_wrong_argc
 from .exits import Return
 from .env import Env
 
@@ -102,112 +91,6 @@ class PythonFunction(Value):
 
     def to_string(self, meta):
         return String(f"<python function '{self.function.__name__}'>")
-
-
-@dataclass(frozen=True)
-class PythonValue(Value):
-    """Python value. Returned by calling ConvenientPythonWrapper"""
-
-    value: object
-
-
-@dataclass(frozen=True)
-class ConvenientPythonWrapper(PythonFunction):
-    """Convenient wrapper for Python functions to baba-lang"""
-
-    function: Callable
-
-    def call(
-        self, args: list[Value], interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> ExpressionResult:
-        # pylint: disable=too-many-return-statements
-        try:
-            unwrapped_args = [
-                ConvenientPythonWrapper._unwrap_arg(a) for a in args
-            ]
-        except ValueError:
-            return error_not_implemented.set_meta(meta)
-        return ConvenientPythonWrapper._wrap_res(
-            self.function(*unwrapped_args)
-        )
-
-    @staticmethod
-    def _unwrap_arg(
-        arg: Value
-    ) -> int | float | str | bool | list | dict | None:
-        """Unwrap argument for use with Python"""
-        uw = ConvenientPythonWrapper._unwrap_arg
-        match arg:
-            case (
-                Int(value=value) | Float(value=value) | Bool(value=value)
-                | String(value=value)
-            ):
-                return value
-            case Null():
-                return None
-            case BLList(elems=elems):
-                return [uw(e) for e in elems]
-            case BLDict(content=content):
-                return {uw(k): uw(content[k]) for k in content}
-        raise ValueError
-
-    @staticmethod
-    def _wrap_res(res: Any) -> Value:
-        """Re-wrap the result for baba-lang"""
-        # pylint: disable=too-many-return-statements
-        w = ConvenientPythonWrapper._wrap_res
-        if isinstance(res, int):
-            return Int(res)
-        if isinstance(res, float):
-            return Float(res)
-        if isinstance(res, bool):
-            return BOOLS[res]
-        if res is None:
-            return NULL
-        if isinstance(res, str):
-            return String(res)
-        if isinstance(res, list):
-            return BLList([w(e) for e in res])
-        if isinstance(res, dict):
-            return BLDict({w(k): w(res[k]) for k in res})
-        if callable(res):
-            return ConvenientPythonWrapper(res)
-        return PythonValue(res)
-
-
-def py_function(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    module: String,
-    name: String,
-    *_
-) -> ConvenientPythonWrapper:
-    """Function to get a Python function from baba-lang"""
-    # pylint: disable=unused-argument
-    return ConvenientPythonWrapper(
-        getattr(import_module(module.value), name.value)
-    )
-
-
-def py_method(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    module: String,
-    class_: String,
-    name: String,
-    *_
-) -> ConvenientPythonWrapper:
-    """Function to get a Python method from baba-lang"""
-    # pylint: disable=unused-argument
-    return ConvenientPythonWrapper(
-        getattr(
-            getattr(import_module(module.value), class_.value),
-            name.value,
-        )
-    )
 
 
 @runtime_checkable
