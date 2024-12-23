@@ -16,27 +16,27 @@ baba-lang is written for educational purposes only, and is not production-ready.
 ## How to install and use baba-lang
 
 Installing and running baba-lang is simple:
-1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt)
+1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt).
 2. Either:
 * clone the repository
 ```sh
 git clone https://github.com/dangduomg/baba-lang.git
 ```
-* or, download a release archive and extract the archive (see Releases)
-3. Set working directory to the project root
+* or, download a release archive and extract the archive (see Releases).
+3. Set working directory to the project root.
 ```sh
 cd baba-lang
 ```
-4. (Optionally) Create and activate a virtual environment
+4. (Optionally) Create and activate a virtual environment.
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
 ```
-5. Install requirements
+5. Install requirements.
 ```sh
 pip install -r requirements.txt
 ```
-6. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`. Run `src/main.py -h` for further help
+6. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`. Run `src/main.py -h` for further help.
 
 
 ## baba-lang reference and tutorial
