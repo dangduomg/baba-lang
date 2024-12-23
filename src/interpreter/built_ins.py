@@ -4,7 +4,8 @@ from typing import Optional, TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .base import BLError, error_not_implemented
+from .base import BLError
+from .errors import error_not_implemented
 from .values import Value, Int, Float, Bool, String, Null, NULL
 
 if TYPE_CHECKING:

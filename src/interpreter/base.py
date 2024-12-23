@@ -381,15 +381,6 @@ string"""
 # Errors
 error_not_implemented = BLError("Operation not supported")
 error_div_by_zero = BLError("Division by zero")
-error_out_of_range = BLError("Index out of range: {}")
-error_key_nonexistent = BLError("Non-existent key: {}")
-error_var_nonexistent = BLError("Variable {} is undefined")
-error_wrong_argc = BLError("Function {} needs exactly {} arguments")
-error_module_var_nonexistent = BLError("Module {} doesn't have variable {}")
-error_include_syntax = BLError("Error in include's syntax:\n{}")
-error_inside_include = BLError(
-    "Error inside include at line {}, column {}: {}"
-)
 
 
 # ---- Essential value types ----

@@ -6,7 +6,8 @@ from typing import Optional
 
 from lark.tree import Meta
 
-from .base import ExpressionResult, BLError, error_var_nonexistent
+from .base import ExpressionResult, BLError
+from .errors import error_var_nonexistent
 from .values import Value
 
 

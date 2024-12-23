@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Protocol, TYPE_CHECKING
+from typing import Optional, Protocol, TYPE_CHECKING, runtime_checkable
 from collections.abc import Callable
 from importlib import import_module
 
@@ -21,6 +21,8 @@ from .base import (
     BOOLS,
     Null,
     NULL,
+)
+from .errors import (
     error_not_implemented,
     error_wrong_argc,
 )
@@ -175,3 +177,24 @@ def py_method(
             name.value,
         )
     )
+
+
+@runtime_checkable
+class SupportsBLCall(Protocol):
+    """Protocol for functions that support being called in baba-lang"""
+
+    # pylint: disable=too-few-public-methods
+    # pylint: disable=missing-function-docstring
+
+    @abstractmethod
+    def call(
+        self, args: list["Value"], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> "ExpressionResult": ...
+
+
+@dataclass(frozen=True)
+class Call:
+    """Call site type for tracebacks"""
+    function: SupportsBLCall
+    meta: Meta

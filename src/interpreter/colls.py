@@ -12,8 +12,10 @@ from .base import (
     BOOLS,
     Null,
     NULL,
-    error_out_of_range,
-    error_key_nonexistent,
+)
+
+from .errors import (
+    error_out_of_range, error_key_nonexistent,
     error_module_var_nonexistent,
 )
 

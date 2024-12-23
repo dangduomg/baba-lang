@@ -8,10 +8,11 @@ from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
 from . import built_ins, values, exits, colls, function
-from .base import Result, ExpressionResult, Success, BLError, \
-                  error_not_implemented, error_include_syntax, \
-                  error_inside_include
-from .values import Value, PythonFunction
+from .base import Result, ExpressionResult, Success, BLError, Value
+from .errors import (
+    error_not_implemented, error_include_syntax, error_inside_include
+)
+from .function import PythonFunction
 from .env import Env
 
 
@@ -25,6 +26,8 @@ class ASTInterpreter(ASTVisitor):
 
     globals: Env
     locals: Optional[Env] = None
+
+    calls: list
 
     def __init__(self, path=''):
         self.path = path
@@ -206,7 +209,11 @@ class ASTInterpreter(ASTVisitor):
                     if not isinstance(arg_visited, Value):
                         return arg_visited
                     args.append(arg_visited)
-                return self.visit_expr(callee).call(args, self, meta)
+                callee = self.visit_expr(callee)
+                match callee:
+                    case function.SupportsBLCall():
+                        self.calls.append(function.Call(callee, meta))
+                return callee.call(args, self, meta)
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
