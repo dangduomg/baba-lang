@@ -39,6 +39,6 @@ pip install -r requirements.txt
 6. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`. Run `src/main.py -h` for further help
 
 
-## baba-lang reference
+## baba-lang reference and tutorial
 
-Not done yet.
+1. Hello world
