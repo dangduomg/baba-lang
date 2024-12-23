@@ -21,5 +21,4 @@ class Continue(Exit):
 @dataclass(frozen=True)
 class Return(Exit):
     """Return statement"""
-
     value: Value
