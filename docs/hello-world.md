@@ -3,6 +3,8 @@ layout: default
 ---
 
 
+[Back](/)
+
 # Hello world
 
 Welcome to the baba-lang tutorial (and reference)! baba-lang is a language made by me for the purpose of learning how programming languages work, from parsing to static analysis to interpretation. To start with, lets make a Hello World program in baba-lang.
