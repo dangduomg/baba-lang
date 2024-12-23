@@ -32,6 +32,7 @@ class ASTInterpreter(ASTVisitor):
 
     def __init__(self, path=''):
         self.path = path
+        self.calls = []
 
         self.globals = Env()
         # Populate some builtins
