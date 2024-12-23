@@ -3,9 +3,11 @@
 from dataclasses import dataclass
 from typing import Optional, TYPE_CHECKING
 
+from lark import Token
 from lark.tree import Meta
 
 from .base import (
+    ExpressionResult,
     Value,
     String,
     Int,
@@ -13,11 +15,11 @@ from .base import (
     Null,
     NULL,
 )
-
 from .errors import (
     error_out_of_range, error_key_nonexistent,
     error_module_var_nonexistent,
 )
+from .function import PythonFunction
 
 if TYPE_CHECKING:
     from .main import ASTInterpreter
@@ -29,19 +31,25 @@ class BLList(Value):
 
     elems: list[Value]
 
-    def add(self, other, meta):
+    def add(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case BLList(other_elems):
                 return BLList(self.elems + other_elems)
         return super().add(other, meta)
 
-    def multiply(self, other, meta):
+    def multiply(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(times):
                 return BLList(self.elems * times)
         return super().add(other, meta)
 
-    def get_item(self, index, meta):
+    def get_item(
+        self, index: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match index:
             case Int(index_val):
                 try:
@@ -51,7 +59,10 @@ class BLList(Value):
                                              .set_meta(meta)
         return super().get_item(index, meta)
 
-    def set_item(self, index, value, meta):
+    def set_item(
+        self, index: ExpressionResult, value: ExpressionResult,
+        meta: Meta | None
+    ) -> ExpressionResult:
         match index, value:
             case Int(index_val), Value():
                 try:
@@ -61,6 +72,16 @@ class BLList(Value):
                     return error_out_of_range.fill_args(index_val) \
                                              .set_meta(meta)
         return super().set_item(index, value, meta)
+
+    def get_attr(self, attr: Token, meta: Meta | None) -> ExpressionResult:
+        match attr:
+            case 'length':
+                return PythonFunction(list_len)
+            case 'insert':
+                return PythonFunction(list_insert)
+            case 'remove_at':
+                return PythonFunction(list_remove_at)
+        return super().get_attr(attr, meta)
 
     def dump(self, meta):
         return String(f'[{', '.join(e.dump(meta).value for e in self.elems)}]')
@@ -116,7 +137,9 @@ class BLDict(Value):
 
     content: dict[Value, Value]
 
-    def get_item(self, index, meta):
+    def get_item(
+        self, index: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match index:
             case Value():
                 try:
@@ -127,7 +150,10 @@ class BLDict(Value):
                     ).set_meta(meta)
         return super().get_item(index, meta)
 
-    def set_item(self, index, value, meta):
+    def set_item(
+        self, index: ExpressionResult, value: ExpressionResult,
+        meta: Meta | None,
+    ) -> ExpressionResult:
         match index, value:
             case Value(), Value():
                 try:
@@ -138,6 +164,16 @@ class BLDict(Value):
                         index.dump(meta).value
                     ).set_meta(meta)
         return super().set_item(index, value, meta)
+
+    def get_attr(self, attr: Token, meta: Meta | None) -> ExpressionResult:
+        match attr:
+            case 'size':
+                return PythonFunction(dict_size)
+            case 'keys':
+                return PythonFunction(dict_keys)
+            case 'remove':
+                return PythonFunction(dict_remove)
+        return super().get_attr(attr, meta)
 
     def dump(self, meta):
         pair_str_list = []
