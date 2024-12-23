@@ -1,0 +1,11 @@
+/*
+ * io.bl -- IO functions
+ */
+
+
+module IO {
+    open = py_function('builtins', 'open');
+    read = py_method('io', 'TextIOWrapper', 'read');
+    write = py_method('io', 'TextIOWrapper', 'write');
+    close = py_method('io', 'TextIOWrapper', 'close');
+}
