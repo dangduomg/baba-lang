@@ -10,7 +10,8 @@ from bl_ast.base import ASTVisitor
 from . import built_ins, values, exits, colls, function
 from .base import Result, ExpressionResult, Success, BLError, Value
 from .errors import (
-    error_not_implemented, error_include_syntax, error_inside_include
+    error_not_implemented, error_include_syntax, error_inside_include,
+    error_invalid_include,
 )
 from .function import PythonFunction
 from .env import Env
@@ -139,24 +140,37 @@ class ASTInterpreter(ASTVisitor):
                     self.globals = self.globals.parent
                 self.globals.new_var(name, values.Module(name, vars_))
                 return Success()
-            case nodes.IncludeStmt(path=path):
-                with open(path, encoding='utf-8') as f:
+            case nodes.IncludeStmt(meta=meta, path=path):
+                try:
+                    f = open(path, encoding='utf-8')
+                except FileNotFoundError:
+                    return error_invalid_include.fill_args(path) \
+                                                .set_meta(meta)
+                with f:
                     src = f.read()
+                    # Execute Python source code
+                    if path.endswith('.py'):
+                        exec(src, globals())  # pylint: disable=exec-used
+                        return Success()
+                    # Invalid include target
+                    if not path.endswith('.bl'):
+                        return error_invalid_include.fill_args(path) \
+                                                    .set_meta(meta)
                     try:
                         include_ast = parse_to_ast(src)
                     except UnexpectedInput as e:
                         return error_include_syntax.fill_args(
                             f"{e.get_context(src)}\n{e}"
-                        )
+                        ).set_meta(meta)
                     match res := self.visit(include_ast):
                         case BLError(value=msg, meta=meta):
                             if meta is None:
                                 return error_inside_include.fill_args(
                                     "n/a", "n/a", msg,
-                                )
+                                ).set_meta(meta)
                             return error_inside_include.fill_args(
                                 meta.line, meta.column, msg,
-                            )
+                            ).set_meta(meta)
                         case Success():
                             return Success()
         return error_not_implemented.set_meta(node.meta)

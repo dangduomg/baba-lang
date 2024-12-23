@@ -16,3 +16,4 @@ error_include_syntax = BLError("Error in include's syntax:\n{}")
 error_inside_include = BLError(
     "Error inside include at line {}, column {}: {}"
 )
+error_invalid_include = BLError("Invalid include '{}'")
