@@ -142,6 +142,8 @@ class ConvenientPythonWrapper(PythonFunction):
             return BLList(res)
         if isinstance(res, dict):
             return BLDict(res)
+        if callable(res):
+            return ConvenientPythonWrapper(res)
         return PythonValue(res)
 
 
