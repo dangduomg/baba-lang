@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Protocol, TYPE_CHECKING, runtime_checkable
+from typing import Any, Optional, Protocol, TYPE_CHECKING, runtime_checkable
 from collections.abc import Callable
 from importlib import import_module
 
@@ -91,7 +91,10 @@ class PythonFunction(Value):
 
     function: SupportsWrappedByPythonFunction
 
-    def call(self, args, interpreter, meta):
+    def call(
+        self, args: list[Value], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
         return self.function(meta, interpreter, *args)
 
     def dump(self, meta):
@@ -114,20 +117,46 @@ class ConvenientPythonWrapper(PythonFunction):
 
     function: Callable
 
-    def call(self, args, interpreter, meta):
+    def call(
+        self, args: list[Value], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
         # pylint: disable=too-many-return-statements
-        args_to_py = []
-        for arg in args:
-            match arg:
-                case Int(value=value) | Float(value=value) \
-                   | Bool(value=value) | String(value=value) \
-                   | BLList(elems=value) | BLDict(content=value):
-                    args_to_py.append(value)
-                case Null():
-                    args_to_py.append(None)
-                case _:
-                    return error_not_implemented.set_meta(meta)
-        res = self.function(*args_to_py)
+        try:
+            unwrapped_args = [
+                ConvenientPythonWrapper._unwrap_arg(a) for a in args
+            ]
+        except ValueError:
+            return error_not_implemented.set_meta(meta)
+        return ConvenientPythonWrapper._wrap_res(
+            self.function(*unwrapped_args)
+        )
+
+    @staticmethod
+    def _unwrap_arg(
+        arg: Value
+    ) -> int | float | str | bool | list | dict | None:
+        """Unwrap argument for use with Python"""
+        uw = ConvenientPythonWrapper._unwrap_arg
+        match arg:
+            case (
+                Int(value=value) | Float(value=value) | Bool(value=value)
+                | String(value=value)
+            ):
+                return value
+            case Null():
+                return None
+            case BLList(elems=elems):
+                return [uw(e) for e in elems]
+            case BLDict(content=content):
+                return {uw(k): uw(content[k]) for k in content}
+        raise ValueError
+
+    @staticmethod
+    def _wrap_res(res: Any) -> Value:
+        """Re-wrap the result for baba-lang"""
+        # pylint: disable=too-many-return-statements
+        w = ConvenientPythonWrapper._wrap_res
         if isinstance(res, int):
             return Int(res)
         if isinstance(res, float):
@@ -139,9 +168,9 @@ class ConvenientPythonWrapper(PythonFunction):
         if isinstance(res, str):
             return String(res)
         if isinstance(res, list):
-            return BLList(res)
+            return BLList([w(e) for e in res])
         if isinstance(res, dict):
-            return BLDict(res)
+            return BLDict({w(k): w(res[k]) for k in res})
         if callable(res):
             return ConvenientPythonWrapper(res)
         return PythonValue(res)
@@ -171,7 +200,7 @@ def py_method(
     name: String,
     *_
 ) -> ConvenientPythonWrapper:
-    """Function to get a Python function from baba-lang"""
+    """Function to get a Python method from baba-lang"""
     # pylint: disable=unused-argument
     return ConvenientPythonWrapper(
         getattr(
