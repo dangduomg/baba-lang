@@ -11,7 +11,7 @@ Right now in version `0.4.2`.
 
 ## How to use
 1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt)
-2. Clone the repository
+2. Clone the repository (https://github.com/dangduomg/baba-lang.git)
 3. (Optionally) Create a virtual environment
 3. Run `pip install -r requirements.txt`
 3. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`
@@ -35,12 +35,11 @@ subjects = ['BABA', 'KEKE', 'DOOR', 'FLAG'];
 verbs = ['HAS', 'HAS', 'IS', 'IS'];
 objects = ['YOU', 'KEY', 'LOCK', 'WIN'];
 
-# zipper
+// zipper
 for (i = 0; i < min(subjects, verbs, objects); i += 1) {
     subject = subjects[i];
     verb = verbs[i];
     object = objects[i];
-    # right now this is the only way to combine booleans :sob:
     if subject == 'BABA' && verb == 'HAS' {
         verb = 'IS';
     }
