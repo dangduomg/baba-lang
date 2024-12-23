@@ -41,4 +41,4 @@ pip install -r requirements.txt
 
 ## baba-lang reference and tutorial
 
-1. [Hello world](/hello-world.md)
+1. [Hello world](hello-world.md)

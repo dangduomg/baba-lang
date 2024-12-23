@@ -3,7 +3,7 @@ layout: default
 ---
 
 
-[Back](./)
+[Back](index.md)
 
 # Hello world
 
