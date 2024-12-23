@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from lark import Token
 from lark.tree import Meta
 
+# from .operation_decorator import auto_magic_methods  # Import the decorator
+
 if TYPE_CHECKING:
     from .main import ASTInterpreter
 
@@ -32,9 +34,44 @@ class Exit(Result):
     """Object signaling early exit"""
 
 
-# ---- Expression result ----
+def auto_magic_methods(cls):
+    magic_methods = {
+        '__add__': 'add',
+        '__sub__': 'subtract',
+        '__mul__': 'multiply',
+        '__truediv__': 'divide',
+        '__mod__': 'mod',
+        '__floordiv__': 'floor_div',
+        '__and__': 'bitwise_and',
+        '__or__': 'bitwise_or',
+        '__xor__': 'bitwise_xor',
+        '__lshift__': 'left_shift',
+        '__rshift__': 'right_shift',
+        '__eq__': 'is_equal',
+        '__ne__': 'is_not_equal',
+        '__lt__': 'is_less',
+        '__le__': 'is_less_or_equal',
+        '__gt__': 'is_greater',
+        '__ge__': 'is_greater_or_equal',
+        '__neg__': 'neg',
+        '__pos__': 'plus',
+        '__invert__': 'bit_not',
+        '__bool__': 'to_bool',
+    }
 
+    for magic, method in magic_methods.items():
+        if hasattr(cls, method):
+            if magic == '__bool__':
+                setattr(cls, magic, lambda self: self.to_bool(meta=None).value)
+            elif magic in ['__neg__', '__pos__', '__invert__']:
+                # Unary methods
+                setattr(cls, magic, (lambda m: lambda self: getattr(self, m)(meta=None))(method))
+            else:
+                # Binary methods
+                setattr(cls, magic, (lambda m: lambda self, other: getattr(self, m)(other, meta=None))(method))
+    return cls
 
+@auto_magic_methods
 class ExpressionResult(Result):
     """Expression result base class"""
 
@@ -267,7 +304,7 @@ class ExpressionResult(Result):
 
 # ---- Error type ----
 
-
+@auto_magic_methods
 @dataclass
 class BLError(Exit, ExpressionResult):
     """Error"""
@@ -385,7 +422,7 @@ error_div_by_zero = BLError("Division by zero")
 
 # ---- Essential value types ----
 
-
+@auto_magic_methods
 class Value(ExpressionResult):
     """Value base class"""
 
@@ -411,6 +448,7 @@ class Value(ExpressionResult):
 
 
 @dataclass(frozen=True)
+@auto_magic_methods
 class Bool(Value):
     """Boolean type"""
 
@@ -429,6 +467,7 @@ BOOLS = Bool(False), Bool(True)
 
 
 @dataclass(frozen=True)
+@auto_magic_methods
 class Null(Value):
     """Null value"""
 
@@ -443,6 +482,7 @@ NULL = Null()
 
 
 @dataclass(frozen=True)
+@auto_magic_methods
 class String(Value):
     """String type"""
 
@@ -458,7 +498,7 @@ class String(Value):
         match other:
             case Int(times):
                 return String(self.value * times)
-        return super().add(other, meta)
+        return super().multiply(other, meta)
 
     def is_equal(self, other, meta):
         match other:
@@ -507,6 +547,7 @@ class String(Value):
 
 
 @dataclass(frozen=True)
+@auto_magic_methods
 class Int(Value):
     """Integer type"""
 
@@ -537,7 +578,7 @@ class Int(Value):
             case Int(other_val):
                 return Int(self.value * other_val)
             case Float(other_val):
-                return Float(self.value - other_val)
+                return Float(self.value * other_val)
         return super().multiply(other, meta)
 
     def divide(self, other, meta):
@@ -575,31 +616,31 @@ class Int(Value):
         match other:
             case Int(other_val):
                 return Int(self.value & other_val)
-        return super().floor_div(other, meta)
+        return super().bitwise_and(other, meta)
 
     def bitwise_or(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value | other_val)
-        return super().floor_div(other, meta)
+        return super().bitwise_or(other, meta)
 
     def bitwise_xor(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value ^ other_val)
-        return super().floor_div(other, meta)
+        return super().bitwise_xor(other, meta)
 
     def left_shift(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value << other_val)
-        return super().floor_div(other, meta)
+        return super().left_shift(other, meta)
 
     def right_shift(self, other, meta):
         match other:
             case Int(other_val):
                 return Int(self.value >> other_val)
-        return super().floor_div(other, meta)
+        return super().right_shift(other, meta)
 
     def is_equal(self, other, meta):
         match other:
@@ -654,6 +695,7 @@ class Int(Value):
 
 
 @dataclass(frozen=True)
+@auto_magic_methods
 class Float(Value):
     """Float type"""
 
@@ -745,6 +787,9 @@ class Float(Value):
 
     def neg(self, meta):
         return Float(-self.value)
+
+    def bit_not(self, meta):
+        return error_not_implemented.set_meta(meta)
 
     def dump(self, meta):
         return String(repr(self.value))
