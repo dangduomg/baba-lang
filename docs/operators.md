@@ -18,7 +18,7 @@ Expressions in baba-lang are composed of operators. There are 32 operators in ba
 
 ## Play with operators
 
-1. Make sure baba-lang is in your local machine. See [How to install and use baba-lang](index.md#How to install and use baba-lang) to obtain and run baba-lang in your local machine.
+1. Make sure baba-lang is in your local machine. See [How to install and use baba-lang](index.md#how-to-install-and-use-baba-lang) to obtain and run baba-lang in your local machine.
 2. Run baba-lang without arguments to go to interactive mode.
 3. Try to enter a mathematical expression in baba-lang:
 

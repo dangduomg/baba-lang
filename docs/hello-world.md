@@ -12,7 +12,7 @@ Welcome to the baba-lang tutorial (and reference)! baba-lang is a language made 
 
 ## Make sure that you have baba-lang in your local machine
 
-See [How to install and use baba-lang](index.md#How to install and use baba-lang) for how to do so.
+See [How to install and use baba-lang](index.md#how-to-install-and-use-baba-lang) for how to do so.
 
 
 ## Create the first baba-lang program
