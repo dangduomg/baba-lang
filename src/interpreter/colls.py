@@ -1,7 +1,8 @@
 """Collection types"""
 
+
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from lark import Token
 from lark.tree import Meta
@@ -76,11 +77,11 @@ class BLList(Value):
     def get_attr(self, attr: Token, meta: Meta | None) -> ExpressionResult:
         match attr:
             case 'length':
-                return PythonFunction(list_len)
+                return PythonFunction(self.length)
             case 'insert':
-                return PythonFunction(list_insert)
+                return PythonFunction(self.insert)
             case 'remove_at':
-                return PythonFunction(list_remove_at)
+                return PythonFunction(self.remove_at)
         return super().get_attr(attr, meta)
 
     def dump(self, meta):
@@ -89,46 +90,53 @@ class BLList(Value):
     def to_bool(self, meta):
         return BOOLS[bool(self.elems)]
 
+    def length(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
+    ) -> Int:
+        """Get length (number of elements) of a list"""
+        # pylint: disable=unused-argument
+        return Int(len(self.elems))
+
+    def insert(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        index: Int, item: Value, *_
+    ) -> Null:
+        """Insert an element into a list"""
+        # pylint: disable=unused-argument
+        self.elems.insert(index.value, item)
+        return NULL
+
+    def remove_at(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        index: Int, *_
+    ) -> Null:
+        """Remove an element from a list given index"""
+        # pylint: disable=unused-argument
+        self.elems.pop(index.value)
+        return NULL
+
 
 def list_len(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    list_: BLList,
-    *_
+    meta: Meta | None, interpreter: "ASTInterpreter", /, list_: BLList, *_
 ) -> Int:
     """Get length (number of elements) of a list"""
-    # pylint: disable=unused-argument
-    return Int(len(list_.elems))
+    return list_.length(meta, interpreter)
 
 
 def list_insert(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    list_: BLList,
-    index: Int,
-    item: Value,
-    *_
+    meta: Meta | None, interpreter: "ASTInterpreter", /,
+    list_: BLList, index: Int, item: Value, *_
 ) -> Null:
     """Insert an element into a list"""
-    # pylint: disable=unused-argument
-    list_.elems.insert(index.value, item)
-    return NULL
+    return list_.insert(meta, interpreter, index, item)
 
 
 def list_remove_at(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    list_: BLList,
-    index: Int,
-    *_
+    meta: Meta | None, interpreter: "ASTInterpreter", /,
+    list_: BLList, index: Int, *_
 ) -> Null:
     """Remove an element from a list given index"""
-    # pylint: disable=unused-argument
-    list_.elems.pop(index.value)
-    return NULL
+    return list_.remove_at(meta, interpreter, index)
 
 
 @dataclass(frozen=True)
@@ -184,43 +192,52 @@ class BLDict(Value):
     def to_bool(self, meta):
         return BOOLS[bool(self.content)]
 
+    def size(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
+    ) -> Int:
+        """Get length (number of elements) of a dictionary"""
+        # pylint: disable=unused-argument
+        return Int(len(self.content))
+
+    def keys(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
+    ) -> BLList:
+        """Get all keys of a dictionary as a list"""
+        # pylint: disable=unused-argument
+        return BLList(list(self.content))
+
+    def remove(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        key: Value, *_
+    ) -> Null:
+        """Remove a key from a dictionary"""
+        # pylint: disable=unused-argument
+        del self.content[key]
+        return NULL
+
 
 def dict_size(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    dict_: BLDict,
-    *_
+    meta: Meta | None, interpreter: "ASTInterpreter", /,
+    dict_: BLDict, *_
 ) -> Int:
     """Get length (number of elements) of a dictionary"""
-    # pylint: disable=unused-argument
-    return Int(len(dict_.content))
+    return dict_.size(meta, interpreter)
 
 
 def dict_keys(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    dict_: BLDict,
-    *_
+    meta: Meta | None, interpreter: "ASTInterpreter", /,
+    dict_: BLDict, *_
 ) -> BLList:
     """Get all keys of a dictionary as a list"""
-    # pylint: disable=unused-argument
-    return BLList(list(dict_.content))
+    return dict_.keys(meta, interpreter)
 
 
 def dict_remove(
-    meta: Optional[Meta],
-    interpreter: "ASTInterpreter",
-    /,
-    dict_: BLDict,
-    key: Value,
-    *_
+    meta: Meta | None, interpreter: "ASTInterpreter", /,
+    dict_: BLDict, key: Value, *_
 ) -> Null:
     """Remove a key from a dictionary"""
-    # pylint: disable=unused-argument
-    del dict_.content[key]
-    return NULL
+    return dict_.remove(meta, interpreter, key)
 
 
 @dataclass(frozen=True)
@@ -234,9 +251,11 @@ class Module(Value):
         try:
             return self.vars[attr]
         except KeyError:
-            return error_module_var_nonexistent \
-                   .fill_args(self.name, str(attr)) \
-                   .set_meta(meta)
+            return (
+                error_module_var_nonexistent
+                .fill_args(self.name, str(attr))
+                .set_meta(meta)
+            )
 
     def dump(self, meta):
         return String(f"<module '{self.name}'>")
