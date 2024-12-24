@@ -121,7 +121,7 @@ All operators in baba-lang have a *precedence*, which allows ambiguity to be sol
 | 10         |               | call `a()`, subscript `a[i]`, dot `a.b` |
 | 11         |               | parentheses `(...)` |
 
-\* Power operator's associativity and precedence is special since it has lower precedence than unary operators on the right, but higher precedence than them on the left.
+\* Power operator's associativity and precedence is special since it has lower precedence than unary operators on the right, but higher precedence than them on the left. Put simply, `3 ** -2` is possible and `-3 ** 2` means `-(3 ** 2)` rather than `(-3) ** 2`.
 
 
 ## Next
