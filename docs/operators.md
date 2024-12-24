@@ -36,46 +36,46 @@ Expressions in baba-lang are composed of operators. There are 32 operators in ba
 
 Binary operators take two values. Binary arithmetic operators in baba-lang are almost always *infix*, meaning they are placed between their arguments. They follow precedence rules, such as the aforementioned PEMDAS, among others, and are either left- or right-associative. Comparison operators, however, are *non-associative*, which means multiple comparison operators without parentheses (e.g. `a == b == c`) will cause a syntax error.
 
-| Symbol | Name | Notes |
-| - | - | - |
-| `+` | Addition | Adds numbers, concatenates strings and lists |
-| `-` | Subtraction | |
-| `*` | Multiplication | Multiplies numbers, repeats strings |
-| `/` | Division | Always return floats |
-| `%/%` | Floor division | |
-| `%` | Modulo | Satisfies `a % b == a - b * (a %/% b)` |
-| `**` | Power | |
-| `&` | Bitwise and | |
-| `|` | Bitwise or | |
-| `^` | Bitwise xor | |
-| `==` | Equality | |
-| `!=` | Inequality | |
-| `>` | Greater than | |
-| `>=` | Greater than or equal to | |
-| `<` | Less than | |
-| `<=` | Less than or equal to | |
+| Name                     | Symbol | Notes |
+| ------------------------ | ------ | - |
+| Addition                 | `+`    | Adds numbers, concatenates strings and lists |
+| Subtraction              | `-`    | |
+| Multiplication           | `*`    | Multiplies numbers, repeats strings |
+| Division                 | `/`    | Always return floats |
+| Floor division           | `%/%`  | |
+| Modulo                   | `%`    | Satisfies `a % b == a - b * (a %/% b)` |
+| Power                    | `**`   | |
+| Bitwise and              | `&`    | |
+| Bitwise or               | `|`    | |
+| Bitwise xor              | `^`    | |
+| Equality                 | `==`   | |
+| Inequality               | `!=`   | |
+| Greater than             | `>`    | |
+| Greater than or equal to | `>=`   | |
+| Less than                | `<`    | |
+| Less than or equal to    | `<=`   | |
 
 
 ## Logical operators
 
 Unlike normal operators, logical operators are *short-circuit*, meaning they may not evaluate the second argument if the result is obvious from the first argument. This can be used to implement conditionals in an expression (`a && b || c`). Only `&&` (logical and) and `||` (logical or) have this property. `!` (logical not) behave like a normal unary operator.
 
-| Symbol | Name | Notes |
-| - | - | - |
-| `&&` | Logical and | |
-| `||` | Logical or | |
-| `!` | Logical not | |
+| Name        | Symbol | Notes |
+| ----------- | ------ | - |
+| Logical and | `&&`   | |
+| Logical or  | `||`   | |
+| Logical not | `!`    | |
 
 
 ## Unary operators
 
 Unary operators take one argument only. In baba-lang, they are prefix operators, meaning they precede their only argument.
 
-| Symbol | Name | Notes |
-| - | - | - |
-| `+` | Unary plus | |
-| `-` | Negation | |
-| `~` | Bitwise not | |
+| Name        | Symbol | Notes |
+| ----------- | ------ | - |
+| Unary plus  | `+`    | |
+| Negation    | `-`    | |
+| Bitwise not | `~`    | |
 
 
 ## Assignment operators
@@ -85,21 +85,21 @@ Assignment operations consists of an *assignment target* on the left-hand side, 
 * a subscript
 , the operator itself and the rest at the right hand side.
 
-| Symbol | Name | Notes |
-| - | - | - |
-| `=` | Assignment | If assigning variables, always creates new ones |
-| `+=` `-=` `*=` `/=` `%=` `%/%=` | In-place assignment | |
+| Name                | Symbol                          | Notes |
+| ------------------- | ------------------------------- | - |
+| Assignment          | `=`                             | If assigning variables, always creates new ones |
+| In-place assignment | `+=` `-=` `*=` `/=` `%=` `%/%=` | |
 
 
 ## Special operators
 
 These operators have special syntax and they are detailed in other sections of the reference.
 
-| Symbol | Name | Notes |
-| - | - | - |
-| | Function call | Syntax: `f(a, b, ...)` |
-| | Subscript | Syntax: `a[i]` |
-| `.` | Dot access | Syntax: `a.b` |
+| Name          | Notes |
+| ------------- | - |
+| Function call | Syntax: `f(a, b, ...)` |
+| Subscript     | Syntax: `a[i]` |
+| Dot access    | Syntax: `a.b` |
 
 
 ## Operator precedence table
@@ -117,7 +117,7 @@ All operators in baba-lang have a *precedence*, which allows ambiguity to be sol
 | 6          | Left          | `+`, `-` |
 | 7          | Left          | `*`, `/`, `%`, `%/%` |
 | 8          |               | unary `+`, unary `-` |
-| 9\*        | Right\*       | ** |
+| 9\*        | Right\*       | `**` |
 | 10         |               | call `a()`, subscript `a[i]`, dot `a.b` |
 | 11         |               | parentheses `(...)` |
 
