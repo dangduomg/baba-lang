@@ -82,7 +82,7 @@ SUM_OP: "+" | "-"
 
 ?prod: prod PROD_OP prefix -> binary_op
      | prefix
-PROD_OP: "*" | "/" | "%/%" | "%"
+PROD_OP: "*" /(?!\*)/ | "/" | "%/%" | "%"
 
 ?prefix: PREFIX_OP prefix
        | postfix
