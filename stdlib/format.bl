@@ -3,6 +3,4 @@
  */
 
 
-module Format {
-    format = py_method('builtins', 'str', 'format');
-}
+format = py_method('builtins', 'str', 'format');
