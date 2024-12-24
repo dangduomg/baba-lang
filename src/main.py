@@ -68,17 +68,44 @@ def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp
     return interpreter.visit_expr(ast_)
 
 
-def handle_runtime_errors(error: BLError) -> None:
+def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str | bytes:
+    """Returns a pretty string pinpointing the error in the text,
+    with span amount of context characters around it.
+
+    Note:
+        The parser doesn't hold a copy of the text it has to parse,
+        so you have to provide it again
+    """
+    # stolen from Lark
+    pos = meta.start_pos
+    start = max(pos - span, 0)
+    end = pos + span
+    if isinstance(text, str):
+        before = text[start:pos].rsplit('\n', 1)[-1]
+        after = text[pos:end].split('\n', 1)[0]
+        return (
+            before + after + '\n' + ' ' * len(before.expandtabs()) +
+            '^\n'
+        )
+    text = bytes(text)
+    before = text[start:pos].rsplit(b'\n', 1)[-1]
+    after = text[pos:end].split(b'\n', 1)[0]
+    return (
+        (before + after + b'\n' + b' ' * len(before.expandtabs()) +
+            b'^\n').decode("ascii", "backslashreplace")
+    )
+
+
+def handle_runtime_errors(src: str, error: BLError) -> None:
     """Print runtime errors nicely"""
     match error:
         case BLError(value=msg, meta=meta):
             match meta:
                 case Meta(line=line, column=column):
-                    print(
-                        f'Runtime error at line {line}, column {column}:',
-                        msg,
-                        sep='\n',
-                    )
+                    print(f'Runtime error at line {line}, column {column}:')
+                    print(msg)
+                    print()
+                    print(get_context(meta, src))
                 case None:
                     print('Error:')
                     print(msg)
@@ -103,8 +130,10 @@ def interp_with_error_handling(
         return e
     except StaticError as e:
         print(e)
+        print()
+        print(e.get_context(src))
         return e
-    handle_runtime_errors(res)
+    handle_runtime_errors(src, res)
     return res
 
 
@@ -149,7 +178,7 @@ def main_interactive() -> int:
                     case Value():
                         print(res.dump(None).value)
                     case BLError():
-                        handle_runtime_errors(res)
+                        handle_runtime_errors(input_, res)
             except UnexpectedInput:
                 interp_with_error_handling(interpret, input_, default_interp)
         except KeyboardInterrupt:

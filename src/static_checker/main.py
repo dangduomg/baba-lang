@@ -23,7 +23,35 @@ class StaticError(ValueError):
     def __str__(self) -> str:
         return (
             f"Static check failed at line {self.meta.line}, " +
-            f"column {self.meta.column}: {self.msg}"
+            f"column {self.meta.column}:\n" +
+            f"{self.msg}\n"
+        )
+
+    def get_context(self, text: str | bytes, span: int = 40) -> str | bytes:
+        """Returns a pretty string pinpointing the error in the text,
+        with span amount of context characters around it.
+
+        Note:
+            The parser doesn't hold a copy of the text it has to parse,
+            so you have to provide it again
+        """
+        # stolen from Lark
+        pos = self.meta.start_pos
+        start = max(pos - span, 0)
+        end = pos + span
+        if isinstance(text, str):
+            before = text[start:pos].rsplit('\n', 1)[-1]
+            after = text[pos:end].split('\n', 1)[0]
+            return (
+                before + after + '\n' + ' ' * len(before.expandtabs()) +
+                '^\n'
+            )
+        text = bytes(text)
+        before = text[start:pos].rsplit(b'\n', 1)[-1]
+        after = text[pos:end].split(b'\n', 1)[0]
+        return (
+            (before + after + b'\n' + b' ' * len(before.expandtabs()) +
+             b'^\n').decode("ascii", "backslashreplace")
         )
 
 
