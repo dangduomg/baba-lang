@@ -37,8 +37,9 @@ class ASTInterpreter(ASTVisitor):
         self.globals = Env()
         # Populate some builtins
         self.globals.new_var("print", PythonFunction(built_ins.print_))
-        self.globals.new_var("print_dump",
-                             PythonFunction(built_ins.print_dump))
+        self.globals.new_var(
+            "print_dump", PythonFunction(built_ins.print_dump)
+        )
         self.globals.new_var("input", PythonFunction(built_ins.input_))
         self.globals.new_var("int", PythonFunction(built_ins.int_))
         self.globals.new_var("float", PythonFunction(built_ins.float_))
@@ -46,15 +47,21 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("str", PythonFunction(built_ins.str_))
         self.globals.new_var("list_len", PythonFunction(colls.list_len))
         self.globals.new_var("list_insert", PythonFunction(colls.list_insert))
-        self.globals.new_var("list_remove_at",
-                             PythonFunction(colls.list_remove_at))
+        self.globals.new_var(
+            "list_remove_at", PythonFunction(colls.list_remove_at)
+        )
         self.globals.new_var("dict_size", PythonFunction(colls.dict_size))
         self.globals.new_var("dict_keys", PythonFunction(colls.dict_keys))
         self.globals.new_var("dict_remove", PythonFunction(colls.dict_remove))
-        self.globals.new_var("py_function",
-                             PythonFunction(pywrapper.py_function))
-        self.globals.new_var("py_method",
-                             PythonFunction(pywrapper.py_method))
+        self.globals.new_var(
+            "py_function", PythonFunction(pywrapper.py_function)
+        )
+        self.globals.new_var(
+            "py_method", PythonFunction(pywrapper.py_method)
+        )
+        self.globals.new_var(
+            "py_constant", PythonFunction(pywrapper.py_constant)
+        )
 
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access
@@ -133,7 +140,9 @@ class ASTInterpreter(ASTVisitor):
                 # Create new environment
                 self.globals = Env(parent=self.globals)
                 # Evaluate the body
-                self.visit_stmt(body)
+                match res := self.visit_stmt(body):
+                    case BLError():
+                        return res
                 vars_ = {str(name): var.value
                          for name, var in self.globals.vars.items()}
                 # Clean up
