@@ -1,3 +1,5 @@
+?start: body
+
 body: stmt*
 
 // Statement grammar
@@ -41,10 +43,11 @@ module_stmt: _MODULE IDENT "{" body "}"
 
 ?exprs: _comma_list{expr}
 
-?expr: assign
+?expr: _FUNCTION "(" form_args ")" "->" expr -> short_fn_literal
+     | assign
 
-?assign: pattern "=" assign
-       | pattern INPLACE_OP assign -> inplace
+?assign: pattern "=" expr
+       | pattern INPLACE_OP expr -> inplace
        | or
 INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|="
           | "^=" | "<<=" | ">>="

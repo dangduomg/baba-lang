@@ -2,7 +2,6 @@
 
 import ast
 from pathlib import Path
-from typing import Optional
 
 from lark import Lark, ast_utils, v_args
 from lark.visitors import Transformer, Discard, _DiscardType
@@ -39,9 +38,9 @@ class Extras(Transformer):
     def for_stmt(
         self,
         meta: Meta,
-        initializer: Optional[nodes._Expr],
-        condition: Optional[nodes._Expr],
-        updater: Optional[nodes._Expr],
+        initializer: nodes._Expr | None,
+        condition: nodes._Expr | None,
+        updater: nodes._Expr | None,
         body: nodes.Body,
     ) -> nodes.Body:
         statements = []
@@ -59,6 +58,13 @@ class Extras(Transformer):
 
     def nop_stmt(self, children: list) -> _DiscardType:
         return Discard
+
+    @v_args(inline=True, meta=True)
+    def short_fn_literal(
+        self, meta: Meta, form_args: nodes.FormArgs, expr: nodes._Expr
+    ) -> nodes.FunctionLiteral:
+        body = nodes.Body(meta, [nodes.ReturnStmt(meta, expr)])
+        return nodes.FunctionLiteral(meta, form_args, body)
 
     def INT(self, lexeme: str) -> int:
         return int(lexeme)

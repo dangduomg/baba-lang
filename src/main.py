@@ -156,9 +156,7 @@ def main() -> int:
     else:
         interp_func = interpret
     match res := interp_with_error_handling(
-        interp_func,
-        src,
-        ASTInterpreter(path)
+        interp_func, src, ASTInterpreter(path)
     ):
         case UnexpectedInput() | BLError():
             return 1
