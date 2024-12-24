@@ -15,10 +15,10 @@ baba-lang is written for educational purposes only, and is not production-ready.
 
 ## How to install and use baba-lang
 
-Installing and running baba-lang is simple:
+Installing and running baba-lang is simple:  
 1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt).
-2. Either:
-* clone the repository
+2. Either:  
+* clone the repository  
 ```sh
 git clone https://github.com/dangduomg/baba-lang.git
 ```
