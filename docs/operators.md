@@ -46,7 +46,7 @@ Binary operators take two values. Binary arithmetic operators in baba-lang are a
 | `%` | Modulo | Satisfies `a % b == a - b * (a %/% b)` |
 | `**` | Power | |
 | `&` | Bitwise and | |
-| `\|` | Bitwise or | |
+| `|` | Bitwise or | |
 | `^` | Bitwise xor | |
 | `==` | Equality | |
 | `!=` | Inequality | |
@@ -63,7 +63,7 @@ Unlike normal operators, logical operators are *short-circuit*, meaning they may
 | Symbol | Name | Notes |
 | - | - | - |
 | `&&` | Logical and | |
-| `\|\|` | Logical or | |
+| `||` | Logical or | |
 | `!` | Logical not | |
 
 
@@ -109,10 +109,10 @@ All operators in baba-lang have a *precedence*, which allows ambiguity to be sol
 | Precedence | Associativity | Operators |
 | ---------- | ------------- | - |
 | 0          | Right         | `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=` |
-| 1          | Right         | `\|\|` |
+| 1          | Right         | `||` |
 | 2          | Right         | `&&` |
 | 3          | None          | `==`, `!=`, `>`, `>=`, `<`, `<=` |
-| 4          | Left          | `\|`, `^` |
+| 4          | Left          | `|`, `^` |
 | 5          | Left          | `&` |
 | 6          | Left          | `+`, `-` |
 | 7          | Left          | `*`, `/`, `%`, `%/%` |
