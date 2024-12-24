@@ -1,0 +1,30 @@
+/*
+ * functools.bl -- library for functional programming
+ */
+
+
+fun map(f, lst) {
+    res = [];
+    for (i = 0; i < lst.length(); i += 1) {
+        res.insert(res.length(), f(lst[i]));
+    }
+    return res;
+}
+
+fun filter(f, lst) {
+    res = [];
+    for (i = 0; i < lst.length(); i += 1) {
+        if (f(lst[i])) {
+            res.insert(res.length(), lst[i]);
+        }
+    }
+    return res;
+}
+
+fun reduce(f, lst, start) {
+    res = start;
+    for (i = 0; i < lst.length(); i += 1) {
+        res = f(res, lst[i]);
+    }
+    return res;
+}
