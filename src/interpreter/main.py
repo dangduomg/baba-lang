@@ -209,8 +209,10 @@ class ASTInterpreter(ASTVisitor):
                     case values.Bool(True):
                         return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
-                return self.visit_expr(left) \
-                           .binary_op(op, self.visit_expr(right), meta)
+                return (
+                    self.visit_expr(left)
+                        .binary_op(op, self.visit_expr(right), meta)
+                )
             case nodes.Subscript(meta=meta, subscriptee=subscriptee,
                                  index=index):
                 return self.visit_expr(subscriptee).get_item(
