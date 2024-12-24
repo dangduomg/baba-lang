@@ -1,0 +1,44 @@
+/*
+ * math.bl -- Math functions
+ */
+
+
+module Math {
+    PI = py_constant('math', 'pi');
+    E = py_constant('math', 'e');
+    INF = py_constant('math', 'inf');
+    NAN = py_constant('math', 'nan');
+
+    min = py_function('builtins', 'min');
+    max = py_function('builtins', 'max');
+    abs = py_function('builtins', 'abs');
+    pow = py_function('builtins', 'pow');
+
+    sqrt = py_function('math', 'sqrt');
+    cbrt = py_function('math', 'cbrt');
+    hypot = py_function('math', 'hypot');
+    dist = py_function('math', 'dist');
+
+    exp = py_function('math', 'exp');
+    exp2 = py_function('math', 'exp2');
+    expm1 = py_function('math', 'expm1');
+    log = py_function('math', 'log');
+    log1p = py_function('math', 'log1p');
+    log2 = py_function('math', 'log2');
+    log10 = py_function('math', 'log10');
+
+    sin = py_function('math', 'sin');
+    cos = py_function('math', 'cos');
+    tan = py_function('math', 'tan');
+    asin = py_function('math', 'asin');
+    acos = py_function('math', 'acos');
+    atan = py_function('math', 'atan');
+    atan2 = py_function('math', 'atan2');
+
+    sinh = py_function('math', 'sinh');
+    cosh = py_function('math', 'cosh');
+    tanh = py_function('math', 'tanh');
+    asinh = py_function('math', 'asinh');
+    acosh = py_function('math', 'acosh');
+    atanh = py_function('math', 'atanh');
+}
