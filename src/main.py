@@ -22,7 +22,7 @@ from interpreter import (
 
 
 PROG = 'baba-lang'
-VERSION = '0.4.2'
+VERSION = '0.4.3'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
 
