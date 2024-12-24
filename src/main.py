@@ -16,8 +16,9 @@ from lark.tree import Meta
 
 from bl_ast import parse_to_ast, parse_expr_to_ast
 from static_checker import StaticChecker, StaticError
-from interpreter import ASTInterpreter, Result, ExpressionResult, BLError, \
-                        Value
+from interpreter import (
+    ASTInterpreter, Result, ExpressionResult, BLError, Value
+)
 
 
 PROG = 'baba-lang'
