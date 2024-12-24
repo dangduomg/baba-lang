@@ -12,7 +12,7 @@ Welcome to the baba-lang tutorial (and reference)! baba-lang is a language made 
 
 ## Make sure that you have baba-lang in your local machine
 
-See [How to install and use baba-lang](/#How to install and use baba-lang) for how to do so.
+See [How to install and use baba-lang](index.md#How to install and use baba-lang) for how to do so.
 
 
 ## Create the first baba-lang program
@@ -54,4 +54,4 @@ Unlike Perl, there is no difference between single-quoting and double-quoting.
 
 ## Next
 
-Not done yet.
+[Operators](operators.md)
