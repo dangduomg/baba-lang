@@ -53,6 +53,8 @@ class ExpressionResult(Result):
                 return self.mod(other, meta)
             case "%/%":
                 return self.floor_div(other, meta)
+            case "**":
+                return self.pow(other, meta)
             case "&":
                 return self.bitwise_and(other, meta)
             case "|":
@@ -111,6 +113,12 @@ class ExpressionResult(Result):
         self, other: "ExpressionResult", meta: Meta | None
     ) -> "ExpressionResult":
         """Floor division"""
+        return self._unimplemented_binary_op(other, meta)
+
+    def pow(
+        self, other: "ExpressionResult", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Power"""
         return self._unimplemented_binary_op(other, meta)
 
     def bitwise_and(
@@ -296,6 +304,9 @@ string"""
     def mod(self, other: ExpressionResult, meta: Meta | None) -> Self:
         return self
 
+    def pow(self, other: ExpressionResult, meta: Meta | None) -> Self:
+        return self
+
     def floor_div(self, other: ExpressionResult, meta: Meta | None) -> Self:
         return self
 
@@ -413,12 +424,12 @@ class Bool(Value):
 
     value: bool
 
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> "String":
         if self.value:
             return String("true")
         return String("false")
 
-    def to_bool(self, meta):
+    def to_bool(self, meta: Meta | None) -> "Bool":
         return self
 
 
@@ -429,10 +440,10 @@ BOOLS = Bool(False), Bool(True)
 class Null(Value):
     """Null value"""
 
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> "String":
         return String("null")
 
-    def to_bool(self, meta):
+    def to_bool(self, meta: Meta | None) -> Bool:
         return BOOLS[False]
 
 
@@ -445,61 +456,77 @@ class String(Value):
 
     value: str
 
-    def add(self, other, meta):
+    def add(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case String(other_val):
                 return String(self.value + other_val)
         return super().add(other, meta)
 
-    def multiply(self, other, meta):
+    def multiply(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(times):
                 return String(self.value * times)
         return super().multiply(other, meta)
 
-    def is_equal(self, other, meta):
+    def is_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> Bool:
         match other:
             case String(other_val):
                 return BOOLS[self.value == other_val]
         return super().is_equal(other, meta)
 
-    def is_not_equal(self, other, meta):
+    def is_not_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> Bool:
         match other:
             case String(other_val):
                 return BOOLS[self.value != other_val]
         return super().is_not_equal(other, meta)
 
-    def is_less(self, other, meta):
+    def is_less(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case String(other_val):
                 return BOOLS[self.value < other_val]
         return super().is_less(other, meta)
 
-    def is_less_or_equal(self, other, meta):
+    def is_less_or_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case String(other_val):
                 return BOOLS[self.value <= other_val]
         return super().is_less_or_equal(other, meta)
 
-    def is_greater(self, other, meta):
+    def is_greater(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case String(other_val):
                 return BOOLS[self.value > other_val]
         return super().is_greater(other, meta)
 
-    def is_greater_or_equal(self, other, meta):
+    def is_greater_or_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case String(other_val):
                 return BOOLS[self.value >= other_val]
         return super().is_greater_or_equal(other, meta)
 
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> "String":
         return String(f"'{self.value}'")
 
-    def to_string(self, meta):
+    def to_string(self, meta: Meta | None) -> Self:
         return self
 
-    def to_bool(self, meta):
+    def to_bool(self, meta: Meta | None) -> Bool:
         return BOOLS[bool(self.value)]
 
 
@@ -529,7 +556,9 @@ class Int(Value):
                 return Float(self.value - other_val)
         return super().subtract(other, meta)
 
-    def multiply(self, other, meta):
+    def multiply(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val):
                 return Int(self.value * other_val)
@@ -537,7 +566,9 @@ class Int(Value):
                 return Float(self.value * other_val)
         return super().multiply(other, meta)
 
-    def divide(self, other, meta):
+    def divide(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val) | Float(other_val):
                 try:
@@ -546,7 +577,9 @@ class Int(Value):
                     return error_div_by_zero.set_meta(meta)
         return super().divide(other, meta)
 
-    def mod(self, other, meta):
+    def mod(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         try:
             match other:
                 case Int(other_val):
@@ -557,7 +590,9 @@ class Int(Value):
             return error_div_by_zero.set_meta(meta)
         return super().mod(other, meta)
 
-    def floor_div(self, other, meta):
+    def floor_div(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         try:
             match other:
                 case Int(other_val):
@@ -568,85 +603,120 @@ class Int(Value):
             return error_div_by_zero.set_meta(meta)
         return super().floor_div(other, meta)
 
-    def bitwise_and(self, other, meta):
+    def pow(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
+        try:
+            match other:
+                case Int(other_val):
+                    return Int(self.value ** other_val)
+                case Float(other_val):
+                    return Float(self.value ** other_val)
+        except ZeroDivisionError:
+            return error_div_by_zero.set_meta(meta)
+        return super().pow(other, meta)
+
+    def bitwise_and(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val):
                 return Int(self.value & other_val)
         return super().bitwise_and(other, meta)
 
-    def bitwise_or(self, other, meta):
+    def bitwise_or(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val):
                 return Int(self.value | other_val)
         return super().bitwise_or(other, meta)
 
-    def bitwise_xor(self, other, meta):
+    def bitwise_xor(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val):
                 return Int(self.value ^ other_val)
         return super().bitwise_xor(other, meta)
 
-    def left_shift(self, other, meta):
+    def left_shift(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val):
                 return Int(self.value << other_val)
         return super().left_shift(other, meta)
 
-    def right_shift(self, other, meta):
+    def right_shift(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val):
                 return Int(self.value >> other_val)
         return super().right_shift(other, meta)
 
-    def is_equal(self, other, meta):
+    def is_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> Bool:
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value == other_val]
         return super().is_equal(other, meta)
 
-    def is_not_equal(self, other, meta):
+    def is_not_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> Bool:
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value != other_val]
         return super().is_not_equal(other, meta)
 
-    def is_less(self, other, meta):
+    def is_less(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value < other_val]
         return super().is_less(other, meta)
 
-    def is_less_or_equal(self, other, meta):
+    def is_less_or_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value <= other_val]
         return super().is_less_or_equal(other, meta)
 
-    def is_greater(self, other, meta):
+    def is_greater(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value > other_val]
         return super().is_greater(other, meta)
 
-    def is_greater_or_equal(self, other, meta):
+    def is_greater_or_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value >= other_val]
         return super().is_greater_or_equal(other, meta)
 
-    def plus(self, meta):
+    def plus(self, meta: Meta | None) -> "Int":
         return Int(+self.value)
 
-    def neg(self, meta):
+    def neg(self, meta: Meta | None) -> "Int":
         return Int(-self.value)
 
-    def bitwise_not(self, meta):
+    def bitwise_not(self, meta: Meta | None) -> "Int":
         return Int(~self.value)
 
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> String:
         return String(repr(self.value))
 
-    def to_bool(self, meta):
+    def to_bool(self, meta: Meta | None) -> Bool:
         return BOOLS[bool(self.value)]
 
 
@@ -656,25 +726,33 @@ class Float(Value):
 
     value: float
 
-    def add(self, other, meta):
+    def add(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 return Float(self.value + other_val)
         return super().add(other, meta)
 
-    def subtract(self, other, meta):
+    def subtract(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 return Float(self.value - other_val)
         return super().subtract(other, meta)
 
-    def multiply(self, other, meta):
+    def multiply(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 return Float(self.value * other_val)
         return super().multiply(other, meta)
 
-    def divide(self, other, meta):
+    def divide(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 try:
@@ -683,7 +761,9 @@ class Float(Value):
                     return error_div_by_zero.set_meta(meta)
         return super().divide(other, meta)
 
-    def mod(self, other, meta):
+    def mod(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 try:
@@ -692,7 +772,9 @@ class Float(Value):
                     return error_div_by_zero.set_meta(meta)
         return super().mod(other, meta)
 
-    def floor_div(self, other, meta):
+    def floor_div(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 try:
@@ -701,56 +783,65 @@ class Float(Value):
                     return error_div_by_zero.set_meta(meta)
         return super().floor_div(other, meta)
 
-    def is_equal(self, other, meta):
+    def is_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> Bool:
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value == other_val]
         return super().is_equal(other, meta)
 
-    def is_not_equal(self, other, meta):
+    def is_not_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> Bool:
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value != other_val]
         return super().is_not_equal(other, meta)
 
-    def is_less(self, other, meta):
+    def is_less(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value < other_val]
         return super().is_less(other, meta)
 
-    def is_less_or_equal(self, other, meta):
+    def is_less_or_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value <= other_val]
         return super().is_less_or_equal(other, meta)
 
-    def is_greater(self, other, meta):
+    def is_greater(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value > other_val]
         return super().is_greater(other, meta)
 
-    def is_greater_or_equal(self, other, meta):
+    def is_greater_or_equal(
+        self, other: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value >= other_val]
         return super().is_greater_or_equal(other, meta)
 
-    def plus(self, meta):
+    def plus(self, meta: Meta | None) -> "Float":
         return Float(+self.value)
 
-    def neg(self, meta):
+    def neg(self, meta: Meta | None) -> "Float":
         return Float(-self.value)
 
-    def bitwise_not(self, meta):
-        return error_not_implemented.set_meta(meta)
-
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> String:
         return String(repr(self.value))
 
-    def to_string(self, meta):
+    def to_string(self, meta: Meta | None) -> String:
         return String(str(self.value))
 
-    def to_bool(self, meta):
+    def to_bool(self, meta: Meta | None) -> Bool:
         return BOOLS[bool(self.value)]
