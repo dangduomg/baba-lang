@@ -66,4 +66,4 @@ class Instance(Value):
         return super().set_attr(attr, value, meta)
 
     def dump(self, meta: Meta | None) -> String:
-        return String(f"<object of {self.class_.dump(meta)}>")
+        return String(f"<object of {self.class_.dump(meta).value}>")

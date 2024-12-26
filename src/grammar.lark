@@ -15,6 +15,7 @@ body: stmt*
      | include_stmt
      | function_stmt
      | module_stmt
+     | class_stmt
      | exprs ";"
      | ";" -> nop_stmt
 
@@ -103,7 +104,7 @@ POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
-     | _NEW IDENT "(" _comma_list{expr}? ")" -> new
+     | _NEW IDENT "(" spec_args ")" -> new
      | "(" expr ")"
 
 literal: STRING -> string
