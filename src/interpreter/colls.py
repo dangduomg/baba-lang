@@ -4,7 +4,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from lark import Token
 from lark.tree import Meta
 
 from .base import (
@@ -74,7 +73,7 @@ class BLList(Value):
                                              .set_meta(meta)
         return super().set_item(index, value, meta)
 
-    def get_attr(self, attr: Token, meta: Meta | None) -> ExpressionResult:
+    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
         match attr:
             case 'length':
                 return PythonFunction(self.length)
@@ -173,7 +172,7 @@ class BLDict(Value):
                     ).set_meta(meta)
         return super().set_item(index, value, meta)
 
-    def get_attr(self, attr: Token, meta: Meta | None) -> ExpressionResult:
+    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
         match attr:
             case 'size':
                 return PythonFunction(dict_size)
@@ -247,7 +246,7 @@ class Module(Value):
     name: str
     vars: dict[str, Value]
 
-    def get_attr(self, attr, meta):
+    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
         try:
             return self.vars[attr]
         except KeyError:
@@ -257,5 +256,5 @@ class Module(Value):
                 .set_meta(meta)
             )
 
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> String:
         return String(f"<module '{self.name}'>")

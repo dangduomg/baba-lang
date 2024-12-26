@@ -245,16 +245,29 @@ class ExpressionResult(Result):
         return error_not_implemented.set_meta(meta)
 
     def get_attr(
-        self, attr: Token, meta: Meta | None
+        self, attr: str, meta: Meta | None
     ) -> "ExpressionResult":
         """Access an attribute"""
         return error_not_implemented.set_meta(meta)
+
+    def set_attr(
+        self, attr: str, value: "ExpressionResult", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Set an attribute"""
+        return self._unimplemented_binary_op(value, meta)
 
     def call(
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> "ExpressionResult":
         """Call self as a function"""
+        return error_not_implemented.set_meta(meta)
+
+    def new(
+        self, args: list["Value"], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> "ExpressionResult":
+        """Instantiate an object"""
         return error_not_implemented.set_meta(meta)
 
     def dump(self, meta: Meta | None) -> "ExpressionResult":
@@ -370,7 +383,12 @@ string"""
     ) -> Self:
         return self
 
-    def get_attr(self, attr: Token, meta: Meta | None) -> Self:
+    def get_attr(self, attr: str, meta: Meta | None) -> Self:
+        return self
+
+    def set_attr(
+        self, attr: str, value: ExpressionResult, meta: Meta | None
+    ) -> Self:
         return self
 
     def call(

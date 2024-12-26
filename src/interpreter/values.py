@@ -7,3 +7,4 @@
 from .base import Value, String, Int, Float, Bool, BOOLS, Null, NULL
 from .colls import BLList, BLDict, Module
 from .function import BLFunction, PythonFunction
+from .object import Class, Instance

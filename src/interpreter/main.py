@@ -2,6 +2,7 @@
 
 from typing import Optional
 
+from lark.tree import Meta
 from lark.exceptions import UnexpectedInput
 
 from bl_ast import nodes, parse_to_ast
@@ -150,6 +151,20 @@ class ASTInterpreter(ASTVisitor):
                     self.globals = self.globals.parent
                 self.globals.new_var(name, values.Module(name, vars_))
                 return Success()
+            case nodes.ClassStmt(name=name, body=body):
+                # Create new environment
+                self.globals = Env(parent=self.globals)
+                # Evaluate the body
+                match res := self.visit_stmt(body):
+                    case BLError():
+                        return res
+                vars_ = {str(name): var.value
+                         for name, var in self.globals.vars.items()}
+                # Clean up
+                if self.globals.parent is not None:
+                    self.globals = self.globals.parent
+                self.globals.new_var(name, values.Class(name, vars_))
+                return Success()
             case nodes.IncludeStmt(meta=meta, path=path):
                 try:
                     f = open(path, encoding='utf-8')
@@ -240,16 +255,24 @@ class ASTInterpreter(ASTVisitor):
                     case function.SupportsBLCall():
                         self.calls.append(function.Call(callee, meta))
                 return callee.call(args, self, meta)
+            case nodes.New(meta=meta, class_name=name, args=args_in_ast):
+                # Visit all args, stop if one is an error
+                args = []
+                for arg in args_in_ast.args:
+                    arg_visited = self.visit_expr(arg)
+                    if not isinstance(arg_visited, Value):
+                        return arg_visited
+                    args.append(arg_visited)
+                match class_ := self.get_var(name, meta):
+                    case values.Class():
+                        return class_.new(args, self, meta)
+                return class_
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
                 return self.visit_expr(accessee).get_attr(attr, meta)
             case nodes.Var(meta=meta, name=name):
-                if self.locals is not None:
-                    res = self.locals.get_var(name, meta)
-                    if isinstance(res, Value):
-                        return res
-                return self.globals.get_var(name, meta)
+                return self.get_var(name, meta)
             case nodes.String(value=value):
                 return values.String(value)
             case nodes.Int(value=value):
@@ -341,3 +364,11 @@ class ASTInterpreter(ASTVisitor):
                     subscriptee.set_item(index, value, meta)
                     return value
         return error_not_implemented.set_meta(meta)
+
+    def get_var(self, name: str, meta: Meta) -> ExpressionResult:
+        """Get a variable either from locals or globals"""
+        if self.locals is not None:
+            res = self.locals.get_var(name, meta)
+            if isinstance(res, Value):
+                return res
+        return self.globals.get_var(name, meta)

@@ -105,6 +105,14 @@ class ModuleStmt(_Stmt):
     body: Body
 
 
+@dataclass(frozen=True)
+class ClassStmt(_Stmt):
+    """Class"""
+    meta: Meta
+    name: Token
+    body: Body
+
+
 # Expressions
 
 
@@ -201,18 +209,26 @@ class Prefix(_Expr):
 
 
 @dataclass(frozen=True)
-class Call(_Expr):
-    """Function call operation"""
-    meta: Meta
-    callee: _Expr
-    args: 'SpecArgs'
-
-
-@dataclass(frozen=True)
 class SpecArgs(_AstNode, AsList):
     """Specific argument list"""
     meta: Meta
     args: list[_Expr]
+
+
+@dataclass(frozen=True)
+class Call(_Expr):
+    """Function call operation"""
+    meta: Meta
+    callee: _Expr
+    args: SpecArgs
+
+
+@dataclass(frozen=True)
+class New(_Expr):
+    """Instantiation operation"""
+    meta: Meta
+    class_name: Token
+    args: SpecArgs
 
 
 # Subscript

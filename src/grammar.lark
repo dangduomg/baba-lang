@@ -39,6 +39,8 @@ function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
 
 module_stmt: _MODULE IDENT "{" body "}"
 
+class_stmt: _CLASS IDENT "{" body "}"
+
 // Expression grammar
 
 ?exprs: _comma_list{expr}
@@ -101,6 +103,7 @@ POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
+     | _NEW IDENT "(" _comma_list{expr}? ")" -> new
      | "(" expr ")"
 
 literal: STRING -> string
@@ -135,10 +138,11 @@ _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 IDENT: /(?!/ RESERVED  /)/ CNAME /\b/
 
 RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE
-        | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE
+        | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE | _CLASS | _NEW
 _TRUE: /true\b/
 _FALSE: /false\b/
 _NULL: /null\b/
+_NEW: /new\b/
 _FUNCTION: /fun\b/
 _RETURN: /return\b/
 _IF: /if\b/
@@ -150,6 +154,7 @@ _BREAK: /break\b/
 _CONTINUE: /continue\b/
 _INCLUDE: /include\b/
 _MODULE: /module\b/
+_CLASS: /class\b/
 
 %import common.CNAME
 %import common.INT

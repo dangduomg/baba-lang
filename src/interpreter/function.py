@@ -20,6 +20,7 @@ from .exits import Return
 from .env import Env
 
 if TYPE_CHECKING:
+    from .object import Instance
     from .main import ASTInterpreter
 
 
@@ -31,6 +32,7 @@ class BLFunction(Value):
     form_args: FormArgs
     body: Body
     env: Optional[Env] = None
+    this: Optional["Instance"] = None
 
     def call(self, args, interpreter, meta):
         # Create an environment (call frame)
@@ -42,8 +44,13 @@ class BLFunction(Value):
             for farg, arg in zip(form_args, args, strict=True):
                 env.new_var(farg, arg)
         except ValueError:
-            return error_wrong_argc.fill_args(self.name, len(form_args)) \
-                                   .set_meta(meta)
+            return (
+                error_wrong_argc.fill_args(self.name, len(form_args))
+                                .set_meta(meta)
+            )
+        # If function is bound to an object, add that object
+        if self.this is not None:
+            env.new_var("this", self.this)
         # Run the body
         interpreter.locals = env
         res = interpreter.visit_stmt(self.body)
@@ -56,6 +63,12 @@ class BLFunction(Value):
             case Return(value=value):
                 return value
         return error_not_implemented.set_meta(meta)
+
+    def bind(self, object_: "Instance") -> "BLFunction":
+        """Return a version of BLFunction bound to an object"""
+        return BLFunction(
+            self.name, self.form_args, self.body, self.env, object_
+        )
 
     def dump(self, meta):
         return String(f"<function '{self.name}'>")
@@ -86,10 +99,10 @@ class PythonFunction(Value):
     ) -> ExpressionResult:
         return self.function(meta, interpreter, *args)
 
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> String:
         return String(f"<python function {self.function!r}>")
 
-    def to_string(self, meta):
+    def to_string(self, meta: Meta | None) -> String:
         return String(f"<python function '{self.function.__name__}'>")
 
 
