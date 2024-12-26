@@ -5,20 +5,26 @@ video game "Baba is You".
 """
 
 
+import importlib.util
+import logging
 import os
 import sys
-from typing import Optional
-from collections.abc import Callable
 from argparse import ArgumentParser
+from collections.abc import Callable
+from typing import Optional
 
 from lark.exceptions import UnexpectedInput
 from lark.tree import Meta
 
-from bl_ast import parse_to_ast, parse_expr_to_ast
-from static_checker import StaticChecker, StaticError
+from bl_ast import parse_expr_to_ast, parse_to_ast
 from interpreter import (
-    ASTInterpreter, Result, ExpressionResult, BLError, Value
+    ASTInterpreter, BLError, ExpressionResult, Result, Value
 )
+from static_checker import StaticChecker, StaticError
+
+if importlib.util.find_spec('readline'):
+    # pylint: disable = import-error, unused-import
+    import readline  # noqa: F401
 
 
 PROG = 'baba-lang'
@@ -168,7 +174,10 @@ def main() -> int:
 
 def main_interactive() -> int:
     """Interactive main function"""
-    print(VERSION_STRING % {'prog': PROG})
+    logging.basicConfig(level=logging.DEBUG)
+    print(VERSION_STRING % {'prog': PROG}, "REPL")
+    print("Press Ctrl-C to terminate the current line")
+    print("Press Ctrl-Z to exit the REPL")
     while True:
         try:
             input_ = input('> ')
@@ -182,7 +191,9 @@ def main_interactive() -> int:
                 interp_with_error_handling(interpret, input_, default_interp)
         except KeyboardInterrupt:
             print()
+            logging.debug("ctrl-C is pressed")
         except EOFError:
+            logging.debug("ctrl-Z is pressed")
             return 0
 
 
