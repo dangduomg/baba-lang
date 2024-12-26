@@ -177,7 +177,7 @@ def main_interactive() -> int:
     logging.basicConfig(level=logging.DEBUG)
     print(VERSION_STRING % {'prog': PROG}, "REPL")
     print("Press Ctrl-C to terminate the current line")
-    print("Press Ctrl-Z to exit the REPL")
+    print("Send EOF (Ctrl-Z on Windows, Ctrl-D on Linux) to exit the REPL")
     while True:
         try:
             input_ = input('> ')
@@ -193,7 +193,7 @@ def main_interactive() -> int:
             print()
             logging.debug("ctrl-C is pressed")
         except EOFError:
-            logging.debug("ctrl-Z is pressed")
+            logging.debug("EOF is sent")
             return 0
 
 
