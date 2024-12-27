@@ -46,12 +46,6 @@ argparser.add_argument(
     help='Evaluate an expression',
     action='store_true',
 )
-argparser.add_argument(
-    '-i', '--interactive',
-    help='Enter interactive shell',
-    action='store_true',
-    default=True,
-)
 
 
 default_interp = ASTInterpreter()
@@ -148,14 +142,10 @@ def interp_with_error_handling(
 def main() -> int:
     """Main function"""
     args = argparser.parse_args()
-    if args.interactive:
-        return main_interactive()
     if args.path is None:
-        path = ''
-        src_stream = sys.stdin
-    else:
-        path = os.path.abspath(args.path)
-        src_stream = open(args.path, encoding='utf-8')
+        return main_interactive()
+    path = os.path.abspath(args.path)
+    src_stream = open(args.path, encoding='utf-8')
     with src_stream:
         src = src_stream.read()
     if args.expression:
