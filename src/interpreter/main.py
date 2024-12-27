@@ -29,7 +29,7 @@ class ASTInterpreter(ASTVisitor):
     globals: Env
     locals: Optional[Env] = None
 
-    calls: list
+    calls: list[function.Call]
 
     def __init__(self, path=''):
         self.path = path
@@ -263,7 +263,7 @@ class ASTInterpreter(ASTVisitor):
                     if not isinstance(arg_visited, Value):
                         return arg_visited
                     args.append(arg_visited)
-                match class_ := self.get_var(name, meta):
+                match class_ := self._get_var(name, meta):
                     case values.Class():
                         return class_.new(args, self, meta)
                 return class_
@@ -272,7 +272,7 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
                 return self.visit_expr(accessee).get_attr(attr, meta)
             case nodes.Var(meta=meta, name=name):
-                return self.get_var(name, meta)
+                return self._get_var(name, meta)
             case nodes.String(value=value):
                 return values.String(value)
             case nodes.Int(value=value):
@@ -315,7 +315,7 @@ class ASTInterpreter(ASTVisitor):
             value = rhs_result
             match node.pattern:
                 case nodes.VarPattern(name=name):
-                    self.globals.new_var(name, value)
+                    self._new_var(name, value)
                     return value
                 case nodes.SubscriptPattern(
                     subscriptee=subscriptee_,
@@ -324,6 +324,12 @@ class ASTInterpreter(ASTVisitor):
                     subscriptee = self.visit_expr(subscriptee_)
                     index = self.visit_expr(index_)
                     return subscriptee.set_item(index, value, meta)
+                case nodes.DotPattern(
+                    accessee=accessee_,
+                    attr_name=attr,
+                ):
+                    accessee = self.visit_expr(accessee_)
+                    return accessee.set_attr(attr, value, meta)
         return error_not_implemented.set_meta(meta)
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
@@ -338,7 +344,7 @@ class ASTInterpreter(ASTVisitor):
         pattern = node.pattern
         if isinstance(pattern, nodes.VarPattern):
             name = pattern.name
-            old_value_get_result = self.globals.get_var(name, meta)
+            old_value_get_result = self._get_var(name, meta)
             new_result = old_value_get_result.binary_op(node.op[:-1], by, meta)
             match old_value_get_result, new_result:
                 case Value(), BLError():
@@ -363,12 +369,36 @@ class ASTInterpreter(ASTVisitor):
                     value = new_result
                     subscriptee.set_item(index, value, meta)
                     return value
+        if isinstance(pattern, nodes.DotPattern):
+            subscriptee = self.visit_expr(pattern.accessee)
+            old_value_get_result = (
+                subscriptee.get_attr(pattern.attr_name, meta)
+            )
+            new_result = (
+                old_value_get_result.binary_op(node.op[:-1], by, meta)
+            )
+            match old_value_get_result, new_result:
+                case Value(), BLError():
+                    return new_result
+                case BLError(), _:
+                    return old_value_get_result
+                case _, Value():
+                    value = new_result
+                    subscriptee.set_attr(pattern.attr_name, value, meta)
+                    return value
         return error_not_implemented.set_meta(meta)
 
-    def get_var(self, name: str, meta: Meta) -> ExpressionResult:
+    def _get_var(self, name: str, meta: Meta) -> ExpressionResult:
         """Get a variable either from locals or globals"""
         if self.locals is not None:
             res = self.locals.get_var(name, meta)
             if isinstance(res, Value):
                 return res
         return self.globals.get_var(name, meta)
+
+    def _new_var(self, name: str, value: Value) -> None:
+        """Assign a new either in locals or globals"""
+        if self.locals is not None:
+            self.locals.new_var(name, value)
+            return
+        self.globals.new_var(name, value)

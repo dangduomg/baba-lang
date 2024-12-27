@@ -57,6 +57,7 @@ INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|="
 
 ?pattern: IDENT -> var_pattern
         | postfix "[" expr "]" -> subscript_pattern
+        | postfix "." IDENT -> dot_pattern
 
 ?or: and OR_OP or
    | and

@@ -167,6 +167,14 @@ class SubscriptPattern(_Pattern):
     index: _Expr
 
 
+@dataclass(frozen=True)
+class DotPattern(_Pattern):
+    """Dot pattern"""
+    meta: Meta
+    accessee: _Expr
+    attr_name: Token
+
+
 # Binary and unary operations
 
 
