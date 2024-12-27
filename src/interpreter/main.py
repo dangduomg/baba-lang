@@ -87,7 +87,8 @@ class ASTInterpreter(ASTVisitor):
                 meta=meta, condition=condition,
                 then_body=then_body, else_body=else_body
             ):
-                match cond := self.visit_expr(condition).to_bool(meta):
+                cond = self.visit_expr(condition).to_bool(self, meta)
+                match cond:
                     case BLError():
                         return cond
                     case types.Bool(True):
@@ -103,7 +104,8 @@ class ASTInterpreter(ASTVisitor):
                 eval_condition = not eval_condition_after
                 while True:
                     if eval_condition:
-                        match cond := self.visit_expr(condition).to_bool(meta):
+                        cond = self.visit_expr(condition).to_bool(self, meta)
+                        match cond:
                             case BLError():
                                 return cond
                             case types.Bool(False):
@@ -340,7 +342,9 @@ class ASTInterpreter(ASTVisitor):
         if isinstance(pattern, nodes.VarPattern):
             name = pattern.name
             old_value_get_result = self._get_var(name, meta)
-            new_result = old_value_get_result.binary_op(node.op[:-1], by, meta)
+            new_result = old_value_get_result.binary_op(
+                node.op[:-1], by, self, meta
+            )
             match old_value_get_result, new_result:
                 case Value(), BLError():
                     return new_result
@@ -354,7 +358,9 @@ class ASTInterpreter(ASTVisitor):
             subscriptee = self.visit_expr(pattern.subscriptee)
             index = self.visit_expr(pattern.index)
             old_value_get_result = subscriptee.get_item(index, meta)
-            new_result = old_value_get_result.binary_op(node.op[:-1], by, meta)
+            new_result = old_value_get_result.binary_op(
+                node.op[:-1], by, self, meta
+            )
             match old_value_get_result, new_result:
                 case Value(), BLError():
                     return new_result
@@ -369,8 +375,8 @@ class ASTInterpreter(ASTVisitor):
             old_value_get_result = (
                 subscriptee.get_attr(pattern.attr_name, meta)
             )
-            new_result = (
-                old_value_get_result.binary_op(node.op[:-1], by, meta)
+            new_result = old_value_get_result.binary_op(
+                node.op[:-1], by, self, meta
             )
             match old_value_get_result, new_result:
                 case Value(), BLError():
@@ -390,6 +396,14 @@ class ASTInterpreter(ASTVisitor):
             if isinstance(res, Value):
                 return res
         return self.globals.get_var(name, meta)
+
+    def _set_var(self, name: str, value: Value, meta: Meta) -> BLError | None:
+        """Set a variable either in locals or globals"""
+        if self.locals is not None:
+            res = self.locals.set_var(name, value, meta)
+            if res is not None:  # if its an error
+                return res
+        return self.globals.set_var(name, value, meta)
 
     def _new_var(self, name: str, value: Value) -> None:
         """Assign a new variable either in locals or globals"""

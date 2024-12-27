@@ -19,9 +19,9 @@ def example_interp() -> ASTInterpreter:
 
 def test_expression(example_interp: ASTInterpreter):
     """Test for expression parsing"""
-    res = interpret_expr("1 + 1", example_interp)
+    res = interpret_expr("2 + 3", example_interp)
     assert isinstance(res, ExpressionResult)
-    assert res.is_equal(types.Int(2), meta=None)
+    assert res.is_equal(types.Int(5), example_interp, meta=None)
 
 
 def test_error(example_interp: ASTInterpreter):
@@ -35,7 +35,7 @@ def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
     interpret("a = 3;", example_interp)
     assert example_interp.globals.get_var("a", meta=None).is_equal(
-        types.Int(3), meta=None
+        types.Int(3), example_interp, meta=None
     )
 
 
@@ -57,7 +57,7 @@ def test_if(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        types.String("adult"), meta=None
+        types.String("adult"), example_interp, meta=None
     )
 
 
@@ -73,7 +73,7 @@ def test_loops(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        types.Int(45), meta=None
+        types.Int(45), example_interp, meta=None
     )
 
 
@@ -93,7 +93,7 @@ def test_function(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        types.Int(3628800), meta=None
+        types.Int(3628800), example_interp, meta=None
     )
 
 
@@ -116,5 +116,5 @@ def test_closure(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        types.Int(3), meta=None
+        types.Int(3), example_interp, meta=None
     )
