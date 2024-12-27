@@ -1,11 +1,15 @@
 # For more information, please refer to https://aka.ms/vscode-docker-python
-FROM python:3.12-bullseye
+FROM python:3.12-bookworm
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
+
+# Install dependencies
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y gcc make lld patch libreadline-dev
 
 # Install pip requirements
 COPY requirements.txt .
@@ -20,4 +24,4 @@ RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /
 USER appuser
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["python", "src\main.py"]
+CMD ["python", "src/main.py"]

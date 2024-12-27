@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  babalang:
+    image: babalang
+    build:
+      context: .
+      dockerfile: ./Dockerfile
