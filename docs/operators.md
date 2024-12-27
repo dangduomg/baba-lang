@@ -48,6 +48,8 @@ Binary operators take two values. Binary arithmetic operators in baba-lang are a
 | Bitwise and              | `&`    | |
 | Bitwise or               | `|`    | |
 | Bitwise xor              | `^`    | |
+| Left shift               | `<<`   | |
+| Right shift              | `>>`   | |
 | Equality                 | `==`   | |
 | Inequality               | `!=`   | |
 | Greater than             | `>`    | |
@@ -114,12 +116,13 @@ All operators in baba-lang have a *precedence*, which allows ambiguity to be sol
 | 3          | None          | `==`, `!=`, `>`, `>=`, `<`, `<=` |
 | 4          | Left          | `|`, `^` |
 | 5          | Left          | `&` |
-| 6          | Left          | `+`, `-` |
-| 7          | Left          | `*`, `/`, `%`, `%/%` |
-| 8          |               | unary `+`, unary `-` |
-| 9\*        | Right\*       | `**` |
-| 10         |               | call `a()`, subscript `a[i]`, dot `a.b` |
-| 11         |               | parentheses `(...)` |
+| 6          | Left          | `<<`, `>>` |
+| 7          | Left          | `+`, `-` |
+| 8          | Left          | `*`, `/`, `%`, `%/%` |
+| 9          |               | unary `+`, unary `-` |
+| 10\*       | Right\*       | `**` |
+| 11         |               | call `a()`, subscript `a[i]`, dot `a.b` |
+| 12         |               | parentheses `(...)` |
 
 \* Power operator's associativity and precedence is special since it has lower precedence than unary operators on the right, but higher precedence than them on the left. Put simply, `3 ** -2` is possible and `-3 ** 2` means `-(3 ** 2)` rather than `(-3) ** 2`.
 
