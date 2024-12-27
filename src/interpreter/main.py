@@ -9,8 +9,8 @@ from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
 from . import built_ins, types
-from .types import exits, function, pywrapper
-from .types.base import Result, ExpressionResult, Success, BLError, Value
+from .types import exits, function, pywrapper, Value
+from .types.base import Result, ExpressionResult, Success, BLError
 from .types.errors import (
     error_not_implemented, error_include_syntax, error_inside_include,
     error_invalid_include,
@@ -24,6 +24,7 @@ class ASTInterpreter(ASTVisitor):
 
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
 
     path: str
 
@@ -218,7 +219,8 @@ class ASTInterpreter(ASTVisitor):
                     case types.Bool(False):
                         return self.visit_expr(right)
             case nodes.Or(left=left, op=op, right=right):
-                match left_res := self.visit_expr(left).to_bool(left.meta):
+                left_res = self.visit_expr(left).to_bool(self, left.meta)
+                match left_res:
                     case BLError():
                         return left_res
                     case types.Bool(False):
@@ -228,12 +230,12 @@ class ASTInterpreter(ASTVisitor):
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
                 return (
                     self.visit_expr(left)
-                        .binary_op(op, self.visit_expr(right), meta)
+                        .binary_op(op, self.visit_expr(right), self, meta)
                 )
             case nodes.Subscript(meta=meta, subscriptee=subscriptee,
                                  index=index):
                 return self.visit_expr(subscriptee).get_item(
-                    self.visit_expr(index), meta
+                    self.visit_expr(index), self, meta
                 )
             case nodes.Call(meta=meta, callee=callee, args=args_in_ast):
                 # Visit all args, stop if one is an error
@@ -261,7 +263,7 @@ class ASTInterpreter(ASTVisitor):
                         return class_.new(args, self, meta)
                 return class_
             case nodes.Prefix(meta=meta, op=op, operand=operand):
-                return self.visit_expr(operand).unary_op(op, meta)
+                return self.visit_expr(operand).unary_op(op, self, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
                 return self.visit_expr(accessee).get_attr(attr, meta)
             case nodes.Var(meta=meta, name=name):
@@ -316,7 +318,7 @@ class ASTInterpreter(ASTVisitor):
                 ):
                     subscriptee = self.visit_expr(subscriptee_)
                     index = self.visit_expr(index_)
-                    return subscriptee.set_item(index, value, meta)
+                    return subscriptee.set_item(index, value, self, meta)
                 case nodes.DotPattern(
                     accessee=accessee_,
                     attr_name=attr,
@@ -360,7 +362,7 @@ class ASTInterpreter(ASTVisitor):
                     return old_value_get_result
                 case _, Value():
                     value = new_result
-                    subscriptee.set_item(index, value, meta)
+                    subscriptee.set_item(index, value, self, meta)
                     return value
         if isinstance(pattern, nodes.DotPattern):
             subscriptee = self.visit_expr(pattern.accessee)
@@ -390,7 +392,7 @@ class ASTInterpreter(ASTVisitor):
         return self.globals.get_var(name, meta)
 
     def _new_var(self, name: str, value: Value) -> None:
-        """Assign a new either in locals or globals"""
+        """Assign a new variable either in locals or globals"""
         if self.locals is not None:
             self.locals.new_var(name, value)
             return
