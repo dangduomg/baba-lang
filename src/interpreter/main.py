@@ -8,7 +8,7 @@ from lark.exceptions import UnexpectedInput
 from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
-from . import built_ins, values, exits, colls, function, pywrapper
+from . import built_ins, values, exits, function, pywrapper
 from .base import Result, ExpressionResult, Success, BLError, Value
 from .errors import (
     error_not_implemented, error_include_syntax, error_inside_include,
@@ -46,14 +46,6 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("float", PythonFunction(built_ins.float_))
         self.globals.new_var("bool", PythonFunction(built_ins.bool_))
         self.globals.new_var("str", PythonFunction(built_ins.str_))
-        self.globals.new_var("list_len", PythonFunction(colls.list_len))
-        self.globals.new_var("list_insert", PythonFunction(colls.list_insert))
-        self.globals.new_var(
-            "list_remove_at", PythonFunction(colls.list_remove_at)
-        )
-        self.globals.new_var("dict_size", PythonFunction(colls.dict_size))
-        self.globals.new_var("dict_keys", PythonFunction(colls.dict_keys))
-        self.globals.new_var("dict_remove", PythonFunction(colls.dict_remove))
         self.globals.new_var(
             "py_function", PythonFunction(pywrapper.py_function)
         )

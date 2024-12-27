@@ -55,8 +55,10 @@ class BLList(Value):
                 try:
                     return self.elems[index_val]
                 except IndexError:
-                    return error_out_of_range.fill_args(index_val) \
-                                             .set_meta(meta)
+                    return (
+                        error_out_of_range.fill_args(index_val)
+                                          .set_meta(meta)
+                    )
         return super().get_item(index, meta)
 
     def set_item(
@@ -69,8 +71,10 @@ class BLList(Value):
                     self.elems[index_val] = value
                     return value
                 except IndexError:
-                    return error_out_of_range.fill_args(index_val) \
-                                             .set_meta(meta)
+                    return (
+                        error_out_of_range.fill_args(index_val)
+                                          .set_meta(meta)
+                    )
         return super().set_item(index, value, meta)
 
     def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
@@ -115,29 +119,6 @@ class BLList(Value):
         return NULL
 
 
-def list_len(
-    meta: Meta | None, interpreter: "ASTInterpreter", /, list_: BLList, *_
-) -> Int:
-    """Get length (number of elements) of a list"""
-    return list_.length(meta, interpreter)
-
-
-def list_insert(
-    meta: Meta | None, interpreter: "ASTInterpreter", /,
-    list_: BLList, index: Int, item: Value, *_
-) -> Null:
-    """Insert an element into a list"""
-    return list_.insert(meta, interpreter, index, item)
-
-
-def list_remove_at(
-    meta: Meta | None, interpreter: "ASTInterpreter", /,
-    list_: BLList, index: Int, *_
-) -> Null:
-    """Remove an element from a list given index"""
-    return list_.remove_at(meta, interpreter, index)
-
-
 @dataclass(frozen=True)
 class BLDict(Value):
     """Dict type"""
@@ -175,11 +156,11 @@ class BLDict(Value):
     def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
         match attr:
             case 'size':
-                return PythonFunction(dict_size)
+                return PythonFunction(self.length)
             case 'keys':
-                return PythonFunction(dict_keys)
+                return PythonFunction(self.keys)
             case 'remove':
-                return PythonFunction(dict_remove)
+                return PythonFunction(self.remove)
         return super().get_attr(attr, meta)
 
     def dump(self, meta):
@@ -191,7 +172,7 @@ class BLDict(Value):
     def to_bool(self, meta):
         return BOOLS[bool(self.content)]
 
-    def size(
+    def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
     ) -> Int:
         """Get length (number of elements) of a dictionary"""
@@ -213,30 +194,6 @@ class BLDict(Value):
         # pylint: disable=unused-argument
         del self.content[key]
         return NULL
-
-
-def dict_size(
-    meta: Meta | None, interpreter: "ASTInterpreter", /,
-    dict_: BLDict, *_
-) -> Int:
-    """Get length (number of elements) of a dictionary"""
-    return dict_.size(meta, interpreter)
-
-
-def dict_keys(
-    meta: Meta | None, interpreter: "ASTInterpreter", /,
-    dict_: BLDict, *_
-) -> BLList:
-    """Get all keys of a dictionary as a list"""
-    return dict_.keys(meta, interpreter)
-
-
-def dict_remove(
-    meta: Meta | None, interpreter: "ASTInterpreter", /,
-    dict_: BLDict, key: Value, *_
-) -> Null:
-    """Remove a key from a dictionary"""
-    return dict_.remove(meta, interpreter, key)
 
 
 @dataclass(frozen=True)
