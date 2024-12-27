@@ -28,7 +28,7 @@ Expressions in baba-lang are composed of operators. There are 32 operators in ba
         > 1 + 1 * 1 / 1 - 1
         1.0
 
-4. baba-lang would evaluate the expression according to the rules you have learned at school (PEMDAS), almost like a glorified calculator. Experiment with other operators as well.
+4. baba-lang would evaluate the expression according to the rules you have learned at school (PEMDAS), like a glorified calculator. Experiment with other operators as well.
 5. Once you are done, type `Ctrl-Z` (Windows) or `Ctrl-D` (Linux) to exit the interpreter.
 
 
@@ -126,4 +126,4 @@ All operators in baba-lang have a *precedence*, which allows ambiguity to be sol
 
 ## Next
 
-Not done yet.
+[Types](types.md)
