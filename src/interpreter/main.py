@@ -76,7 +76,7 @@ class ASTInterpreter(ASTVisitor):
                         return res
                 return Success()
             case nodes.IfStmt(meta=meta, condition=condition, body=body):
-                match cond := self.visit_expr(condition).to_bool(meta):
+                match cond := self.visit_expr(condition).to_bool(self, meta):
                     case BLError():
                         return cond
                     case types.Bool(True):
@@ -213,7 +213,8 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Inplace():
                 return self.visit_inplace(node)
             case nodes.And(left=left, op=op, right=right):
-                match left_res := self.visit_expr(left).to_bool(left.meta):
+                left_res = self.visit_expr(left).to_bool(self, left.meta)
+                match left_res:
                     case BLError():
                         return left_res
                     case types.Bool(True):
@@ -357,7 +358,7 @@ class ASTInterpreter(ASTVisitor):
         if isinstance(pattern, nodes.SubscriptPattern):
             subscriptee = self.visit_expr(pattern.subscriptee)
             index = self.visit_expr(pattern.index)
-            old_value_get_result = subscriptee.get_item(index, meta)
+            old_value_get_result = subscriptee.get_item(index, self, meta)
             new_result = old_value_get_result.binary_op(
                 node.op[:-1], by, self, meta
             )

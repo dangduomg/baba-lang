@@ -6,21 +6,13 @@ from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .value import (
-    ExpressionResult,
-    Value,
-    String,
-    Int,
-    Bool,
-    BOOLS,
-    Null,
-    NULL,
-)
+from .base import ExpressionResult
+from .value import Value, String, Int, Bool, BOOLS, Null, NULL
+from .function import PythonFunction
 from .errors import (
-    error_out_of_range, error_key_nonexistent,
+    BLError, error_out_of_range, error_key_nonexistent,
     error_module_var_nonexistent,
 )
-from .function import PythonFunction
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -176,7 +168,9 @@ class BLDict(Value):
             pair_str_list.append(f"{k.dump(meta).value}: {v.dump(meta).value}")
         return String(f'{{{', '.join(pair_str_list)}}}')
 
-    def to_bool(self, interpreter: "ASTInterpreter", meta: Meta) -> Bool:
+    def to_bool(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool | BLError:
         return BOOLS[bool(self.content)]
 
     def length(
