@@ -161,7 +161,7 @@ class String(Value):
         return super().is_greater_or_equal(other, interpreter, meta)
 
     def dump(self, meta: Meta | None) -> "String":
-        return String(f"'{self.value}'")
+        return String(f"{self.value!r}")
 
     def to_string(self, meta: Meta | None) -> Self:
         return self
