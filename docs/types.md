@@ -6,7 +6,7 @@ layout: default
 [Back](index.md)
 
 
-# Types
+# Basic types
 
 All values in baba-lang has a type associated with it. There are currently 12 types in baba-lang: string, integer, float, boolean, null, list, dict, module, baba-lang function, native (Python) function, class and instance
 
@@ -18,6 +18,8 @@ The integer type is one of the most basic and important types in most programmin
 ### Syntax
 
 Right now, baba-lang only supports decimal syntax, and leading zeros are simply ignored, rather than treated specially.
+
+Note that, for simplicity, the baba-lang grammar does not treat negative numbers as a single literal, but a production consisting of an unary operator (`+` or `-`) and the number itself.
 ```
 0
 1
@@ -69,4 +71,75 @@ The special numbers `Infinity`, `-Infinity` and `NaN` are available from the `st
 
 ## String type
 
-Strings in baba-lang are largely similar to Python's. Strings can be double-quoted or single-quoted
+Strings in baba-lang are largely similar to Python's. Strings can be double-quoted or single-quoted. Unlike Perl, single-quoted and double-quoted strings are nearly identical in behavior, therefore which delimiter to use is largely a matter of style and preference.
+
+### Syntax
+
+As baba-lang uses `str` to parse a string, the syntax for strings is identical to Python. See https://docs.python.org/3/reference/lexical_analysis.html#strings for details.
+
+```
+'hello'
+"world"
+"eBaum's World"
+'eBaum\'s World'  # having 2 different quotes avoid this
+
+'There is a website\nnamed "eBaum\'s World"'
+# this is:
+# There is a website
+# named "eBaum's World"
+
+print('I hate\b\b\b\blove you\a')  # prints 'I love you' and plays a sound (if the console supports it)
+
+'a
+b'  # illegal
+
+'a"  # also illegal
+```
+
+### Supported operators
+
+1. Binary operators:
+    1. Concatenation: `+`
+    2. Repetition: `*`
+    3. Comparison in lexicographical order: `==`, `!=`, `>`, `>=`, `<`, `<=`
+
+
+## Boolean type
+
+Booleans are either `true` or `false`. Unlike Python, booleans are not subtypes of integers, therefore most operations on booleans do not work on integers.
+
+### Syntax
+
+There are 2 Boolean literals: `true` and `false`. They are reserved keywords (cannot be used as identifiers)
+
+### Supported operators
+
+None yet.
+
+
+## Null type
+
+The null type only has a single instance: `null`. `null` is used as the default return value for functions without an explicit `return`.
+
+### Syntax
+
+The only instance `null` is a reserved keyword.
+
+### Supported operators
+
+None.
+
+
+## The rest
+
+The rest of the types will have their separate pages to detail them:
+
+- Lists and dicts
+- Functions (Python functions and baba-lang functions)
+- Modules
+- OOP (classes and instances)
+
+
+## Next
+
+
