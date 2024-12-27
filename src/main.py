@@ -174,7 +174,7 @@ def main() -> int:
 
 def main_interactive() -> int:
     """Interactive main function"""
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig()
     print(VERSION_STRING % {'prog': PROG}, "REPL")
     print("Press Ctrl-C to terminate the current line")
     print("Send EOF (Ctrl-Z on Windows, Ctrl-D on Linux) to exit the REPL")
