@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .base import (
+from .value import (
     ExpressionResult,
     Value,
     String,
     Int,
+    Bool,
     BOOLS,
     Null,
     NULL,
@@ -22,7 +23,7 @@ from .errors import (
 from .function import PythonFunction
 
 if TYPE_CHECKING:
-    from .main import ASTInterpreter
+    from ..main import ASTInterpreter
 
 
 @dataclass(frozen=True)
@@ -32,23 +33,26 @@ class BLList(Value):
     elems: list[Value]
 
     def add(
-        self, other: ExpressionResult, meta: Meta | None
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
     ) -> ExpressionResult:
         match other:
             case BLList(other_elems):
                 return BLList(self.elems + other_elems)
-        return super().add(other, meta)
+        return super().add(other, interpreter, meta)
 
     def multiply(
-        self, other: ExpressionResult, meta: Meta | None
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
     ) -> ExpressionResult:
         match other:
             case Int(times):
                 return BLList(self.elems * times)
-        return super().add(other, meta)
+        return super().add(other, interpreter, meta)
 
     def get_item(
-        self, index: ExpressionResult, meta: Meta | None
+        self, index: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
     ) -> ExpressionResult:
         match index:
             case Int(index_val):
@@ -59,11 +63,11 @@ class BLList(Value):
                         error_out_of_range.fill_args(index_val)
                                           .set_meta(meta)
                     )
-        return super().get_item(index, meta)
+        return super().get_item(index, interpreter, meta)
 
     def set_item(
         self, index: ExpressionResult, value: ExpressionResult,
-        meta: Meta | None
+        interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
         match index, value:
             case Int(index_val), Value():
@@ -75,7 +79,7 @@ class BLList(Value):
                         error_out_of_range.fill_args(index_val)
                                           .set_meta(meta)
                     )
-        return super().set_item(index, value, meta)
+        return super().set_item(index, value, interpreter, meta)
 
     def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
         match attr:
@@ -88,9 +92,11 @@ class BLList(Value):
         return super().get_attr(attr, meta)
 
     def dump(self, meta):
-        return String(f'[{', '.join(e.dump(meta).value for e in self.elems)}]')
+        return String(f"[{', '.join(e.dump(meta).value for e in self.elems)}]")
 
-    def to_bool(self, meta):
+    def to_bool(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool:
         return BOOLS[bool(self.elems)]
 
     def length(
@@ -126,7 +132,8 @@ class BLDict(Value):
     content: dict[Value, Value]
 
     def get_item(
-        self, index: ExpressionResult, meta: Meta | None
+        self, index: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
     ) -> ExpressionResult:
         match index:
             case Value():
@@ -136,11 +143,11 @@ class BLDict(Value):
                     return error_key_nonexistent.fill_args(
                         index.dump(meta).value
                     ).set_meta(meta)
-        return super().get_item(index, meta)
+        return super().get_item(index, interpreter, meta)
 
     def set_item(
         self, index: ExpressionResult, value: ExpressionResult,
-        meta: Meta | None,
+        interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
         match index, value:
             case Value(), Value():
@@ -151,7 +158,7 @@ class BLDict(Value):
                     return error_key_nonexistent.fill_args(
                         index.dump(meta).value
                     ).set_meta(meta)
-        return super().set_item(index, value, meta)
+        return super().set_item(index, value, interpreter, meta)
 
     def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
         match attr:
@@ -169,7 +176,7 @@ class BLDict(Value):
             pair_str_list.append(f"{k.dump(meta).value}: {v.dump(meta).value}")
         return String(f'{{{', '.join(pair_str_list)}}}')
 
-    def to_bool(self, meta):
+    def to_bool(self, interpreter: "ASTInterpreter", meta: Meta) -> Bool:
         return BOOLS[bool(self.content)]
 
     def length(

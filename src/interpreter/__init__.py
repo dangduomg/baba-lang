@@ -3,6 +3,7 @@
 
 # ruff: noqa: F401
 # flake8: noqa: F401
-from .base import Result, ExpressionResult, Value
-from .errors import BLError
+from .types import Value
+from .types.base import Result, ExpressionResult
+from .types.errors import BLError
 from .main import ASTInterpreter

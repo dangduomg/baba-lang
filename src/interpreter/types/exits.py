@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 
-from .base import Exit, Value
+from .base import Exit
+from .value import Value
 
 
 # pylint: disable=too-few-public-methods

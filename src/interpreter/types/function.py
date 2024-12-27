@@ -8,20 +8,15 @@ from lark.tree import Meta
 
 from bl_ast.nodes import FormArgs, Body
 
-from .base import (
-    ExpressionResult,
-    Value,
-    Success,
-    String,
-    NULL,
-)
+from .base import ExpressionResult, Success
+from .value import Value, String, NULL
 from .errors import error_not_implemented, error_wrong_argc
 from .exits import Return
-from .env import Env
+from ..env import Env
 
 if TYPE_CHECKING:
-    from .object import Instance
-    from .main import ASTInterpreter
+    from . import Instance
+    from ..main import ASTInterpreter
 
 
 @dataclass(frozen=True)

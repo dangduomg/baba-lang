@@ -11,7 +11,6 @@ import os
 import sys
 from argparse import ArgumentParser
 from collections.abc import Callable
-from typing import Optional
 
 from lark.exceptions import UnexpectedInput
 from lark.tree import Meta
@@ -59,23 +58,25 @@ default_interp = ASTInterpreter()
 default_static_checker = StaticChecker()
 
 
-def interpret(src: str, interpreter: ASTInterpreter = default_interp
-              ) -> Result:
+def interpret(
+    src: str, interpreter: ASTInterpreter = default_interp
+) -> Result:
     """Interpret a script"""
     ast_ = parse_to_ast(src)
     default_static_checker.visit(ast_)
     return interpreter.visit(ast_)
 
 
-def interpret_expr(src: str, interpreter: ASTInterpreter = default_interp
-                   ) -> ExpressionResult:
+def interpret_expr(
+        src: str, interpreter: ASTInterpreter = default_interp
+) -> ExpressionResult:
     """Interpret an expression"""
     ast_ = parse_expr_to_ast(src)
     default_static_checker.visit(ast_)
     return interpreter.visit_expr(ast_)
 
 
-def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str | bytes:
+def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str:
     """Returns a pretty string pinpointing the error in the text,
     with span amount of context characters around it.
 
@@ -121,7 +122,7 @@ def handle_runtime_errors(src: str, error: BLError) -> None:
 def interp_with_error_handling(
     interp_func: Callable,
     src: str,
-    interpreter: Optional[ASTInterpreter] = None,
+    interpreter: ASTInterpreter | None = None,
 ) -> ExpressionResult | UnexpectedInput | StaticError:
     """Interpret with error handling"""
     try:
@@ -161,9 +162,10 @@ def main() -> int:
         interp_func = interpret_expr
     else:
         interp_func = interpret
-    match res := interp_with_error_handling(
+    res = interp_with_error_handling(
         interp_func, src, ASTInterpreter(path)
-    ):
+    )
+    match res:
         case UnexpectedInput() | BLError():
             return 1
         case Value():

@@ -4,9 +4,10 @@
 from .base import BLError
 
 # pylint: disable=unused-import
-from .base import error_not_implemented, error_div_by_zero  # noqa: F401
+from .base import error_not_implemented  # noqa: F401
 
 
+error_div_by_zero = BLError("Division by zero")
 error_out_of_range = BLError("Index out of range: {}")
 error_key_nonexistent = BLError("Non-existent key: {}")
 error_var_nonexistent = BLError("Variable {} is undefined")

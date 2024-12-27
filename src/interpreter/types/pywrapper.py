@@ -8,15 +8,16 @@ from typing import Any, TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .base import (
-    BOOLS, NULL, Bool, ExpressionResult, Float, Int, Null, String, Value
+from .base import ExpressionResult
+from .value import (
+    BOOLS, NULL, Bool, Float, Int, Null, String, Value
 )
-from .colls import BLDict, BLList
+from . import BLDict, BLList
 from .errors import error_not_implemented
-from .function import PythonFunction
+from . import PythonFunction
 
 if TYPE_CHECKING:
-    from .main import ASTInterpreter
+    from ..main import ASTInterpreter
 
 
 @dataclass(frozen=True)

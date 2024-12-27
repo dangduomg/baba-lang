@@ -158,7 +158,7 @@ class StaticChecker(ASTVisitor):
                 self.modes.append(BodyType.FUNCTION)
                 self.visit(body)
                 self.modes.pop()
-            case nodes.ModuleStmt(body=body):
+            case nodes.ModuleStmt(body=body) | nodes.ClassStmt(body=body):
                 self.modes.append(BodyType.MODULE)
                 self.visit(body)
                 self.modes.pop()
