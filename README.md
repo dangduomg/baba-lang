@@ -2,7 +2,7 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.4.3`.
+Right now in version `0.4.4-beta`.
 
 ## Notes
 
@@ -10,11 +10,27 @@ Right now in version `0.4.3`.
 - baba-lang is written for educational purposes only; it is not meant to be used in production.
 
 ## How to use
-1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt)
-2. Clone the repository (https://github.com/dangduomg/baba-lang.git)
-3. (Optionally) Create a virtual environment
-3. Run `pip install -r requirements.txt`
-3. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`
+1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt).
+2. Either:
+* clone the repository
+```sh
+git clone https://github.com/dangduomg/baba-lang.git
+```
+* or, download a release archive and extract the archive (see Releases).
+3. Set working directory to the project root.
+```sh
+cd baba-lang
+```
+4. (Optionally) Create and activate a virtual environment.
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+```
+5. Install requirements.
+```sh
+pip install -r requirements.txt
+```
+6. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`. Run `src/main.py -h` for further help.
 
 ## Features
 - First-class functions
@@ -49,7 +65,8 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
 
 ## To-do list
 - Rest and keyword arguments
-- OOP
+- OOP (Inheritance)
 - Iterators
 - Exceptions
+- Algebraic data types
 - Package manager
