@@ -1,3 +1,8 @@
+/**
+  * fizzbuzz.bl -- A FizzBuzz program written in baba-lang
+  */
+
+
 fun fizzbuzz(start, stop, step) {
 	for (i = start; i <= stop; i += step) {
 		if i % 15 == 0 {
