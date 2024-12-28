@@ -56,12 +56,13 @@ class BLFunction(Value):
         res = interpreter.visit_stmt(self.body)
         # Clean it up
         interpreter.locals = old_env
-        interpreter.calls.pop()
         # Return!
         match res:
             case Success():
+                interpreter.calls.pop()
                 return NULL
             case Return(value=value):
+                interpreter.calls.pop()
                 return value
             case BLError():
                 return res
