@@ -1,0 +1,34 @@
+/**
+  * random.bl -- A pseudo-random number generator in baba-lang, to demonstrate
+  * support for classes
+  */
+
+
+class Random {
+    # A linear congruential generator is used for simplicity
+    # Parameters are from glibc
+
+    MULTIPLIER = 1103515245;
+    CONSTANT = 12345;
+    BITS = 31;
+
+    fun __init__(seed) {
+        this.state = seed;
+    }
+
+    fun next() {
+        this.state = (
+            this.MULTIPLIER * this.state + this.CONSTANT & (1 << this.BITS) - 1
+        );
+        return this.state;
+    }
+}
+
+
+seed = int(input('seed: '));
+random = new Random(seed);
+
+print('\nthe first 5 random numbers are:');
+for (i = 0; i < 5; i += 1) {
+    print(random.next());
+}
