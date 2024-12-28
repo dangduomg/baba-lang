@@ -69,7 +69,7 @@ AND_OP: "&&"
 
 ?comp: bit_or COMP_OP bit_or -> binary_op
      | bit_or
-COMP_OP: "==" | "!=" | "<" | "<=" | ">" | ">="
+COMP_OP: "==" | "!=" | /<(?!<)/ | "<=" | />(?!>)/ | ">="
 
 ?bit_or: bit_or BIT_OR_OP bit_and -> binary_op
        | bit_and
