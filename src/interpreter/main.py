@@ -67,7 +67,7 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_expr(node)
             case nodes._Stmt():
                 return self.visit_stmt(node)
-        return error_not_implemented
+        return error_not_implemented.copy()
 
     def visit_stmt(self, node: nodes._Stmt) -> Result:
         """Visit a statement node"""
@@ -165,7 +165,7 @@ class ASTInterpreter(ASTVisitor):
                 return Success()
             case nodes.IncludeStmt():
                 return self.visit_include(node)
-        return error_not_implemented.set_meta(node.meta)
+        return error_not_implemented.copy().set_meta(node.meta)
 
     def visit_include(self, node: nodes.IncludeStmt) -> Result:
         """Visit an include statement node"""
@@ -175,7 +175,7 @@ class ASTInterpreter(ASTVisitor):
             # Find from current working directory
             f = open(Path.cwd() / path, encoding='utf-8')
         except FileNotFoundError:
-            return error_invalid_include.fill_args(path).set_meta(meta)
+            return error_invalid_include.copy().fill_args(path).set_meta(meta)
         with f:
             src = f.read()
             # Execute Python source code
@@ -184,24 +184,33 @@ class ASTInterpreter(ASTVisitor):
                 return Success()
             # Invalid include target
             if not path.endswith('.bl'):
-                return error_invalid_include.fill_args(path).set_meta(meta)
+                return (
+                    error_invalid_include.copy().fill_args(path).set_meta(meta)
+                )
             try:
                 include_ast = parse_to_ast(src)
             except UnexpectedInput as e:
-                return error_include_syntax.fill_args(
-                    f"{e.get_context(src)}\n{e}"
-                ).set_meta(meta)
+                return (
+                    error_include_syntax.copy()
+                    .fill_args(f"{e.get_context(src)}\n{e}")
+                    .set_meta(meta)
+                )
             match self.visit(include_ast):
                 case BLError(value=msg, meta=meta):
                     if meta is None:
-                        return error_inside_include.fill_args(
-                            "n/a", "n/a", msg,
-                        ).set_meta(meta)
-                    return error_inside_include.fill_args(
-                        meta.line, meta.column, msg,
-                    ).set_meta(meta)
+                        return (
+                            error_inside_include.copy()
+                            .fill_args("n/a", "n/a", msg)
+                            .set_meta(meta)
+                        )
+                    return (
+                        error_inside_include.copy()
+                        .fill_args(meta.line, meta.column, msg)
+                        .set_meta(meta)
+                    )
                 case Success():
                     return Success()
+        return error_not_implemented.copy().set_meta(meta)
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
@@ -305,7 +314,7 @@ class ASTInterpreter(ASTVisitor):
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 return types.BLFunction("<anonymous>", form_args, body, env)
-        return error_not_implemented
+        return error_not_implemented.copy()
 
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
         """Visit an assignment node"""
@@ -332,7 +341,7 @@ class ASTInterpreter(ASTVisitor):
                 ):
                     accessee = self.visit_expr(accessee_)
                     return accessee.set_attr(attr, value, meta)
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
         """Visit an in-place assignment node"""
@@ -341,7 +350,7 @@ class ASTInterpreter(ASTVisitor):
         if isinstance(rhs_result, BLError):
             return rhs_result
         if not isinstance(rhs_result, Value):
-            return error_not_implemented.set_meta(meta)
+            return error_not_implemented.copy().set_meta(meta)
         by = rhs_result
         pattern = node.pattern
         if isinstance(pattern, nodes.VarPattern):
@@ -392,7 +401,7 @@ class ASTInterpreter(ASTVisitor):
                     value = new_result
                     subscriptee.set_attr(pattern.attr_name, value, meta)
                     return value
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def _get_var(self, name: str, meta: Meta) -> ExpressionResult:
         """Get a variable either from locals or globals"""

@@ -48,7 +48,7 @@ def int_(
             return Int(int(value))
         case Int():
             return arg
-    return error_not_implemented.set_meta(meta)
+    return error_not_implemented.copy().set_meta(meta)
 
 
 def float_(
@@ -61,7 +61,7 @@ def float_(
             return Float(float(value))
         case Float():
             return arg
-    return error_not_implemented.set_meta(meta)
+    return error_not_implemented.copy().set_meta(meta)
 
 
 def bool_(

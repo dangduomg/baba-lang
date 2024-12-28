@@ -52,7 +52,7 @@ class BLList(Value):
                     return self.elems[index_val]
                 except IndexError:
                     return (
-                        error_out_of_range.fill_args(index_val)
+                        error_out_of_range.copy().fill_args(index_val)
                                           .set_meta(meta)
                     )
         return super().get_item(index, interpreter, meta)
@@ -68,7 +68,7 @@ class BLList(Value):
                     return value
                 except IndexError:
                     return (
-                        error_out_of_range.fill_args(index_val)
+                        error_out_of_range.copy().fill_args(index_val)
                                           .set_meta(meta)
                     )
         return super().set_item(index, value, interpreter, meta)
@@ -132,9 +132,11 @@ class BLDict(Value):
                 try:
                     return self.content[index]
                 except KeyError:
-                    return error_key_nonexistent.fill_args(
-                        index.dump(meta).value
-                    ).set_meta(meta)
+                    return (
+                        error_key_nonexistent.copy()
+                        .fill_args(index.dump(meta).value)
+                        .set_meta(meta)
+                    )
         return super().get_item(index, interpreter, meta)
 
     def set_item(
@@ -147,7 +149,7 @@ class BLDict(Value):
                     self.content[index] = value
                     return value
                 except KeyError:
-                    return error_key_nonexistent.fill_args(
+                    return error_key_nonexistent.copy().fill_args(
                         index.dump(meta).value
                     ).set_meta(meta)
         return super().set_item(index, value, interpreter, meta)
@@ -209,7 +211,7 @@ class Module(Value):
             return self.vars[attr]
         except KeyError:
             return (
-                error_module_var_nonexistent
+                error_module_var_nonexistent.copy()
                 .fill_args(self.name, str(attr))
                 .set_meta(meta)
             )

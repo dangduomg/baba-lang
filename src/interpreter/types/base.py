@@ -79,7 +79,7 @@ class ExpressionResult(Result):
                 return self.is_greater(other, interpreter, meta)
             case ">=":
                 return self.is_greater_or_equal(other, interpreter, meta)
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def add(
         self, other: "ExpressionResult", interpreter: "ASTInterpreter",
@@ -214,7 +214,7 @@ class ExpressionResult(Result):
         match other:
             case BLError():
                 return other
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def unary_op(
         self, op: Token, interpreter: "ASTInterpreter", meta: Meta | None
@@ -229,31 +229,31 @@ class ExpressionResult(Result):
                 return self.bitwise_not(interpreter, meta)
             case "!":
                 return self.logical_not(interpreter, meta)
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def plus(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Unary plus"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Negation"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def bitwise_not(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Bitwise not"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def logical_not(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Logical not"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def get_item(
         self, index: "ExpressionResult", interpreter: "ASTInterpreter",
@@ -273,13 +273,13 @@ class ExpressionResult(Result):
         match value:
             case BLError():
                 return value
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def get_attr(
         self, attr: str, meta: Meta | None
     ) -> "ExpressionResult":
         """Access an attribute"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def set_attr(
         self, attr: str, value: "ExpressionResult", meta: Meta | None
@@ -292,18 +292,18 @@ class ExpressionResult(Result):
         meta: Meta | None
     ) -> "ExpressionResult":
         """Call self as a function"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def new(
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> "ExpressionResult":
         """Instantiate an object"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def dump(self, meta: Meta | None) -> "ExpressionResult":
         """Conversion to representation for debugging"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def to_string(self, meta: Meta | None) -> "ExpressionResult":
         """Conversion to string"""
@@ -313,7 +313,7 @@ class ExpressionResult(Result):
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Conversion to boolean"""
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
 
 # ---- Error type ----
@@ -325,6 +325,10 @@ class BLError(Exit, ExpressionResult):
 
     value: str
     meta: Meta | None = None
+
+    def copy(self) -> "BLError":
+        """Copy the error"""
+        return BLError(self.value, self.meta)
 
     def set_meta(self, meta: Meta | None) -> Self:
         """Set meta attribute to error"""

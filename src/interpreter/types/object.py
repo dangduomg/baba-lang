@@ -225,7 +225,7 @@ class Instance(Value):
                         index, interpreter, meta
                     )
             return res
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -235,7 +235,7 @@ class Instance(Value):
             if isinstance(res, BLError):
                 if res.value == error_var_nonexistent.value:
                     return super().to_bool(interpreter, meta)
-            return error_incorrect_rettype_to_bool.set_meta(meta)
+            return error_incorrect_rettype_to_bool.copy().set_meta(meta)
         return res
 
     def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
@@ -279,7 +279,7 @@ class Instance(Value):
                             other, interpreter, meta
                         )
                 return res
-            return error_not_implemented.set_meta(meta)
+            return error_not_implemented.copy().set_meta(meta)
         return _wrapper
 
     def _call_method_if_exists(

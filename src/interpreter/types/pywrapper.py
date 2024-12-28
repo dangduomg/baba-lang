@@ -43,7 +43,7 @@ class ConvenientPythonWrapper(PythonFunction):
                 ConvenientPythonWrapper.unwrap_arg(a) for a in args
             ]
         except ValueError:
-            return error_not_implemented.set_meta(meta)
+            return error_not_implemented.copy().set_meta(meta)
         return ConvenientPythonWrapper.wrap_res(
             self.function(*unwrapped_args)
         )

@@ -45,7 +45,7 @@ class BLFunction(Value):
                 env.new_var(farg, arg)
         except ValueError:
             return (
-                error_wrong_argc.fill_args(self.name, len(form_args))
+                error_wrong_argc.copy().fill_args(self.name, len(form_args))
                                 .set_meta(meta)
             )
         # If function is bound to an object, add that object
@@ -66,7 +66,7 @@ class BLFunction(Value):
                 return value
             case BLError():
                 return res
-        return error_not_implemented.set_meta(meta)
+        return error_not_implemented.copy().set_meta(meta)
 
     def bind(self, object_: "Instance") -> "BLFunction":
         """Return a version of BLFunction bound to an object"""
@@ -132,4 +132,4 @@ class SupportsBLCall(Protocol):
 class Call:
     """Call site type for tracebacks"""
     function: SupportsBLCall
-    meta: Meta
+    meta: Meta | None

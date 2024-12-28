@@ -221,7 +221,7 @@ class Int(Value):
                 try:
                     return Float(self.value / other_val)
                 except ZeroDivisionError:
-                    return error_div_by_zero.set_meta(meta)
+                    return error_div_by_zero.copy().set_meta(meta)
         return super().divide(other, interpreter, meta)
 
     def mod(
@@ -235,7 +235,7 @@ class Int(Value):
                 case Float(other_val):
                     return Float(self.value % other_val)
         except ZeroDivisionError:
-            return error_div_by_zero.set_meta(meta)
+            return error_div_by_zero.copy().set_meta(meta)
         return super().mod(other, interpreter, meta)
 
     def floor_div(
@@ -249,7 +249,7 @@ class Int(Value):
                 case Float(other_val):
                     return Float(self.value // other_val)
         except ZeroDivisionError:
-            return error_div_by_zero.set_meta(meta)
+            return error_div_by_zero.copy().set_meta(meta)
         return super().floor_div(other, interpreter, meta)
 
     def pow(
@@ -263,7 +263,7 @@ class Int(Value):
                 case Float(other_val):
                     return Float(self.value ** other_val)
         except ZeroDivisionError:
-            return error_div_by_zero.set_meta(meta)
+            return error_div_by_zero.copy().set_meta(meta)
         return super().pow(other, interpreter, meta)
 
     def bitwise_and(
@@ -427,7 +427,7 @@ class Float(Value):
                 try:
                     return Float(self.value / other_val)
                 except ZeroDivisionError:
-                    return error_div_by_zero.set_meta(meta)
+                    return error_div_by_zero.copy().set_meta(meta)
         return super().divide(other, interpreter, meta)
 
     def floor_div(
@@ -439,7 +439,7 @@ class Float(Value):
                 try:
                     return Float(self.value // other_val)
                 except ZeroDivisionError:
-                    return error_div_by_zero.set_meta(meta)
+                    return error_div_by_zero.copy().set_meta(meta)
         return super().floor_div(other, interpreter, meta)
 
     def mod(
@@ -451,7 +451,7 @@ class Float(Value):
                 try:
                     return Float(self.value % other_val)
                 except ZeroDivisionError:
-                    return error_div_by_zero.set_meta(meta)
+                    return error_div_by_zero.copy().set_meta(meta)
         return super().mod(other, interpreter, meta)
 
     def is_equal(
