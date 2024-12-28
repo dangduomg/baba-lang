@@ -1,6 +1,6 @@
-/*
- * functools.bl -- library for functional programming
- */
+/**
+  * functools.bl -- library for functional programming
+  */
 
 
 fun map(f, lst) {

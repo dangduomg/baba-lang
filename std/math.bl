@@ -1,6 +1,6 @@
-/*
- * math.bl -- Math functions
- */
+/**
+  * math.bl -- Math functions
+  */
 
 
 module Math {

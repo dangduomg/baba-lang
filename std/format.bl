@@ -1,6 +1,6 @@
-/*
- * format.bl -- formatting functions
- */
+/**
+  * format.bl -- formatting functions
+  */
 
 
 format = py_method('builtins', 'str', 'format');
