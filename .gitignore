@@ -160,7 +160,7 @@ cython_debug/
 #.idea/
 
 # VSCode settings
-.vscode
+.vscode/
 
 # personal files
 personal/
