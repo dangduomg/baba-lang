@@ -98,7 +98,9 @@ def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str:
     )
 
 
-def handle_runtime_errors(src: str, error: BLError) -> None:
+def handle_runtime_errors(
+    interpreter: ASTInterpreter, src: str, error: BLError
+) -> None:
     """Print runtime errors nicely"""
     match error:
         case BLError(value=msg, meta=meta):
@@ -111,6 +113,10 @@ def handle_runtime_errors(src: str, error: BLError) -> None:
                 case None:
                     print('Error:')
                     print(msg)
+            print('Traceback:')
+            for call in interpreter.calls:
+                print(f'At line {call.meta.line}, column {call.meta.column}:')
+                print(get_context(call.meta, src))
 
 
 def interp_with_error_handling(
@@ -135,7 +141,7 @@ def interp_with_error_handling(
         print()
         print(e.get_context(src))
         return e
-    handle_runtime_errors(src, res)
+    handle_runtime_errors(interpreter, src, res)
     return res
 
 
@@ -178,7 +184,7 @@ def main_interactive() -> int:
                     case Value():
                         print(res.dump(None).value)
                     case BLError():
-                        handle_runtime_errors(input_, res)
+                        handle_runtime_errors(default_interp, input_, res)
             except UnexpectedInput:
                 interp_with_error_handling(interpret, input_, default_interp)
         except KeyboardInterrupt:

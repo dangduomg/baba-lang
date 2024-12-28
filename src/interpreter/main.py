@@ -249,9 +249,6 @@ class ASTInterpreter(ASTVisitor):
                         return arg_visited
                     args.append(arg_visited)
                 callee = self.visit_expr(callee)
-                match callee:
-                    case function.SupportsBLCall():
-                        self.calls.append(function.Call(callee, meta))
                 return callee.call(args, self, meta)
             case nodes.New(meta=meta, class_name=name, args=args_in_ast):
                 # Visit all args, stop if one is an error

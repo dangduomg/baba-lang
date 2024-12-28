@@ -10,7 +10,7 @@ from bl_ast.nodes import FormArgs, Body
 
 from .base import ExpressionResult, Success
 from .value import Value, String, NULL
-from .errors import error_not_implemented, error_wrong_argc
+from .errors import BLError, error_not_implemented, error_wrong_argc
 from .exits import Return
 from ..env import Env
 
@@ -29,7 +29,12 @@ class BLFunction(Value):
     env: Optional[Env] = None
     this: Optional["Instance"] = None
 
-    def call(self, args, interpreter, meta):
+    def call(
+        self, args: list[Value], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        # Add the function to the "call stack"
+        interpreter.calls.append(Call(self, meta))
         # Create an environment (call frame)
         old_env = interpreter.locals
         env = Env(parent=self.env)
@@ -51,12 +56,15 @@ class BLFunction(Value):
         res = interpreter.visit_stmt(self.body)
         # Clean it up
         interpreter.locals = old_env
+        interpreter.calls.pop()
         # Return!
         match res:
             case Success():
                 return NULL
             case Return(value=value):
                 return value
+            case BLError():
+                return res
         return error_not_implemented.set_meta(meta)
 
     def bind(self, object_: "Instance") -> "BLFunction":
@@ -65,7 +73,11 @@ class BLFunction(Value):
             self.name, self.form_args, self.body, self.env, object_
         )
 
-    def dump(self, meta):
+    def dump(self, meta: Meta | None) -> String:
+        if self.this is not None:
+            return String(
+                f"<method '{self.name}' bound to {self.this.dump(meta).value}>"
+            )
         return String(f"<function '{self.name}'>")
 
 
