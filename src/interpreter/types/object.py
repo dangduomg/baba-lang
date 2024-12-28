@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from lark.tree import Meta
 
@@ -10,7 +11,10 @@ from .base import BLError, ExpressionResult
 from .value import Value, String, Bool
 from . import Module
 from .function import BLFunction
-from .errors import error_var_nonexistent
+from .errors import (
+    error_var_nonexistent, error_not_implemented,
+    error_incorrect_rettype_to_bool
+)
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -50,193 +54,121 @@ class Instance(Value):
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__add__", [other], interpreter, meta
+        return self._overloaded_binary_op("__add__", "add")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().add(other, interpreter, meta)
-        return res
 
     def subtract(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__sub__", [other], interpreter, meta
+        return self._overloaded_binary_op("__sub__", "subtract")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().subtract(other, interpreter, meta)
-        return res
 
     def multiply(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__mul__", [other], interpreter, meta
+        return self._overloaded_binary_op("__mul__", "multiply")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().multiply(other, interpreter, meta)
-        return res
 
     def divide(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__div__", [other], interpreter, meta
+        return self._overloaded_binary_op("__div__", "divide")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().divide(other, interpreter, meta)
-        return res
 
     def floor_div(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__floordiv__", [other], interpreter, meta
+        return self._overloaded_binary_op("__floordiv__", "floor_div")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().floor_div(other, interpreter, meta)
-        return res
 
     def mod(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__mod__", [other], interpreter, meta
+        return self._overloaded_binary_op("__mod__", "mod")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().mod(other, interpreter, meta)
-        return res
 
     def pow(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__pow__", [other], interpreter, meta
+        return self._overloaded_binary_op("__pow__", "pow")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().pow(other, interpreter, meta)
-        return res
 
     def bitwise_and(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__and__", [other], interpreter, meta
+        return self._overloaded_binary_op("__and__", "bitwise_and")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().bitwise_and(other, interpreter, meta)
-        return res
 
     def bitwise_or(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__or__", [other], interpreter, meta
+        return self._overloaded_binary_op("__or__", "bitwise_or")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().bitwise_or(other, interpreter, meta)
-        return res
 
     def bitwise_xor(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__xor__", [other], interpreter, meta
+        return self._overloaded_binary_op("__xor__", "bitwise_xor")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().bitwise_xor(other, interpreter, meta)
-        return res
 
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__eq__", [other], interpreter, meta
+    ) -> Bool:
+        return self._overloaded_binary_op("__eq__", "is_equal")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().is_equal(other, interpreter, meta)
-        return res
-
-    def is_not_equal(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__ne__", [other], interpreter, meta
-        )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().is_not_equal(other, interpreter, meta)
-        return res
 
     def is_less(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__lt__", [other], interpreter, meta
+        return self._overloaded_binary_op("__lt__", "is_less")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().is_less(other, interpreter, meta)
-        return res
 
     def is_less_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__le__", [other], interpreter, meta
+        return self._overloaded_binary_op("__le__", "is_less_or_equal")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().is_less_or_equal(other, interpreter, meta)
-        return res
 
     def is_greater(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__gt__", [other], interpreter, meta
+        return self._overloaded_binary_op("__gt__", "is_greater")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().is_greater(other, interpreter, meta)
-        return res
 
     def is_greater_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__ge__", [other], interpreter, meta
+        return self._overloaded_binary_op("__ge__", "is_greater_or_equal")(
+            other, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().is_greater_or_equal(other, interpreter, meta)
-        return res
 
     def plus(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -267,46 +199,43 @@ class Instance(Value):
                 return super().bitwise_not(interpreter, meta)
         return res
 
-    def logical_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        res = self._call_method_if_exists("__not__", [], interpreter, meta)
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().logical_not(interpreter, meta)
-        return res
-
     def get_item(
         self, index: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__getitem__", [index], interpreter, meta
+        return self._overloaded_binary_op("__get_item__", "get_item")(
+            index, interpreter, meta
         )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().get_item(index, interpreter, meta)
-        return res
 
     def set_item(
         self, index: ExpressionResult, value: ExpressionResult,
         interpreter: "ASTInterpreter", meta: Meta | None,
     ) -> ExpressionResult:
-        res = self._call_method_if_exists(
-            "__setitem__", [index, value], interpreter, meta
-        )
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().set_item(index, value, interpreter, meta)
-        return res
+        if isinstance(index, BLError):
+            return index
+        if isinstance(index, Value) and isinstance(value, BLError):
+            return value
+        if isinstance(index, Value) and isinstance(value, Value):
+            res = self._call_method_if_exists(
+                "__set_item__", [index], interpreter, meta
+            )
+            if isinstance(res, BLError):
+                if res.value == error_var_nonexistent.value:
+                    return super().__getattribute__("set_item")(
+                        index, interpreter, meta
+                    )
+            return res
+        return error_not_implemented.set_meta(meta)
 
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Bool:
+    ) -> Bool | BLError:
         res = self._call_method_if_exists("__bool__", [], interpreter, meta)
-        if isinstance(res, BLError):
-            if res.value == error_var_nonexistent.value:
-                return super().to_bool(interpreter, meta)
+        if not isinstance(res, Bool):
+            if isinstance(res, BLError):
+                if res.value == error_var_nonexistent.value:
+                    return super().to_bool(interpreter, meta)
+            return error_incorrect_rettype_to_bool.set_meta(meta)
         return res
 
     def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
@@ -332,6 +261,26 @@ class Instance(Value):
 
     def dump(self, meta: Meta | None) -> String:
         return String(f"<object of {self.class_.dump(meta).value}>")
+
+    def _overloaded_binary_op(self, name: str, fallback_name: str) -> Callable:
+        def _wrapper(
+            other: ExpressionResult, interpreter: "ASTInterpreter",
+            meta: Meta | None,
+        ) -> ExpressionResult:
+            if isinstance(other, BLError):
+                return other
+            if isinstance(other, Value):
+                res = self._call_method_if_exists(
+                    name, [other], interpreter, meta
+                )
+                if isinstance(res, BLError):
+                    if res.value == error_var_nonexistent.value:
+                        return super().__getattribute__(fallback_name)(
+                            other, interpreter, meta
+                        )
+                return res
+            return error_not_implemented.set_meta(meta)
+        return _wrapper
 
     def _call_method_if_exists(
         self, name: str, args: list[Value], interpreter: "ASTInterpreter",

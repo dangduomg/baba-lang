@@ -11,6 +11,7 @@ from .errors import error_div_by_zero
 
 
 if TYPE_CHECKING:
+    from .errors import BLError
     from ..main import ASTInterpreter
 
 
@@ -42,7 +43,7 @@ class Value(ExpressionResult):
 
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "Bool":
+    ) -> "Bool | BLError":
         return BOOLS[True]
 
 

@@ -66,10 +66,10 @@ def float_(
 
 def bool_(
     meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
-) -> Bool:
+) -> Bool | BLError:
     """Convert to boolean"""
     # pylint: disable=unused-argument
-    return arg.to_bool(meta)
+    return arg.to_bool(interpreter, meta)
 
 
 def str_(
