@@ -115,8 +115,11 @@ def handle_runtime_errors(
                     print(msg)
             print('Traceback:')
             for call in interpreter.calls:
-                print(f'At line {call.meta.line}, column {call.meta.column}:')
-                print(get_context(call.meta, src))
+                if call.meta is not None:
+                    print(
+                        f'At line {call.meta.line}, column {call.meta.column}:'
+                    )
+                    print(get_context(call.meta, src))
 
 
 def interp_with_error_handling(
@@ -127,9 +130,8 @@ def interp_with_error_handling(
     """Interpret with error handling"""
     try:
         if interpreter is None:
-            res = interp_func(src)
-        else:
-            res = interp_func(src, interpreter)
+            interpreter = default_interp
+        res = interp_func(src, interpreter)
     except UnexpectedInput as e:
         print('Syntax error:')
         print()
