@@ -23,5 +23,6 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+**/personal
 LICENSE
 README.md
