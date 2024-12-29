@@ -8,8 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install dependencies
-RUN apt-get update
-RUN apt-get install --no-install-recommends -y gcc make lld patch libreadline-dev
+RUN apt-get update && apt-get install --no-install-recommends -y gcc make lld patch libreadline-dev
 
 # Install pip requirements
 COPY requirements.txt .
