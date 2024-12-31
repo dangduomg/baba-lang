@@ -19,3 +19,4 @@ error_inside_include = BLError(
 )
 error_invalid_include = BLError("Invalid include '{}'")
 error_incorrect_rettype_to_bool = BLError("to_bool() must return a Bool")
+error_class_attr_nonexistent = BLError("Class {} has no attribute {}")

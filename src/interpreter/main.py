@@ -10,14 +10,14 @@ from lark.exceptions import UnexpectedInput
 from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
-from . import built_ins, types
-from .types import exits, function, pywrapper, Value
-from .types.base import Result, ExpressionResult, Success, BLError
-from .types.errors import (
+from . import built_ins, bl_types
+from .bl_types import exits, function, pywrapper, Value
+from .bl_types.base import Result, ExpressionResult, Success, BLError
+from .bl_types.errors import (
     error_not_implemented, error_include_syntax, error_inside_include,
     error_invalid_include,
 )
-from .types.function import PythonFunction
+from .bl_types.function import PythonFunction
 from .env import Env
 
 
@@ -83,9 +83,9 @@ class ASTInterpreter(ASTVisitor):
                 match cond := self.visit_expr(condition).to_bool(self, meta):
                     case BLError():
                         return cond
-                    case types.Bool(True):
+                    case bl_types.Bool(True):
                         return self.visit_stmt(body)
-                    case types.Bool(False):
+                    case bl_types.Bool(False):
                         return Success()
             case nodes.IfElseStmt(
                 meta=meta, condition=condition,
@@ -95,9 +95,9 @@ class ASTInterpreter(ASTVisitor):
                 match cond:
                     case BLError():
                         return cond
-                    case types.Bool(True):
+                    case bl_types.Bool(True):
                         return self.visit_stmt(then_body)
-                    case types.Bool(False):
+                    case bl_types.Bool(False):
                         return self.visit_stmt(else_body)
             case nodes.WhileStmt(
                 meta=meta,
@@ -112,7 +112,7 @@ class ASTInterpreter(ASTVisitor):
                         match cond:
                             case BLError():
                                 return cond
-                            case types.Bool(False):
+                            case bl_types.Bool(False):
                                 return Success()
                     res = self.visit_stmt(body)
                     if isinstance(res, exits.Continue):
@@ -134,7 +134,7 @@ class ASTInterpreter(ASTVisitor):
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 self.globals.new_var(
-                    name, types.BLFunction(str(name), form_args, body, env)
+                    name, bl_types.BLFunction(str(name), form_args, body, env)
                 )
                 return Success()
             case nodes.ModuleStmt(name=name, body=body):
@@ -149,7 +149,7 @@ class ASTInterpreter(ASTVisitor):
                 # Clean up
                 if self.globals.parent is not None:
                     self.globals = self.globals.parent
-                self.globals.new_var(name, types.Module(name, vars_))
+                self.globals.new_var(name, bl_types.Module(name, vars_))
                 return Success()
             case nodes.ClassStmt(name=name, body=body):
                 # Create new environment
@@ -163,7 +163,9 @@ class ASTInterpreter(ASTVisitor):
                 # Clean up
                 if self.globals.parent is not None:
                     self.globals = self.globals.parent
-                self.globals.new_var(name, types.Class(name, vars_))
+                self.globals.new_var(
+                    name, bl_types.Class(name, vars_, bl_types.ObjectClass)
+                )
                 return Success()
             case nodes.IncludeStmt():
                 return self.visit_include(node)
@@ -218,7 +220,7 @@ class ASTInterpreter(ASTVisitor):
         """Visit an expression node"""
         match node:
             case nodes.Exprs(expressions=expressions):
-                final_res = types.NULL
+                final_res = bl_types.NULL
                 for expr in expressions:
                     res = self.visit_expr(expr)
                     if isinstance(res, BLError):
@@ -235,18 +237,18 @@ class ASTInterpreter(ASTVisitor):
                 match left_res:
                     case BLError():
                         return left_res
-                    case types.Bool(True):
+                    case bl_types.Bool(True):
                         return left_res
-                    case types.Bool(False):
+                    case bl_types.Bool(False):
                         return self.visit_expr(right)
             case nodes.Or(left=left, op=op, right=right):
                 left_res = self.visit_expr(left).to_bool(self, left.meta)
                 match left_res:
                     case BLError():
                         return left_res
-                    case types.Bool(False):
+                    case bl_types.Bool(False):
                         return left_res
-                    case types.Bool(True):
+                    case bl_types.Bool(True):
                         return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
                 return (
@@ -277,7 +279,7 @@ class ASTInterpreter(ASTVisitor):
                         return arg_visited
                     args.append(arg_visited)
                 match class_ := self._get_var(name, meta):
-                    case types.Class():
+                    case bl_types.Class():
                         return class_.new(args, self, meta)
                 return class_
             case nodes.Prefix(meta=meta, op=op, operand=operand):
@@ -287,17 +289,17 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Var(meta=meta, name=name):
                 return self._get_var(name, meta)
             case nodes.String(value=value):
-                return types.String(value)
+                return bl_types.String(value)
             case nodes.Int(value=value):
-                return types.Int(value)
+                return bl_types.Int(value)
             case nodes.Float(value=value):
-                return types.Float(value)
+                return bl_types.Float(value)
             case nodes.TrueLiteral():
-                return types.BOOLS[True]
+                return bl_types.BOOLS[True]
             case nodes.FalseLiteral():
-                return types.BOOLS[False]
+                return bl_types.BOOLS[False]
             case nodes.NullLiteral():
-                return types.NULL
+                return bl_types.NULL
             case nodes.List(elems=elems_in_ast):
                 elems = []
                 for e in elems_in_ast:
@@ -305,17 +307,17 @@ class ASTInterpreter(ASTVisitor):
                     if not isinstance(e_visited, Value):
                         return e_visited
                     elems.append(e_visited)
-                return types.BLList(elems)
+                return bl_types.BLList(elems)
             case nodes.Dict(pairs=pairs):
                 content = {}
                 for pair in pairs:
                     k_visited = self.visit(pair.key)
                     v_visited = self.visit(pair.value)
                     content[k_visited] = v_visited
-                return types.BLDict(content)
+                return bl_types.BLDict(content)
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
-                return types.BLFunction("<anonymous>", form_args, body, env)
+                return bl_types.BLFunction("<anonymous>", form_args, body, env)
         return error_not_implemented.copy()
 
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:

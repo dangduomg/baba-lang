@@ -13,7 +13,7 @@ from . import Module
 from .function import BLFunction
 from .errors import (
     error_var_nonexistent, error_not_implemented,
-    error_incorrect_rettype_to_bool
+    error_incorrect_rettype_to_bool, error_class_attr_nonexistent,
 )
 
 if TYPE_CHECKING:
@@ -26,6 +26,21 @@ class Class(Module):
 
     name: str
     vars: dict[str, Value]
+    super: "Class | None"
+
+    def get_attr(
+        self, attr: str, meta: Meta | None
+    ) -> ExpressionResult:
+        try:
+            return self.vars[attr]
+        except KeyError:
+            if self.super is not None:
+                return self.super.get_attr(attr, meta)
+            return (
+                error_class_attr_nonexistent.copy()
+                .fill_args(self.dump(meta).value, attr)
+                .set_meta(meta)
+            )
 
     def new(
         self, args: list[Value], interpreter: "ASTInterpreter",
@@ -43,9 +58,15 @@ class Class(Module):
         return String(f"<class '{self.name}'>")
 
 
+# Base class for all objects
+ObjectClass = Class("Object", {}, None)
+
+
 @dataclass(frozen=True)
 class Instance(Value):
     """baba-lang instance"""
+
+    # pylint: disable=too-many-public-methods
 
     class_: Class
     vars: dict[str, Value]

@@ -6,9 +6,9 @@ from typing import Optional
 
 from lark.tree import Meta
 
-from .types.base import ExpressionResult, BLError
-from .types.errors import error_var_nonexistent
-from .types import Value
+from .bl_types.base import ExpressionResult, BLError
+from .bl_types.errors import error_var_nonexistent
+from .bl_types import Value
 
 
 @dataclass
