@@ -114,6 +114,7 @@ class StaticChecker(ASTVisitor):
 
     def visit_stmt(self, node: nodes._Stmt) -> nodes._Stmt:
         """Visit a statement node"""
+        # pylint: disable=too-many-return-statements
         match node:
             case nodes.Body():
                 return self.visit_body(node)

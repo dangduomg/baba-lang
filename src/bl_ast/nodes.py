@@ -2,7 +2,6 @@
 
 
 from dataclasses import dataclass
-from typing import Optional
 
 from lark import Token
 from lark.ast_utils import AsList
@@ -40,7 +39,7 @@ class IncludeStmt(_Stmt):
 class ReturnStmt(_Stmt):
     """Return statement"""
     meta: Meta
-    value: Optional['_Expr']
+    value: '_Expr | None'
 
 
 @dataclass
@@ -110,6 +109,7 @@ class ClassStmt(_Stmt):
     """Class"""
     meta: Meta
     name: Token
+    super: Token | None
     body: Body
 
 
@@ -242,7 +242,7 @@ class New(_Expr):
     """Instantiation operation"""
     meta: Meta
     class_name: Token
-    args: SpecArgs
+    args: SpecArgs | None
 
 
 # Subscript

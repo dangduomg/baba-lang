@@ -59,6 +59,7 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var(
             "py_constant", PythonFunction(pywrapper.py_constant)
         )
+        self.globals.new_var("Object", bl_types.ObjectClass)
 
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access
@@ -151,20 +152,36 @@ class ASTInterpreter(ASTVisitor):
                     self.globals = self.globals.parent
                 self.globals.new_var(name, bl_types.Module(name, vars_))
                 return Success()
-            case nodes.ClassStmt(name=name, body=body):
+            case nodes.ClassStmt(
+                meta=meta, name=name, super=super_, body=body
+            ):
                 # Create new environment
                 self.globals = Env(parent=self.globals)
                 # Evaluate the body
                 match res := self.visit_stmt(body):
                     case BLError():
                         return res
-                vars_ = {str(name): var.value
-                         for name, var in self.globals.vars.items()}
+                vars_ = {
+                    str(name): var.value
+                    for name, var in self.globals.vars.items()
+                }
                 # Clean up
                 if self.globals.parent is not None:
                     self.globals = self.globals.parent
+                # Create the class
+                if super_ is None:
+                    superclass = bl_types.ObjectClass
+                else:
+                    superclass = self._get_var(super_, meta)
+                    match superclass:
+                        case bl_types.Class():
+                            pass
+                        case BLError():
+                            return res
+                        case _:
+                            return error_not_implemented.copy().set_meta(meta)
                 self.globals.new_var(
-                    name, bl_types.Class(name, vars_, bl_types.ObjectClass)
+                    name, bl_types.Class(name, vars_, superclass)
                 )
                 return Success()
             case nodes.IncludeStmt():
@@ -253,7 +270,7 @@ class ASTInterpreter(ASTVisitor):
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
                 return (
                     self.visit_expr(left)
-                        .binary_op(op, self.visit_expr(right), self, meta)
+                    .binary_op(op, self.visit_expr(right), self, meta)
                 )
             case nodes.Subscript(meta=meta, subscriptee=subscriptee,
                                  index=index):
@@ -270,18 +287,20 @@ class ASTInterpreter(ASTVisitor):
                     args.append(arg_visited)
                 callee = self.visit_expr(callee)
                 return callee.call(args, self, meta)
-            case nodes.New(meta=meta, class_name=name, args=args_in_ast):
+            case nodes.New(meta=meta, class_name=name, args=args_):
                 # Visit all args, stop if one is an error
                 args = []
-                for arg in args_in_ast.args:
-                    arg_visited = self.visit_expr(arg)
-                    if not isinstance(arg_visited, Value):
-                        return arg_visited
-                    args.append(arg_visited)
+                if args_ is not None:
+                    for arg in args_.args:
+                        arg_visited = self.visit_expr(arg)
+                        if not isinstance(arg_visited, Value):
+                            return arg_visited
+                        args.append(arg_visited)
                 match class_ := self._get_var(name, meta):
                     case bl_types.Class():
                         return class_.new(args, self, meta)
-                return class_
+                    case BLError():
+                        return class_
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, self, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
@@ -318,7 +337,7 @@ class ASTInterpreter(ASTVisitor):
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 return bl_types.BLFunction("<anonymous>", form_args, body, env)
-        return error_not_implemented.copy()
+        return error_not_implemented.copy().set_meta(node.meta)
 
     def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
         """Visit an assignment node"""
