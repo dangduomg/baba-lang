@@ -35,11 +35,15 @@ class Value(ExpressionResult):
     ) -> "Bool":
         return BOOLS[not self.to_bool(interpreter, meta)]
 
-    def dump(self, meta: Meta | None) -> "String":
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String | BLError":
         return String("<value>")
 
-    def to_string(self, meta: Meta | None) -> "String":
-        return self.dump(meta)
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String | BLError":
+        return self.dump(interpreter, meta)
 
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -53,7 +57,9 @@ class Bool(Value):
 
     value: bool
 
-    def dump(self, meta: Meta | None) -> "String":
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String":
         if self.value:
             return String("true")
         return String("false")
@@ -71,7 +77,9 @@ BOOLS = Bool(False), Bool(True)
 class Null(Value):
     """Null value"""
 
-    def dump(self, meta: Meta | None) -> "String":
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String":
         return String("null")
 
     def to_bool(
@@ -161,10 +169,14 @@ class String(Value):
                 return BOOLS[self.value >= other_val]
         return super().is_greater_or_equal(other, interpreter, meta)
 
-    def dump(self, meta: Meta | None) -> "String":
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String":
         return String(f"{self.value!r}")
 
-    def to_string(self, meta: Meta | None) -> Self:
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
         return self
 
     def to_bool(
@@ -376,7 +388,7 @@ class Int(Value):
     ) -> "Int":
         return Int(~self.value)
 
-    def dump(self, meta: Meta | None) -> String:
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(repr(self.value))
 
     def to_bool(
@@ -518,10 +530,14 @@ class Float(Value):
     ) -> "Float":
         return Float(-self.value)
 
-    def dump(self, meta: Meta | None) -> String:
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String:
         return String(repr(self.value))
 
-    def to_string(self, meta: Meta | None) -> String:
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String:
         return String(str(self.value))
 
     def to_bool(

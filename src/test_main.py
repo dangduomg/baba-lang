@@ -184,7 +184,7 @@ def test_object(example_interp: ASTInterpreter):
     assert isinstance(res, bl_types.Instance)
     assert res.class_ == cls
     assert (
-        res.get_attr("x", meta=None)
+        res.get_attr("x", example_interp, None)
         .is_equal(bl_types.Float(1.), example_interp, meta=None)
     )
 

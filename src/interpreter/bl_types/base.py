@@ -276,7 +276,7 @@ class ExpressionResult(Result):
         return error_not_implemented.copy().set_meta(meta)
 
     def get_attr(
-        self, attr: str, meta: Meta | None
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Access an attribute"""
         return error_not_implemented.copy().set_meta(meta)
@@ -301,13 +301,17 @@ class ExpressionResult(Result):
         """Instantiate an object"""
         return error_not_implemented.copy().set_meta(meta)
 
-    def dump(self, meta: Meta | None) -> "ExpressionResult":
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
         """Conversion to representation for debugging"""
         return error_not_implemented.copy().set_meta(meta)
 
-    def to_string(self, meta: Meta | None) -> "ExpressionResult":
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
         """Conversion to string"""
-        return self.dump(meta)
+        return self.dump(interpreter, meta)
 
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -484,7 +488,9 @@ string"""
     ) -> Self:
         return self
 
-    def get_attr(self, attr: str, meta: Meta | None) -> Self:
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
         return self
 
     def set_attr(
@@ -498,10 +504,12 @@ string"""
     ) -> Self:
         return self
 
-    def dump(self, meta: Meta | None) -> Self:
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> Self:
         return self
 
-    def to_string(self, meta: Meta | None) -> Self:
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
         return self
 
 

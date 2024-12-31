@@ -17,7 +17,7 @@ def print_(
 ) -> Null:
     """Print objects"""
     # pylint: disable=unused-argument
-    print(*(arg.to_string(meta).value for arg in args))
+    print(*(arg.to_string(interpreter, meta).value for arg in args))
     return NULL
 
 
@@ -26,7 +26,7 @@ def print_dump(
 ) -> Null:
     """'Dump' (print detailed, debug-friendly representation) objects"""
     # pylint: disable=unused-argument
-    print(*(arg.dump(meta) for arg in args))
+    print(*(arg.dump(interpreter, meta) for arg in args))
     return NULL
 
 
@@ -35,7 +35,9 @@ def input_(
 ) -> String:
     """Prompt for user input"""
     # pylint: disable=unused-argument
-    return String(input(args[0].to_string(meta).value if args else ""))
+    return String(
+        input(args[0].to_string(interpreter, meta).value if args else "")
+    )
 
 
 def int_(
@@ -74,7 +76,7 @@ def bool_(
 
 def str_(
     meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
-) -> String:
+) -> String | BLError:
     """Convert to string"""
     # pylint: disable=unused-argument
-    return arg.to_string(meta)
+    return arg.to_string(interpreter, meta)

@@ -14,6 +14,7 @@ from .function import BLFunction
 from .errors import (
     error_var_nonexistent, error_not_implemented,
     error_incorrect_rettype_to_bool, error_class_attr_nonexistent,
+    error_incorrect_rettype_to_string,
 )
 
 if TYPE_CHECKING:
@@ -29,16 +30,16 @@ class Class(Module):
     super: "Class | None"
 
     def get_attr(
-        self, attr: str, meta: Meta | None
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
         try:
             return self.vars[attr]
         except KeyError:
             if self.super is not None:
-                return self.super.get_attr(attr, meta)
+                return self.super.get_attr(attr, interpreter, meta)
             return (
                 error_class_attr_nonexistent.copy()
-                .fill_args(self.dump(meta).value, attr)
+                .fill_args(self.dump(interpreter, meta).value, attr)
                 .set_meta(meta)
             )
 
@@ -48,13 +49,13 @@ class Class(Module):
     ) -> ExpressionResult:
         inst = Instance(self, {})
         if "__init__" in self.vars:  # __init__ is the constructor method
-            constr = inst.get_attr("__init__", meta)
+            constr = inst.get_attr("__init__", interpreter, meta)
             match res := constr.call(args, interpreter, meta):
                 case BLError():
                     return res
         return inst
 
-    def dump(self, meta: Meta | None) -> String:
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(f"<class '{self.name}'>")
 
 
@@ -259,11 +260,13 @@ class Instance(Value):
             return error_incorrect_rettype_to_bool.copy().set_meta(meta)
         return res
 
-    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
         try:
             return self.vars[attr]
         except KeyError:
-            match res := self.class_.get_attr(attr, meta):
+            match res := self.class_.get_attr(attr, interpreter, meta):
                 case BLFunction():
                     return res.bind(self)
                 case _:
@@ -280,8 +283,46 @@ class Instance(Value):
                 return value
         return super().set_attr(attr, value, meta)
 
-    def dump(self, meta: Meta | None) -> String:
-        return String(f"<object of {self.class_.dump(meta).value}>")
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String | BLError:
+        res = self._call_method_if_exists("__dump__", [], interpreter, meta)
+        if not isinstance(res, String):
+            if isinstance(res, BLError):
+                if res.value == error_var_nonexistent.value:
+                    class_to_str = self.class_.dump(interpreter, meta).value
+                    return String(f"<object of {class_to_str}>")
+            return error_incorrect_rettype_to_string.copy().set_meta(meta)
+        return res
+
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String | BLError:
+        res = self._call_method_if_exists("__str__", [], interpreter, meta)
+        if not isinstance(res, String):
+            if isinstance(res, BLError):
+                if res.value == error_var_nonexistent.value:
+                    return self.dump(interpreter, meta)
+            return error_incorrect_rettype_to_string.copy().set_meta(meta)
+        return res
+
+    def next(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        res = self._call_method_if_exists("__next__", [], interpreter, meta)
+        if isinstance(res, BLError):
+            if res.value == error_var_nonexistent.value:
+                return super().next(interpreter, meta)
+        return res
+
+    def iterate(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        res = self._call_method_if_exists("__iter__", [], interpreter, meta)
+        if isinstance(res, BLError):
+            if res.value == error_var_nonexistent.value:
+                return super().iterate(interpreter, meta)
+        return res
 
     def _overloaded_binary_op(self, name: str, fallback_name: str) -> Callable:
         def _wrapper(
@@ -307,7 +348,7 @@ class Instance(Value):
         self, name: str, args: list[Value], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
-        match res := self.get_attr(name, meta):
+        match res := self.get_attr(name, interpreter, meta):
             case BLFunction():
                 return res.bind(self).call(args, interpreter, meta)
         return res

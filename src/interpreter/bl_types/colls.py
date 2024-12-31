@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from operator import methodcaller
 
 from lark.tree import Meta
 
@@ -74,7 +75,9 @@ class BLList(Value):
                     )
         return super().set_item(index, value, interpreter, meta)
 
-    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
         match attr:
             case 'length':
                 return PythonFunction(self.length)
@@ -82,10 +85,11 @@ class BLList(Value):
                 return PythonFunction(self.insert)
             case 'remove_at':
                 return PythonFunction(self.remove_at)
-        return super().get_attr(attr, meta)
+        return super().get_attr(attr, interpreter, meta)
 
-    def dump(self, meta):
-        return String(f"[{', '.join(e.dump(meta).value for e in self.elems)}]")
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
+        dmp = methodcaller("dump", interpreter, meta)
+        return String(f"[{', '.join(dmp(e).value for e in self.elems)}]")
 
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -139,8 +143,9 @@ class ListIterator(Value):
             return item
         return NULL
 
-    def dump(self, meta: Meta | None) -> String:
-        return String(f"<list iterator of {self.list.dump(meta).value}>")
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
+        lst_to_str = self.list.dump(interpreter, meta).value
+        return String(f"<list iterator of {lst_to_str}>")
 
 
 @dataclass(frozen=True)
@@ -160,7 +165,7 @@ class BLDict(Value):
                 except KeyError:
                     return (
                         error_key_nonexistent.copy()
-                        .fill_args(index.dump(meta).value)
+                        .fill_args(index.dump(interpreter, meta).value)
                         .set_meta(meta)
                     )
         return super().get_item(index, interpreter, meta)
@@ -176,11 +181,13 @@ class BLDict(Value):
                     return value
                 except KeyError:
                     return error_key_nonexistent.copy().fill_args(
-                        index.dump(meta).value
+                        index.dump(interpreter, meta).value
                     ).set_meta(meta)
         return super().set_item(index, value, interpreter, meta)
 
-    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
         match attr:
             case 'size':
                 return PythonFunction(self.length)
@@ -188,12 +195,13 @@ class BLDict(Value):
                 return PythonFunction(self.keys)
             case 'remove':
                 return PythonFunction(self.remove)
-        return super().get_attr(attr, meta)
+        return super().get_attr(attr, interpreter, meta)
 
-    def dump(self, meta):
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
+        dmp = methodcaller("dump", interpreter, meta)
         pair_str_list = []
         for k, v in self.content.items():
-            pair_str_list.append(f"{k.dump(meta).value}: {v.dump(meta).value}")
+            pair_str_list.append(f"{dmp(k)}: {dmp(v)}")
         return String(f'{{{', '.join(pair_str_list)}}}')
 
     def to_bool(
@@ -232,7 +240,9 @@ class Module(Value):
     name: str
     vars: dict[str, Value]
 
-    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
         try:
             return self.vars[attr]
         except KeyError:
@@ -242,5 +252,5 @@ class Module(Value):
                 .set_meta(meta)
             )
 
-    def dump(self, meta: Meta | None) -> String:
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(f"<module '{self.name}'>")

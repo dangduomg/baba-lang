@@ -159,15 +159,14 @@ def main() -> int:
         interp_func = interpret_expr
     else:
         interp_func = interpret
-    res = interp_with_error_handling(
-        interp_func, src, ASTInterpreter(path)
-    )
+    interpreter = ASTInterpreter(path)
+    res = interp_with_error_handling(interp_func, src, interpreter)
     match res:
         case UnexpectedInput() | BLError():
             return 1
         case Value():
             if args.expression:
-                print(res.dump(None).value)
+                print(res.dump(interpreter, None).value)
     return 0
 
 
@@ -183,7 +182,7 @@ def main_interactive() -> int:
             try:
                 match res := interpret_expr(input_):
                     case Value():
-                        print(res.dump(None).value)
+                        print(res.dump(default_interp, None).value)
                     case BLError():
                         handle_runtime_errors(default_interp, input_, res)
             except UnexpectedInput:

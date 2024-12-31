@@ -9,11 +9,15 @@ that's about it"""
 
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
 from .base import ExpressionResult
 from .value import Value
+
+if TYPE_CHECKING:
+    from ..main import ASTInterpreter
 
 
 @dataclass(frozen=True)
@@ -22,7 +26,9 @@ class Item(Value):
 
     value: Value
 
-    def get_attr(self, attr: str, meta: Meta | None) -> ExpressionResult:
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
         if attr == "value":
             return self.value
-        return super().get_attr(attr, meta)
+        return super().get_attr(attr, interpreter, meta)

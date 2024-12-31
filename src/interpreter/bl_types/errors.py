@@ -18,5 +18,8 @@ error_inside_include = BLError(
     "Error inside include at line {}, column {}: {}"
 )
 error_invalid_include = BLError("Invalid include '{}'")
-error_incorrect_rettype_to_bool = BLError("to_bool() must return a Bool")
+error_incorrect_rettype_to_bool = BLError("__bool__() must return a Bool")
 error_class_attr_nonexistent = BLError("Class {} has no attribute {}")
+error_incorrect_rettype_to_string = BLError(
+    "__dump__() and to_string() must return a String"
+)

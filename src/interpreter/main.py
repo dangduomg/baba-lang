@@ -364,7 +364,7 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, self, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
-                return self.visit_expr(accessee).get_attr(attr, meta)
+                return self.visit_expr(accessee).get_attr(attr, self, meta)
             case nodes.Var(meta=meta, name=name):
                 return self._get_var(name, meta)
             case nodes.String(value=value):
@@ -465,8 +465,8 @@ class ASTInterpreter(ASTVisitor):
                     return value
         if isinstance(pattern, nodes.DotPattern):
             subscriptee = self.visit_expr(pattern.accessee)
-            old_value_get_result = (
-                subscriptee.get_attr(pattern.attr_name, meta)
+            old_value_get_result = subscriptee.get_attr(
+                pattern.attr_name, self, meta
             )
             new_result = old_value_get_result.binary_op(
                 node.op[:-1], by, self, meta
