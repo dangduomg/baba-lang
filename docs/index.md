@@ -8,7 +8,7 @@ The site is **under construction**
 
 ## What is baba-lang?
 
-baba-lang is a programming language created with Python (with a bytecode interpreter planned to be written in Rust). Right now, it's still incomplete, but has supported most control flow operators, closures, modules and easy Python integration via `py_*` functions. It is currently in version `0.4.4-beta`.
+baba-lang is a programming language created with Python (with a bytecode interpreter planned to be written in Rust). Right now, it's still incomplete, but has supported most control flow operators, closures, modules and easy Python integration via `py_*` functions. It is currently in version `0.4.4`.
 
 baba-lang is written for educational purposes only, and is not production-ready.
 
@@ -18,11 +18,11 @@ baba-lang is written for educational purposes only, and is not production-ready.
 Installing and running baba-lang is simple:
 1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt).
 2. Either:
-* clone the repository
+* Download the latest point release on GitHub (recommended, as it is stable)
+* Clone the repository
 ```sh
 git clone https://github.com/dangduomg/baba-lang.git
 ```
-* or, download a release archive and extract the archive (see Releases).
 3. Set working directory to the project root.
 ```sh
 cd baba-lang

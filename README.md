@@ -2,21 +2,23 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.4.4-beta`.
+Right now in version `0.4.4`.
 
 ## Notes
 
 - baba-lang is now in its `0.x` versions. This means that later versions of baba-lang is not guaranteed to be backward compatible with the previous ones.
 - baba-lang is written for educational purposes only; it is not meant to be used in production.
 
-## How to use
+## How to install and use baba-lang
+
+Installing and running baba-lang is simple:
 1. Prerequisites: Python 3 (At least 3.12 can be sure to work), Lark (see requirements.txt).
 2. Either:
-* clone the repository
+* Download the latest point release on GitHub (recommended, as it is stable)
+* Clone the repository
 ```sh
 git clone https://github.com/dangduomg/baba-lang.git
 ```
-* or, download a release archive and extract the archive (see Releases).
 3. Set working directory to the project root.
 ```sh
 cd baba-lang
