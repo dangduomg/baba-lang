@@ -96,6 +96,16 @@ class ContinueStmt(_Stmt):
     meta: Meta
 
 
+@dataclass(frozen=True)
+class TryStmt(_Stmt):
+    """Try-catch statement"""
+    meta: Meta
+    try_body: Body
+    catch_var: Token | None
+    catch_body: Body
+    finally_body: Body | None
+
+
 @dataclass
 class FunctionStmt(_Stmt):
     """Function declaration"""

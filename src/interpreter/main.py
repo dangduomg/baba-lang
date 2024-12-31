@@ -158,6 +158,28 @@ class ASTInterpreter(ASTVisitor):
                         return res
                     case bl_types.String(value=value):
                         return BLError(value, meta)
+            case nodes.TryStmt(
+                try_body=try_body, catch_var=catch_var, catch_body=catch_body,
+                finally_body=finally_body,
+            ):
+                match res := self.visit_stmt(try_body):
+                    case BLError():
+                        if catch_var is not None:
+                            self._new_var(
+                                catch_var, bl_types.String(res.value)
+                            )
+                        if finally_body is None:
+                            return self.visit_stmt(catch_body)
+                        match res := self.visit_stmt(catch_body):
+                            case exits.Exit():
+                                self.visit_stmt(finally_body)
+                                return res
+                            case Success():
+                                return self.visit_stmt(finally_body)
+                    case Success():
+                        if finally_body is not None:
+                            return self.visit_stmt(finally_body)
+                        return res
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 self.globals.new_var(
@@ -171,22 +193,6 @@ class ASTInterpreter(ASTVisitor):
                 match res := self.visit_stmt(body):
                     case BLError():
                         return res
-                vars_ = {str(name): var.value
-                         for name, var in self.globals.vars.items()}
-                # Clean up
-                if self.globals.parent is not None:
-                    self.globals = self.globals.parent
-                self.globals.new_var(name, bl_types.Module(name, vars_))
-                return Success()
-            case nodes.ClassStmt(
-                meta=meta, name=name, super=super_, body=body
-            ):
-                # Create new environment
-                self.globals = Env(parent=self.globals)
-                # Evaluate the body
-                match res := self.visit_stmt(body):
-                    case BLError():
-                        return res
                 vars_ = {
                     str(name): var.value
                     for name, var in self.globals.vars.items()
@@ -194,25 +200,49 @@ class ASTInterpreter(ASTVisitor):
                 # Clean up
                 if self.globals.parent is not None:
                     self.globals = self.globals.parent
-                # Create the class
-                if super_ is None:
-                    superclass = bl_types.ObjectClass
-                else:
-                    superclass = self._get_var(super_, meta)
-                    match superclass:
-                        case bl_types.Class():
-                            pass
-                        case BLError():
-                            return res
-                        case _:
-                            return error_not_implemented.copy().set_meta(meta)
-                self.globals.new_var(
-                    name, bl_types.Class(name, vars_, superclass)
-                )
+                self.globals.new_var(name, bl_types.Module(name, vars_))
                 return Success()
+            case nodes.ClassStmt():
+                return self.visit_class(node)
             case nodes.IncludeStmt():
                 return self.visit_include(node)
         return error_not_implemented.copy().set_meta(node.meta)
+
+    def visit_class(self, node: nodes.ClassStmt) -> Result:
+        """Visit a class statement node"""
+        meta = node.meta
+        name = node.name
+        super_ = node.super
+        body = node.body
+        # Create new environment
+        self.globals = Env(parent=self.globals)
+        # Evaluate the body
+        match res := self.visit_stmt(body):
+            case BLError():
+                return res
+        vars_ = {
+            str(name): var.value
+            for name, var in self.globals.vars.items()
+        }
+        # Clean up
+        if self.globals.parent is not None:
+            self.globals = self.globals.parent
+        # Create the class
+        if super_ is None:
+            superclass = bl_types.ObjectClass
+        else:
+            superclass = self._get_var(super_, meta)
+            match superclass:
+                case bl_types.Class():
+                    pass
+                case BLError():
+                    return res
+                case _:
+                    return error_not_implemented.copy().set_meta(meta)
+        self.globals.new_var(
+            name, bl_types.Class(name, vars_, superclass)
+        )
+        return Success()
 
     def visit_include(self, node: nodes.IncludeStmt) -> Result:
         """Visit an include statement node"""
