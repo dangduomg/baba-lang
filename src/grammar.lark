@@ -141,7 +141,7 @@ IDENT: /(?!/ RESERVED  /)/ CNAME /\b/
 
 RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE
         | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE | _CLASS | _NEW
-        | _EXTENDS
+        | _EXTENDS | _IN | _THROW
 _TRUE: /true\b/
 _FALSE: /false\b/
 _NULL: /null\b/
@@ -159,6 +159,8 @@ _INCLUDE: /include\b/
 _MODULE: /module\b/
 _CLASS: /class\b/
 _EXTENDS: /extends\b/
+_IN: /in\b/
+_THROW: /throw\b/
 
 %import common.CNAME
 %import common.INT

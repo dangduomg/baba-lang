@@ -56,7 +56,7 @@ class IfElseStmt(_Stmt):
     meta: Meta
     condition: '_Expr'
     then_body: Body
-    else_body: Body
+    else_body: _Stmt
 
 
 @dataclass
@@ -66,6 +66,15 @@ class WhileStmt(_Stmt):
     condition: '_Expr'
     body: Body
     eval_condition_after: bool = False
+
+
+@dataclass
+class ForEachStmt(_Stmt):
+    """For-each (for..in) statement"""
+    meta: Meta
+    pattern: 'VarPattern'
+    iterable: '_Expr'
+    body: Body
 
 
 @dataclass(frozen=True)

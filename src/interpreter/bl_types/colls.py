@@ -13,6 +13,7 @@ from .errors import (
     BLError, error_out_of_range, error_key_nonexistent,
     error_module_var_nonexistent,
 )
+from .iterator import Item
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -91,6 +92,11 @@ class BLList(Value):
     ) -> Bool:
         return BOOLS[bool(self.elems)]
 
+    def iterate(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        return ListIterator(self)
+
     def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
     ) -> Int:
@@ -115,6 +121,26 @@ class BLList(Value):
         # pylint: disable=unused-argument
         self.elems.pop(index.value)
         return NULL
+
+
+class ListIterator(Value):
+    """Iterator for a list"""
+
+    def __init__(self, list_: BLList):
+        self.list = list_
+        self.index = 0
+
+    def next(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        if self.index < len(self.list.elems):
+            item = Item(self.list.elems[self.index])
+            self.index += 1
+            return item
+        return NULL
+
+    def dump(self, meta: Meta | None) -> String:
+        return String(f"<list iterator of {self.list.dump(meta).value}>")
 
 
 @dataclass(frozen=True)

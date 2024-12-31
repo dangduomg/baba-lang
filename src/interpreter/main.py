@@ -122,6 +122,28 @@ class ASTInterpreter(ASTVisitor):
                         return res
                     if eval_condition_after:
                         eval_condition = True
+            case nodes.ForEachStmt(
+                meta=meta, pattern=pattern, iterable=iterable, body=body
+            ):
+                match iterator := (
+                    self.visit_expr(iterable).iterate(self, meta)
+                ):
+                    case BLError():
+                        return iterator
+                while (next_ := iterator.next(self, meta)) is not NULL:
+                    match next_:
+                        case BLError():
+                            return next_
+                        case Item(value):
+                            self.assign(meta, pattern, value)
+                        case _:
+                            return error_not_implemented.copy().set_meta(meta)
+                    res = self.visit_stmt(body)
+                    if isinstance(res, exits.Continue):
+                        pass
+                    elif isinstance(res, exits.Exit):
+                        return res
+                return Success()
             case nodes.BreakStmt():
                 return exits.Break()
             case nodes.ContinueStmt():
@@ -245,8 +267,12 @@ class ASTInterpreter(ASTVisitor):
                     if isinstance(res, Value):
                         final_res = res
                 return final_res
-            case nodes.Assign():
-                return self.visit_assign(node)
+            case nodes.Assign(meta=meta, pattern=pattern, right=right):
+                rhs_result = self.visit_expr(right)
+                if isinstance(rhs_result, BLError):
+                    return rhs_result
+                if isinstance(rhs_result, Value):
+                    return self.assign(meta, pattern, rhs_result)
             case nodes.Inplace():
                 return self.visit_inplace(node)
             case nodes.And(left=left, op=op, right=right):
@@ -339,31 +365,27 @@ class ASTInterpreter(ASTVisitor):
                 return bl_types.BLFunction("<anonymous>", form_args, body, env)
         return error_not_implemented.copy().set_meta(node.meta)
 
-    def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
+    def assign(
+        self, meta: Meta, pattern: nodes._Pattern, value: Value
+    ) -> ExpressionResult:
         """Visit an assignment node"""
-        rhs_result = self.visit_expr(node.right)
-        meta = node.meta
-        if isinstance(rhs_result, BLError):
-            return rhs_result
-        if isinstance(rhs_result, Value):
-            value = rhs_result
-            match node.pattern:
-                case nodes.VarPattern(name=name):
-                    self._new_var(name, value)
-                    return value
-                case nodes.SubscriptPattern(
-                    subscriptee=subscriptee_,
-                    index=index_,
-                ):
-                    subscriptee = self.visit_expr(subscriptee_)
-                    index = self.visit_expr(index_)
-                    return subscriptee.set_item(index, value, self, meta)
-                case nodes.DotPattern(
-                    accessee=accessee_,
-                    attr_name=attr,
-                ):
-                    accessee = self.visit_expr(accessee_)
-                    return accessee.set_attr(attr, value, meta)
+        match pattern:
+            case nodes.VarPattern(name=name):
+                self._new_var(name, value)
+                return value
+            case nodes.SubscriptPattern(
+                subscriptee=subscriptee_,
+                index=index_,
+            ):
+                subscriptee = self.visit_expr(subscriptee_)
+                index = self.visit_expr(index_)
+                return subscriptee.set_item(index, value, self, meta)
+            case nodes.DotPattern(
+                accessee=accessee_,
+                attr_name=attr,
+            ):
+                accessee = self.visit_expr(accessee_)
+                return accessee.set_attr(attr, value, meta)
         return error_not_implemented.copy().set_meta(meta)
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:

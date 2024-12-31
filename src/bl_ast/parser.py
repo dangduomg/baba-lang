@@ -35,7 +35,7 @@ class Extras(Transformer):
         return nodes.WhileStmt(meta, cond, body, eval_condition_after=True)
 
     @v_args(inline=True, meta=True)
-    def for_stmt(
+    def c_for_stmt(
         self,
         meta: Meta,
         initializer: nodes._Expr | None,

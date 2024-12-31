@@ -315,6 +315,18 @@ class ExpressionResult(Result):
         """Conversion to boolean"""
         return error_not_implemented.copy().set_meta(meta)
 
+    def next(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Get the next element"""
+        return error_not_implemented.copy().set_meta(meta)
+
+    def iterate(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Get an iterator for the object"""
+        return error_not_implemented.copy().set_meta(meta)
+
 
 # ---- Error type ----
 

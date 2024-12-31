@@ -147,7 +147,7 @@ class StaticChecker(ASTVisitor):
                         return else_body
                 self.modes.append(BodyType.NORMAL)
                 node.then_body = self.visit_body(then_body)
-                node.else_body = self.visit_body(else_body)
+                node.else_body = self.visit_stmt(else_body)
                 self.modes.pop()
             case nodes.WhileStmt(
                 condition=condition, body=body,
