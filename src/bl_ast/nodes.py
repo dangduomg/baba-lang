@@ -42,6 +42,13 @@ class ReturnStmt(_Stmt):
     value: '_Expr | None'
 
 
+@dataclass(frozen=True)
+class ThrowStmt(_Stmt):
+    """Throw statement"""
+    meta: Meta
+    value: '_Expr'
+
+
 @dataclass
 class IfStmt(_Stmt):
     """If statements"""

@@ -11,7 +11,7 @@ from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
 from . import built_ins, bl_types
-from .bl_types import exits, function, pywrapper, Value
+from .bl_types import exits, function, pywrapper, Value, NULL, Item
 from .bl_types.base import Result, ExpressionResult, Success, BLError
 from .bl_types.errors import (
     error_not_implemented, error_include_syntax, error_inside_include,
@@ -101,9 +101,7 @@ class ASTInterpreter(ASTVisitor):
                     case bl_types.Bool(False):
                         return self.visit_stmt(else_body)
             case nodes.WhileStmt(
-                meta=meta,
-                condition=condition,
-                body=body,
+                meta=meta, condition=condition, body=body,
                 eval_condition_after=eval_condition_after,
             ):
                 eval_condition = not eval_condition_after
@@ -154,6 +152,12 @@ class ASTInterpreter(ASTVisitor):
                     return res
                 if isinstance(res, Value):
                     return exits.Return(res)
+            case nodes.ThrowStmt(meta=meta, value=value):
+                match res := self.visit_expr(value):
+                    case BLError():
+                        return res
+                    case bl_types.String(value=value):
+                        return BLError(value, meta)
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 self.globals.new_var(
