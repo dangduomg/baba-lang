@@ -56,8 +56,8 @@ def interpret(
     src: str, interpreter: ASTInterpreter = default_interp
 ) -> Result:
     """Interpret a script"""
-    ast_ = parse_to_ast(src)
-    default_static_checker.visit(ast_)
+    raw_ast = parse_to_ast(src)
+    ast_ = default_static_checker.visit(raw_ast)
     return interpreter.visit(ast_)
 
 

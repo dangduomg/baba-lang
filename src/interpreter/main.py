@@ -72,6 +72,8 @@ class ASTInterpreter(ASTVisitor):
     def visit_stmt(self, node: nodes._Stmt) -> Result:
         """Visit a statement node"""
         match node:
+            case nodes.NopStmt():
+                return Success()
             case nodes.Body(statements=statements):
                 for stmt in statements:
                     if isinstance(res := self.visit(stmt), exits.Exit):

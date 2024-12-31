@@ -43,7 +43,7 @@ class ReturnStmt(_Stmt):
     value: Optional['_Expr']
 
 
-@dataclass(frozen=True)
+@dataclass
 class IfStmt(_Stmt):
     """If statements"""
     meta: Meta
@@ -51,7 +51,7 @@ class IfStmt(_Stmt):
     body: Body
 
 
-@dataclass(frozen=True)
+@dataclass
 class IfElseStmt(_Stmt):
     """If..else statements"""
     meta: Meta
@@ -60,7 +60,7 @@ class IfElseStmt(_Stmt):
     else_body: Body
 
 
-@dataclass(frozen=True)
+@dataclass
 class WhileStmt(_Stmt):
     """While (and do..while) statements"""
     meta: Meta
@@ -81,7 +81,7 @@ class ContinueStmt(_Stmt):
     meta: Meta
 
 
-@dataclass(frozen=True)
+@dataclass
 class FunctionStmt(_Stmt):
     """Function declaration"""
     meta: Meta
@@ -111,6 +111,12 @@ class ClassStmt(_Stmt):
     meta: Meta
     name: Token
     body: Body
+
+
+@dataclass(frozen=True)
+class NopStmt(_Stmt):
+    """No-op statement"""
+    meta: Meta
 
 
 # Expressions
@@ -310,7 +316,7 @@ class NullLiteral(_Expr):
     meta: Meta
 
 
-@dataclass(frozen=True)
+@dataclass
 class FunctionLiteral(_Expr):
     """Function literal"""
     meta: Meta
