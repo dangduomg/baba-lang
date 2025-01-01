@@ -11,7 +11,7 @@ from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
 from . import built_ins, bl_types
-from .bl_types import exits, function, pywrapper, Value, NULL, Item
+from .bl_types import exits, function, Value
 from .bl_types.base import Result, ExpressionResult, Success, BLError
 from .bl_types.errors import (
     error_not_implemented, error_include_syntax, error_inside_include,
@@ -50,15 +50,6 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("float", PythonFunction(built_ins.float_))
         self.globals.new_var("bool", PythonFunction(built_ins.bool_))
         self.globals.new_var("str", PythonFunction(built_ins.str_))
-        self.globals.new_var(
-            "py_function", PythonFunction(pywrapper.py_function)
-        )
-        self.globals.new_var(
-            "py_method", PythonFunction(pywrapper.py_method)
-        )
-        self.globals.new_var(
-            "py_constant", PythonFunction(pywrapper.py_constant)
-        )
         self.globals.new_var("Object", bl_types.ObjectClass)
 
     def visit(self, node: nodes._AstNode) -> Result:
@@ -81,7 +72,12 @@ class ASTInterpreter(ASTVisitor):
                         return res
                 return Success()
             case nodes.IfStmt(meta=meta, condition=condition, body=body):
-                match cond := self.visit_expr(condition).to_bool(self, meta):
+                cond = (
+                    self.visit_expr(condition)
+                    .logical_not(self, meta)
+                    .logical_not(self, meta)
+                )
+                match cond:
                     case BLError():
                         return cond
                     case bl_types.Bool(True):
@@ -92,7 +88,11 @@ class ASTInterpreter(ASTVisitor):
                 meta=meta, condition=condition,
                 then_body=then_body, else_body=else_body
             ):
-                cond = self.visit_expr(condition).to_bool(self, meta)
+                cond = (
+                    self.visit_expr(condition)
+                    .logical_not(self, meta)
+                    .logical_not(self, meta)
+                )
                 match cond:
                     case BLError():
                         return cond
@@ -102,12 +102,16 @@ class ASTInterpreter(ASTVisitor):
                         return self.visit_stmt(else_body)
             case nodes.WhileStmt(
                 meta=meta, condition=condition, body=body,
-                eval_condition_after=eval_condition_after,
+                eval_cond_after_body=eval_cond_after_body,
             ):
-                eval_condition = not eval_condition_after
+                eval_condition = not eval_cond_after_body
                 while True:
                     if eval_condition:
-                        cond = self.visit_expr(condition).to_bool(self, meta)
+                        cond = (
+                            self.visit_expr(condition)
+                            .logical_not(self, meta)
+                            .logical_not(self, meta)
+                        )
                         match cond:
                             case BLError():
                                 return cond
@@ -118,7 +122,7 @@ class ASTInterpreter(ASTVisitor):
                         pass
                     elif isinstance(res, exits.Exit):
                         return res
-                    if eval_condition_after:
+                    if eval_cond_after_body:
                         eval_condition = True
             case nodes.BreakStmt():
                 return exits.Break()

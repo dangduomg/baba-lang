@@ -32,7 +32,7 @@ class Extras(Transformer):
     def do_while_stmt(
         self, meta: Meta, body: nodes.Body, cond: nodes._Expr
     ) -> nodes.WhileStmt:
-        return nodes.WhileStmt(meta, cond, body, eval_condition_after=True)
+        return nodes.WhileStmt(meta, cond, body, eval_cond_after_body=True)
 
     @v_args(inline=True, meta=True)
     def for_stmt(
