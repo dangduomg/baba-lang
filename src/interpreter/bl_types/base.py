@@ -51,22 +51,6 @@ class ExpressionResult(Result):
                 return self.multiply(other, interpreter, meta)
             case "/":
                 return self.divide(other, interpreter, meta)
-            case "%":
-                return self.mod(other, interpreter, meta)
-            case "%/%":
-                return self.floor_div(other, interpreter, meta)
-            case "**":
-                return self.pow(other, interpreter, meta)
-            case "&":
-                return self.bitwise_and(other, interpreter, meta)
-            case "|":
-                return self.bitwise_or(other, interpreter, meta)
-            case "^":
-                return self.bitwise_xor(other, interpreter, meta)
-            case "<<":
-                return self.left_shift(other, interpreter, meta)
-            case ">>":
-                return self.right_shift(other, interpreter, meta)
             case "==":
                 return self.is_equal(other, interpreter, meta)
             case "!=":
@@ -107,62 +91,6 @@ class ExpressionResult(Result):
         meta: Meta | None
     ) -> "ExpressionResult":
         """Division"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def mod(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Modulo"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def floor_div(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Floor division"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def pow(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Power"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def bitwise_and(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Bitwise and"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def bitwise_or(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Bitwise or"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def bitwise_xor(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Bitwise xor"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def left_shift(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Bitwise left shift"""
-        return self._unimplemented_binary_op(other, meta)
-
-    def right_shift(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Bitwise right shift"""
         return self._unimplemented_binary_op(other, meta)
 
     def is_equal(
@@ -221,58 +149,14 @@ class ExpressionResult(Result):
     ) -> "ExpressionResult":
         """Unary operation"""
         match op:
-            case "+":
-                return self.plus(interpreter, meta)
             case "-":
                 return self.neg(interpreter, meta)
-            case "~":
-                return self.bitwise_not(interpreter, meta)
-            case "!":
-                return self.logical_not(interpreter, meta)
-        return error_not_implemented.copy().set_meta(meta)
-
-    def plus(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Unary plus"""
         return error_not_implemented.copy().set_meta(meta)
 
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Negation"""
-        return error_not_implemented.copy().set_meta(meta)
-
-    def bitwise_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Bitwise not"""
-        return error_not_implemented.copy().set_meta(meta)
-
-    def logical_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Logical not"""
-        return error_not_implemented.copy().set_meta(meta)
-
-    def get_item(
-        self, index: "ExpressionResult", interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult":
-        """Get an item in a container"""
-        return self._unimplemented_binary_op(index, meta)
-
-    def set_item(
-        self, index: "ExpressionResult", value: "ExpressionResult",
-        interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Set an item in a container"""
-        match index:
-            case BLError():
-                return index
-        match value:
-            case BLError():
-                return value
         return error_not_implemented.copy().set_meta(meta)
 
     def get_attr(
@@ -307,28 +191,10 @@ class ExpressionResult(Result):
         """Conversion to representation for debugging"""
         return error_not_implemented.copy().set_meta(meta)
 
-    def to_string(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Conversion to string"""
-        return self.dump(interpreter, meta)
-
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Conversion to boolean"""
-        return error_not_implemented.copy().set_meta(meta)
-
-    def next(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Get the next element"""
-        return error_not_implemented.copy().set_meta(meta)
-
-    def iterate(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Get an iterator for the object"""
         return error_not_implemented.copy().set_meta(meta)
 
 
@@ -339,7 +205,7 @@ class ExpressionResult(Result):
 class BLError(Exit, ExpressionResult):
     """Error"""
 
-    value: str
+    value: "Value"
     meta: Meta | None = None
 
     def copy(self) -> "BLError":
@@ -349,13 +215,6 @@ class BLError(Exit, ExpressionResult):
     def set_meta(self, meta: Meta | None) -> Self:
         """Set meta attribute to error"""
         self.meta = meta
-        return self
-
-    def fill_args(self, *args, **kwargs) -> Self:
-        """Fill in the arguments to the error value, if the error value is a
-string"""
-        if isinstance(self.value, str):
-            self.value = self.value.format(*args, **kwargs)
         return self
 
     def add(
@@ -371,54 +230,6 @@ string"""
         return self
 
     def multiply(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def mod(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def pow(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def floor_div(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def bitwise_and(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def bitwise_or(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def bitwise_xor(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def left_shift(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def right_shift(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> Self:
@@ -460,32 +271,7 @@ string"""
     ) -> Self:
         return self
 
-    def plus(self, interpreter: "ASTInterpreter", meta: Meta | None) -> Self:
-        return self
-
     def neg(self, interpreter: "ASTInterpreter", meta: Meta | None) -> Self:
-        return self
-
-    def bitwise_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Self:
-        return self
-
-    def logical_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Self:
-        return self
-
-    def get_item(
-        self, index: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Self:
-        return self
-
-    def set_item(
-        self, index: ExpressionResult, value: ExpressionResult,
-        interpreter: "ASTInterpreter", meta: Meta | None,
-    ) -> Self:
         return self
 
     def get_attr(
@@ -505,11 +291,6 @@ string"""
         return self
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> Self:
-        return self
-
-    def to_string(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Self:
         return self
 
 

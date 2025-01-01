@@ -35,7 +35,7 @@ while_stmt: _WHILE expr "{" body "}"
 
 do_while_stmt: _DO "{" body "}" _WHILE expr ";"
 
-for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}" -> c_for_stmt
+for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
         | _FOR pattern _IN expr "{" body "}" -> for_each_stmt
 
 break_stmt: _BREAK ";"
@@ -62,11 +62,9 @@ class_entry: module_var_stmt | function_stmt
 ?assign: pattern "=" expr
        | pattern INPLACE_OP expr -> inplace
        | or
-INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|="
-          | "^=" | "<<=" | ">>="
+INPLACE_OP: "+=" | "-=" | "*=" | "/="
 
 ?pattern: IDENT -> var_pattern
-        | postfix "[" expr "]" -> subscript_pattern
         | postfix "." IDENT -> dot_pattern
 
 ?or: and OR_OP or
@@ -81,37 +79,22 @@ AND_OP: "&&"
      | bit_or
 COMP_OP: "==" | "!=" | /<(?!<)/ | "<=" | />(?!>)/ | ">="
 
-?bit_or: bit_or BIT_OR_OP bit_and -> binary_op
-       | bit_and
-BIT_OR_OP: "|" | "^"
-
-?bit_and: bit_and BIT_AND_OP shift -> binary_op
-        | shift
-BIT_AND_OP: "&"
-
-?shift: shift SHIFT_OP sum -> binary_op
-      | sum
-SHIFT_OP: "<<" | ">>"
-
 ?sum: sum SUM_OP prod -> binary_op
     | prod
 SUM_OP: "+" | "-"
 
 ?prod: prod PROD_OP prefix -> binary_op
      | prefix
-PROD_OP: "*" /(?!\*)/ | "/" | "%/%" | "%"
+PROD_OP: "*" | "/"
 
 ?prefix: PREFIX_OP prefix
        | postfix
-PREFIX_OP: "+" | "-" | "~" | "!"
+PREFIX_OP: "-"
 
-?postfix: postfix POW_OP prefix -> binary_op
-        | postfix "(" spec_args ")" -> call
-        | postfix "[" expr "]" -> subscript
+?postfix: postfix "(" spec_args ")" -> call
         | postfix "." IDENT -> dot
         | atom
 spec_args: _comma_list{expr}?
-POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
