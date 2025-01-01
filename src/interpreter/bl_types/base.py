@@ -514,4 +514,3 @@ string"""
 
 
 # Errors
-error_not_implemented = BLError("Operation not supported")

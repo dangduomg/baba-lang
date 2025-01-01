@@ -72,6 +72,29 @@ class Instance(Value):
     class_: Class
     vars: dict[str, Value]
 
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        try:
+            return self.vars[attr]
+        except KeyError:
+            match res := self.class_.get_attr(attr, interpreter, meta):
+                case BLFunction():
+                    return res.bind(self)
+                case _:
+                    return res
+
+    def set_attr(
+        self, attr: str, value: ExpressionResult, meta: Meta | None
+    ) -> ExpressionResult:
+        match value:
+            case BLError():
+                return value
+            case Value():
+                self.vars[attr] = value
+                return value
+        return super().set_attr(attr, value, meta)
+    
     def add(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -259,29 +282,6 @@ class Instance(Value):
                     return super().to_bool(interpreter, meta)
             return error_incorrect_rettype_to_bool.copy().set_meta(meta)
         return res
-
-    def get_attr(
-        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        try:
-            return self.vars[attr]
-        except KeyError:
-            match res := self.class_.get_attr(attr, interpreter, meta):
-                case BLFunction():
-                    return res.bind(self)
-                case _:
-                    return res
-
-    def set_attr(
-        self, attr: str, value: ExpressionResult, meta: Meta | None
-    ) -> ExpressionResult:
-        match value:
-            case BLError():
-                return value
-            case Value():
-                self.vars[attr] = value
-                return value
-        return super().set_attr(attr, value, meta)
 
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
