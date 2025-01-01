@@ -10,24 +10,19 @@ import logging
 import os
 import sys
 from argparse import ArgumentParser
-from collections.abc import Callable
-
-from lark.exceptions import UnexpectedInput
 from lark.tree import Meta
 
 from bl_ast import parse_expr_to_ast, parse_to_ast
-from interpreter import (
-    ASTInterpreter, BLError, ExpressionResult, Result, Value
-)
-from static_checker import StaticChecker, StaticError
+from interpreter import ASTInterpreter, ExpressionResult, Result
+from static_checker import StaticChecker
 
 if importlib.util.find_spec('readline'):
     # pylint: disable = import-error, unused-import
     import readline  # noqa: F401
 
 
-PROG = 'baba-lang'
-VERSION = '0.4.4'
+PROG = 'mini-baba-lang'
+VERSION = '0.5.0'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
 
@@ -97,55 +92,6 @@ def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str:
     ).decode("ascii", "backslashreplace")
 
 
-def handle_runtime_errors(
-    interpreter: ASTInterpreter, src: str, error: BLError
-) -> None:
-    """Print runtime errors nicely"""
-    match error:
-        case BLError(value=msg, meta=meta):
-            match meta:
-                case Meta(line=line, column=column):
-                    print(f'Runtime error at line {line}, column {column}:')
-                    print(msg)
-                    print()
-                    print(get_context(meta, src))
-                case None:
-                    print('Error:')
-                    print(msg)
-            print('Traceback:')
-            for call in interpreter.calls:
-                if call.meta is not None:
-                    print(
-                        f'At line {call.meta.line}, column {call.meta.column}:'
-                    )
-                    print(get_context(call.meta, src))
-
-
-def interp_with_error_handling(
-    interp_func: Callable,
-    src: str,
-    interpreter: ASTInterpreter | None = None,
-) -> ExpressionResult | UnexpectedInput | StaticError:
-    """Interpret with error handling"""
-    try:
-        if interpreter is None:
-            interpreter = default_interp
-        res = interp_func(src, interpreter)
-    except UnexpectedInput as e:
-        print('Syntax error:')
-        print()
-        print(e.get_context(src))
-        print(e)
-        return e
-    except StaticError as e:
-        print(e)
-        print()
-        print(e.get_context(src))
-        return e
-    handle_runtime_errors(interpreter, src, res)
-    return res
-
-
 def main() -> int:
     """Main function"""
     args = argparser.parse_args()
@@ -160,13 +106,7 @@ def main() -> int:
     else:
         interp_func = interpret
     interpreter = ASTInterpreter(path)
-    res = interp_with_error_handling(interp_func, src, interpreter)
-    match res:
-        case UnexpectedInput() | BLError():
-            return 1
-        case Value():
-            if args.expression:
-                print(res.dump(interpreter, None).value)
+    interp_func(src, interpreter)
     return 0
 
 
@@ -177,22 +117,9 @@ def main_interactive() -> int:
     print("Press Ctrl-C to terminate the current line")
     print("Send EOF (Ctrl-Z on Windows, Ctrl-D on Linux) to exit the REPL")
     while True:
-        try:
-            input_ = input('> ')
-            try:
-                match res := interpret_expr(input_):
-                    case Value():
-                        print(res.dump(default_interp, None).value)
-                    case BLError():
-                        handle_runtime_errors(default_interp, input_, res)
-            except UnexpectedInput:
-                interp_with_error_handling(interpret, input_, default_interp)
-        except KeyboardInterrupt:
-            print()
-            logging.debug("ctrl-C is pressed")
-        except EOFError:
-            logging.debug("EOF is sent")
-            return 0
+        input_ = input('> ')
+        res = interpret_expr(input_)
+        print(res)
 
 
 if __name__ == '__main__':
