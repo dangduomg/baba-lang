@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .base import ExpressionResult
-from .value import Value
+from .essentials import ExpressionResult, Value
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter

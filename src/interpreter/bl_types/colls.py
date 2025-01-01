@@ -2,22 +2,22 @@
 
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from operator import methodcaller
 
 from lark.tree import Meta
 
-from .base import ExpressionResult
-from .value import Value, String, Int, Bool, BOOLS, Null, NULL
-from .function import PythonFunction
-from .errors import (
-    BLError, error_out_of_range, error_key_nonexistent,
-    error_module_var_nonexistent,
+from .essentials import (
+    ExpressionResult, Value, BLError, String, Int, Null, NULL, Class,
+    Instance, ExceptionClass, IncorrectTypeException,
 )
-from .iterator import Item
+from .pyfunction import PythonFunction
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
+
+
+# List
 
 
 @dataclass(frozen=True)
@@ -44,41 +44,14 @@ class BLList(Value):
                 return BLList(self.elems * times)
         return super().add(other, interpreter, meta)
 
-    def get_item(
-        self, index: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        match index:
-            case Int(index_val):
-                try:
-                    return self.elems[index_val]
-                except IndexError:
-                    return (
-                        error_out_of_range.copy().fill_args(index_val)
-                                          .set_meta(meta)
-                    )
-        return super().get_item(index, interpreter, meta)
-
-    def set_item(
-        self, index: ExpressionResult, value: ExpressionResult,
-        interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        match index, value:
-            case Int(index_val), Value():
-                try:
-                    self.elems[index_val] = value
-                    return value
-                except IndexError:
-                    return (
-                        error_out_of_range.copy().fill_args(index_val)
-                                          .set_meta(meta)
-                    )
-        return super().set_item(index, value, interpreter, meta)
-
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
         match attr:
+            case 'get':
+                return PythonFunction(self.get)
+            case 'set':
+                return PythonFunction(self.set)
             case 'length':
                 return PythonFunction(self.length)
             case 'insert':
@@ -91,15 +64,42 @@ class BLList(Value):
         dmp = methodcaller("dump", interpreter, meta)
         return String(f"[{', '.join(dmp(e).value for e in self.elems)}]")
 
-    def to_bool(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Bool:
-        return BOOLS[bool(self.elems)]
-
-    def iterate(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
+    def get(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        index: Int, *_
     ) -> ExpressionResult:
-        return ListIterator(self)
+        """Get an element from a list"""
+        match index:
+            case Int(index_val):
+                try:
+                    return self.elems[index_val]
+                except IndexError:
+                    return BLError(cast(
+                        Instance,
+                        OutOfRangeException.new([], interpreter, meta),
+                    ))
+        return BLError(cast(
+            Instance, IncorrectTypeException.new([], interpreter, meta)
+        ))
+
+    def set(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        index: Int, value: Value, *_
+    ) -> ExpressionResult:
+        """Set an element in a list"""
+        match index, value:
+            case Int(index_val), Value():
+                try:
+                    self.elems[index_val] = value
+                    return value
+                except IndexError:
+                    return BLError(cast(
+                        Instance,
+                        OutOfRangeException.new([], interpreter, meta),
+                    ))
+        return BLError(cast(
+            Instance, IncorrectTypeException.new([], interpreter, meta)
+        ))
 
     def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
@@ -127,25 +127,10 @@ class BLList(Value):
         return NULL
 
 
-class ListIterator(Value):
-    """Iterator for a list"""
+# List errors
+OutOfRangeException = Class(ExceptionClass)
 
-    def __init__(self, list_: BLList):
-        self.list = list_
-        self.index = 0
-
-    def next(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        if self.index < len(self.list.elems):
-            item = Item(self.list.elems[self.index])
-            self.index += 1
-            return item
-        return NULL
-
-    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
-        lst_to_str = self.list.dump(interpreter, meta).value
-        return String(f"<list iterator of {lst_to_str}>")
+# Dict
 
 
 @dataclass(frozen=True)
@@ -154,41 +139,14 @@ class BLDict(Value):
 
     content: dict[Value, Value]
 
-    def get_item(
-        self, index: ExpressionResult, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        match index:
-            case Value():
-                try:
-                    return self.content[index]
-                except KeyError:
-                    return (
-                        error_key_nonexistent.copy()
-                        .fill_args(index.dump(interpreter, meta).value)
-                        .set_meta(meta)
-                    )
-        return super().get_item(index, interpreter, meta)
-
-    def set_item(
-        self, index: ExpressionResult, value: ExpressionResult,
-        interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        match index, value:
-            case Value(), Value():
-                try:
-                    self.content[index] = value
-                    return value
-                except KeyError:
-                    return error_key_nonexistent.copy().fill_args(
-                        index.dump(interpreter, meta).value
-                    ).set_meta(meta)
-        return super().set_item(index, value, interpreter, meta)
-
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
         match attr:
+            case 'get':
+                return PythonFunction(self.get)
+            case 'set':
+                return PythonFunction(self.set)
             case 'size':
                 return PythonFunction(self.length)
             case 'keys':
@@ -204,10 +162,36 @@ class BLDict(Value):
             pair_str_list.append(f"{dmp(k)}: {dmp(v)}")
         return String(f'{{{', '.join(pair_str_list)}}}')
 
-    def to_bool(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Bool | BLError:
-        return BOOLS[bool(self.content)]
+    def get(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        key: Value, *_
+    ) -> ExpressionResult:
+        """Get a value from a dictionary"""
+        match key:
+            case Value():
+                try:
+                    return self.content[key]
+                except KeyError:
+                    return BLError(cast(
+                        Instance,
+                        KeyNotFoundException.new([], interpreter, meta),
+                    ))
+        return BLError(cast(
+            Instance, IncorrectTypeException.new([], interpreter, meta)
+        ))
+
+    def set(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        key: Value, value: Value, *_
+    ) -> ExpressionResult:
+        """Set a value in a dictionary"""
+        match key, value:
+            case Value(), Value():
+                self.content[key] = value
+                return value
+        return BLError(cast(
+            Instance, IncorrectTypeException.new([], interpreter, meta)
+        ))
 
     def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
@@ -233,6 +217,13 @@ class BLDict(Value):
         return NULL
 
 
+# Dict errors
+KeyNotFoundException = Class(ExceptionClass)
+
+
+# Module
+
+
 @dataclass(frozen=True)
 class Module(Value):
     """baba-lang module"""
@@ -246,11 +237,13 @@ class Module(Value):
         try:
             return self.vars[attr]
         except KeyError:
-            return (
-                error_module_var_nonexistent.copy()
-                .fill_args(self.name, str(attr))
-                .set_meta(meta)
-            )
+            return BLError(cast(
+                Instance, ModuleVarNotFoundException.new([], interpreter, meta)
+            ))
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(f"<module '{self.name}'>")
+
+
+# Module errors
+ModuleVarNotFoundException = Class(ExceptionClass)

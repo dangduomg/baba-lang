@@ -2,7 +2,7 @@
 
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 from lark.tree import Meta
 from lark.exceptions import UnexpectedInput
@@ -11,13 +11,10 @@ from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
 from . import built_ins, bl_types
-from .bl_types import exits, function, Value
-from .bl_types.base import Result, ExpressionResult, Success, BLError
-from .bl_types.errors import (
-    error_not_implemented, error_include_syntax, error_inside_include,
-    error_invalid_include,
+from .bl_types import (
+    Result, ExpressionResult, Success, BLError, Value, PythonFunction, Call,
+    Instance, NotImplementedException, exits,
 )
-from .bl_types.function import PythonFunction
 from .env import Env
 
 
@@ -33,24 +30,20 @@ class ASTInterpreter(ASTVisitor):
     globals: Env
     locals: Optional[Env] = None
 
-    calls: list[function.Call]
+    calls: list[Call]
 
     def __init__(self, path=''):
         self.path = path
         self.calls = []
 
-        self.globals = Env()
+        self.globals = Env(self)
         # Populate some builtins
         self.globals.new_var("print", PythonFunction(built_ins.print_))
-        self.globals.new_var(
-            "print_dump", PythonFunction(built_ins.print_dump)
-        )
         self.globals.new_var("input", PythonFunction(built_ins.input_))
         self.globals.new_var("int", PythonFunction(built_ins.int_))
         self.globals.new_var("float", PythonFunction(built_ins.float_))
-        self.globals.new_var("bool", PythonFunction(built_ins.bool_))
-        self.globals.new_var("str", PythonFunction(built_ins.str_))
         self.globals.new_var("Object", bl_types.ObjectClass)
+        self.globals.new_var("Exception", bl_types.ExceptionClass)
 
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access
@@ -59,7 +52,9 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_expr(node)
             case nodes._Stmt():
                 return self.visit_stmt(node)
-        return error_not_implemented.copy()
+        return BLError(cast(
+            Instance, NotImplementedException.new([], self, node.meta)
+        ))
 
     def visit_stmt(self, node: nodes._Stmt) -> Result:
         """Visit a statement node"""
@@ -142,7 +137,7 @@ class ASTInterpreter(ASTVisitor):
                 return Success()
             case nodes.ModuleStmt(name=name, body=body):
                 # Create new environment
-                self.globals = Env(parent=self.globals)
+                self.globals = Env(self, parent=self.globals)
                 # Evaluate the body
                 match res := self.visit_stmt(body):
                     case BLError():
@@ -160,7 +155,9 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_class(node)
             case nodes.IncludeStmt():
                 return self.visit_include(node)
-        return error_not_implemented.copy().set_meta(node.meta)
+        return BLError(cast(
+            Instance, NotImplementedException.new([], self, node.meta)
+        ))
 
     def visit_class(self, node: nodes.ClassStmt) -> Result:
         """Visit a class statement node"""
@@ -169,7 +166,7 @@ class ASTInterpreter(ASTVisitor):
         super_ = node.super
         body = node.body
         # Create new environment
-        self.globals = Env(parent=self.globals)
+        self.globals = Env(self, parent=self.globals)
         # Evaluate the body
         match res := self.visit_stmt(body):
             case BLError():
@@ -192,9 +189,13 @@ class ASTInterpreter(ASTVisitor):
                 case BLError():
                     return res
                 case _:
-                    return error_not_implemented.copy().set_meta(meta)
+                    return BLError(cast(
+                        Instance, bl_types.IncorrectTypeException.new(
+                            [], self, meta
+                        )
+                    ))
         self.globals.new_var(
-            name, bl_types.Class(name, vars_, superclass)
+            name, bl_types.Class(superclass, vars_)
         )
         return Success()
 
@@ -206,7 +207,9 @@ class ASTInterpreter(ASTVisitor):
             # Find from current working directory
             f = open(Path.cwd() / path, encoding='utf-8')
         except FileNotFoundError:
-            return error_invalid_include.copy().fill_args(path).set_meta(meta)
+            return BLError(cast(
+                Instance, InvalidIncludeException.new([], self, meta)
+            ))
         with f:
             src = f.read()
             # Execute Python source code
@@ -215,33 +218,33 @@ class ASTInterpreter(ASTVisitor):
                 return Success()
             # Invalid include target
             if not path.endswith('.bl'):
-                return (
-                    error_invalid_include.copy().fill_args(path).set_meta(meta)
-                )
+                return BLError(cast(
+                    Instance, InvalidIncludeException.new([], self, meta)
+                ))
             try:
                 include_ast = parse_to_ast(src)
-            except UnexpectedInput as e:
-                return (
-                    error_include_syntax.copy()
-                    .fill_args(f"{e.get_context(src)}\n{e}")
-                    .set_meta(meta)
-                )
+            except UnexpectedInput:
+                return BLError(cast(
+                    Instance, IncludeSyntaxErrException.new([], self, meta)
+                ))
             match self.visit(include_ast):
-                case BLError(value=msg, meta=meta):
+                case BLError(meta=meta):
                     if meta is None:
-                        return (
-                            error_inside_include.copy()
-                            .fill_args("n/a", "n/a", msg)
-                            .set_meta(meta)
+                        return BLError(cast(
+                            Instance, IncludeRuntimeErrException.new(
+                                [], self, meta
+                            )
+                        ))
+                    return BLError(cast(
+                        Instance, IncludeRuntimeErrException.new(
+                            [], self, meta
                         )
-                    return (
-                        error_inside_include.copy()
-                        .fill_args(meta.line, meta.column, msg)
-                        .set_meta(meta)
-                    )
+                    ))
                 case Success():
                     return Success()
-        return error_not_implemented.copy().set_meta(meta)
+        return BLError(cast(
+            Instance, InvalidIncludeException.new([], self, meta)
+        ))
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
@@ -263,33 +266,24 @@ class ASTInterpreter(ASTVisitor):
                     return self.assign(meta, pattern, rhs_result)
             case nodes.Inplace():
                 return self.visit_inplace(node)
-            case nodes.And(left=left, op=op, right=right):
-                left_res = self.visit_expr(left).to_bool(self, left.meta)
-                match left_res:
-                    case BLError():
-                        return left_res
-                    case bl_types.Bool(True):
-                        return left_res
-                    case bl_types.Bool(False):
-                        return self.visit_expr(right)
-            case nodes.Or(left=left, op=op, right=right):
-                left_res = self.visit_expr(left).to_bool(self, left.meta)
-                match left_res:
-                    case BLError():
-                        return left_res
-                    case bl_types.Bool(False):
-                        return left_res
-                    case bl_types.Bool(True):
-                        return self.visit_expr(right)
+            case nodes.Logical(left=left, op=op, right=right):
+                not_left_res = (
+                    self.visit_expr(left).logical_not(self, left.meta)
+                )
+                if isinstance(not_left_res, BLError):
+                    return not_left_res
+                if isinstance(not_left_res, bl_types.Bool):
+                    left_value = not not_left_res.value
+                    if (
+                        op == "&&" and left_value
+                        or op == "||" and not left_value
+                    ):
+                        return not_left_res.logical_not(self, left.meta)
+                    return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
                 return (
                     self.visit_expr(left)
                     .binary_op(op, self.visit_expr(right), self, meta)
-                )
-            case nodes.Subscript(meta=meta, subscriptee=subscriptee,
-                                 index=index):
-                return self.visit_expr(subscriptee).get_item(
-                    self.visit_expr(index), self, meta
                 )
             case nodes.Call(meta=meta, callee=callee, args=args_in_ast):
                 # Visit all args, stop if one is an error
@@ -351,7 +345,9 @@ class ASTInterpreter(ASTVisitor):
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 return bl_types.BLFunction("<anonymous>", form_args, body, env)
-        return error_not_implemented.copy().set_meta(node.meta)
+        return BLError(cast(
+            Instance, NotImplementedException.new([], self, node.meta)
+        ))
 
     def assign(
         self, meta: Meta, pattern: nodes._Pattern, value: Value
@@ -366,8 +362,10 @@ class ASTInterpreter(ASTVisitor):
                 attr_name=attr,
             ):
                 accessee = self.visit_expr(accessee_)
-                return accessee.set_attr(attr, value, meta)
-        return error_not_implemented.copy().set_meta(meta)
+                return accessee.set_attr(attr, value, self, meta)
+        return BLError(cast(
+            Instance, NotImplementedException.new([], self, meta)
+        ))
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
         """Visit an in-place assignment node"""
@@ -376,7 +374,9 @@ class ASTInterpreter(ASTVisitor):
         if isinstance(rhs_result, BLError):
             return rhs_result
         if not isinstance(rhs_result, Value):
-            return error_not_implemented.copy().set_meta(meta)
+            return BLError(cast(
+                Instance, NotImplementedException.new([], self, meta)
+            ))
         by = rhs_result
         pattern = node.pattern
         if isinstance(pattern, nodes.VarPattern):
@@ -409,9 +409,11 @@ class ASTInterpreter(ASTVisitor):
                     return old_value_get_result
                 case _, Value():
                     value = new_result
-                    subscriptee.set_attr(pattern.attr_name, value, meta)
+                    subscriptee.set_attr(pattern.attr_name, value, self, meta)
                     return value
-        return error_not_implemented.copy().set_meta(meta)
+        return BLError(cast(
+            Instance, NotImplementedException.new([], self, meta)
+        ))
 
     def _get_var(self, name: str, meta: Meta) -> ExpressionResult:
         """Get a variable either from locals or globals"""
@@ -435,3 +437,9 @@ class ASTInterpreter(ASTVisitor):
             self.locals.new_var(name, value)
             return
         self.globals.new_var(name, value)
+
+
+# Interpreter errors
+InvalidIncludeException = bl_types.Class(bl_types.ExceptionClass)
+IncludeSyntaxErrException = bl_types.Class(bl_types.ExceptionClass)
+IncludeRuntimeErrException = bl_types.Class(bl_types.ExceptionClass)

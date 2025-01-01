@@ -4,8 +4,12 @@
 # pylint: disable=unused-import
 # ruff: noqa: F401
 # flake8: noqa: F401
-from .value import Value, String, Int, Float, Bool, BOOLS, Null, NULL
+from .essentials import (
+    Result, ExpressionResult, Success, Value, BLError, String, Int, Float,
+    Bool, BOOLS, Null, NULL, BLFunction, Call, Class, Instance, ObjectClass,
+    ExceptionClass, NotImplementedException, IncorrectTypeException,
+    VarNotFoundException,
+)
 from .colls import BLList, BLDict, Module
-from .function import BLFunction, PythonFunction
-from .object import Class, Instance, ObjectClass
+from .pyfunction import PythonFunction
 from .iterator import Item

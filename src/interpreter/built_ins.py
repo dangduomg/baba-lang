@@ -1,12 +1,11 @@
 """Built-in functions"""
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, cast
 
 from lark.tree import Meta
 
-from .bl_types.base import BLError
-from .bl_types.errors import error_not_implemented
-from .bl_types import Value, Int, Float, Bool, String, Null, NULL
+from .bl_types.essentials import BLError, IncorrectTypeException
+from .bl_types import Value, Int, Float, String, Null, NULL, Instance
 
 if TYPE_CHECKING:
     from .main import ASTInterpreter
@@ -17,16 +16,7 @@ def print_(
 ) -> Null:
     """Print objects"""
     # pylint: disable=unused-argument
-    print(*(arg.to_string(interpreter, meta).value for arg in args))
-    return NULL
-
-
-def print_dump(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
-) -> Null:
-    """'Dump' (print detailed, debug-friendly representation) objects"""
-    # pylint: disable=unused-argument
-    print(*(arg.dump(interpreter, meta) for arg in args))
+    print(*(arg.dump(interpreter, meta).value for arg in args))
     return NULL
 
 
@@ -36,7 +26,7 @@ def input_(
     """Prompt for user input"""
     # pylint: disable=unused-argument
     return String(
-        input(args[0].to_string(interpreter, meta).value if args else "")
+        input(args[0].dump(interpreter, meta).value if args else "")
     )
 
 
@@ -50,7 +40,9 @@ def int_(
             return Int(int(value))
         case Int():
             return arg
-    return error_not_implemented.copy().set_meta(meta)
+    return BLError(cast(
+        Instance, IncorrectTypeException.new([], interpreter, meta)
+    ))
 
 
 def float_(
@@ -63,20 +55,14 @@ def float_(
             return Float(float(value))
         case Float():
             return arg
-    return error_not_implemented.copy().set_meta(meta)
+    return BLError(cast(
+        Instance, IncorrectTypeException.new([], interpreter, meta)
+    ))
 
 
-def bool_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
-) -> Bool | BLError:
-    """Convert to boolean"""
-    # pylint: disable=unused-argument
-    return arg.to_bool(interpreter, meta)
-
-
-def str_(
+def dump(
     meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
 ) -> String | BLError:
     """Convert to string"""
     # pylint: disable=unused-argument
-    return arg.to_string(interpreter, meta)
+    return arg.dump(interpreter, meta)
