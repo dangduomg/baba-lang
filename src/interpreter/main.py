@@ -120,28 +120,6 @@ class ASTInterpreter(ASTVisitor):
                         return res
                     if eval_condition_after:
                         eval_condition = True
-            case nodes.ForEachStmt(
-                meta=meta, pattern=pattern, iterable=iterable, body=body
-            ):
-                match iterator := (
-                    self.visit_expr(iterable).iterate(self, meta)
-                ):
-                    case BLError():
-                        return iterator
-                while (next_ := iterator.next(self, meta)) is not NULL:
-                    match next_:
-                        case BLError():
-                            return next_
-                        case Item(value):
-                            self.assign(meta, pattern, value)
-                        case _:
-                            return error_not_implemented.copy().set_meta(meta)
-                    res = self.visit_stmt(body)
-                    if isinstance(res, exits.Continue):
-                        pass
-                    elif isinstance(res, exits.Exit):
-                        return res
-                return Success()
             case nodes.BreakStmt():
                 return exits.Break()
             case nodes.ContinueStmt():
@@ -152,34 +130,6 @@ class ASTInterpreter(ASTVisitor):
                     return res
                 if isinstance(res, Value):
                     return exits.Return(res)
-            case nodes.ThrowStmt(meta=meta, value=value):
-                match res := self.visit_expr(value):
-                    case BLError():
-                        return res
-                    case bl_types.String(value=value):
-                        return BLError(value, meta)
-            case nodes.TryStmt(
-                try_body=try_body, catch_var=catch_var, catch_body=catch_body,
-                finally_body=finally_body,
-            ):
-                match res := self.visit_stmt(try_body):
-                    case BLError():
-                        if catch_var is not None:
-                            self._new_var(
-                                catch_var, bl_types.String(res.value)
-                            )
-                        if finally_body is None:
-                            return self.visit_stmt(catch_body)
-                        match res := self.visit_stmt(catch_body):
-                            case exits.Exit():
-                                self.visit_stmt(finally_body)
-                                return res
-                            case Success():
-                                return self.visit_stmt(finally_body)
-                    case Success():
-                        if finally_body is not None:
-                            return self.visit_stmt(finally_body)
-                        return res
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 self.globals.new_var(

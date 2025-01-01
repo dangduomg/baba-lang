@@ -24,9 +24,6 @@ body: stmt*
 include_stmt: _INCLUDE STRING ";"
 
 return_stmt: _RETURN [expr] ";"
-
-throw_stmt: _THROW expr ";"
-
 if_stmt: _IF expr "{" body "}"
 
 if_else_stmt: _IF expr "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" body "}")
@@ -36,12 +33,9 @@ while_stmt: _WHILE expr "{" body "}"
 do_while_stmt: _DO "{" body "}" _WHILE expr ";"
 
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
-        | _FOR pattern _IN expr "{" body "}" -> for_each_stmt
 
 break_stmt: _BREAK ";"
 continue_stmt: _CONTINUE ";"
-
-try_stmt: _TRY "{" body "}" _CATCH [IDENT] "{" body "}" [_FINALLY "{" body "}"]
 
 function_stmt: _FUN IDENT "(" form_args ")" "{" body "}"
 

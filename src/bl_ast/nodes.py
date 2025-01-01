@@ -43,13 +43,6 @@ class ReturnStmt(_Stmt):
     value: '_Expr | None'
 
 
-@dataclass(frozen=True)
-class ThrowStmt(_Stmt):
-    """Throw statement"""
-    meta: Meta
-    value: '_Expr'
-
-
 @dataclass
 class IfStmt(_Stmt):
     """If statements"""
@@ -73,16 +66,7 @@ class WhileStmt(_Stmt):
     meta: Meta
     condition: '_Expr'
     body: Body
-    eval_condition_after: bool = False
-
-
-@dataclass
-class ForEachStmt(_Stmt):
-    """For-each (for..in) statement"""
-    meta: Meta
-    pattern: 'VarPattern'
-    iterable: '_Expr'
-    body: Body
+    eval_cond_after_body: bool = False
 
 
 @dataclass(frozen=True)
@@ -95,16 +79,6 @@ class BreakStmt(_Stmt):
 class ContinueStmt(_Stmt):
     """Continue statement"""
     meta: Meta
-
-
-@dataclass(frozen=True)
-class TryStmt(_Stmt):
-    """Try-catch statement"""
-    meta: Meta
-    try_body: Body
-    catch_var: Token | None
-    catch_body: Body
-    finally_body: Body | None
 
 
 @dataclass
