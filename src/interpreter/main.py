@@ -361,13 +361,6 @@ class ASTInterpreter(ASTVisitor):
             case nodes.VarPattern(name=name):
                 self._new_var(name, value)
                 return value
-            case nodes.SubscriptPattern(
-                subscriptee=subscriptee_,
-                index=index_,
-            ):
-                subscriptee = self.visit_expr(subscriptee_)
-                index = self.visit_expr(index_)
-                return subscriptee.set_item(index, value, self, meta)
             case nodes.DotPattern(
                 accessee=accessee_,
                 attr_name=attr,
@@ -400,22 +393,6 @@ class ASTInterpreter(ASTVisitor):
                 case _, Value():
                     value = new_result
                     self.globals.set_var(name, value, node.meta)
-                    return value
-        if isinstance(pattern, nodes.SubscriptPattern):
-            subscriptee = self.visit_expr(pattern.subscriptee)
-            index = self.visit_expr(pattern.index)
-            old_value_get_result = subscriptee.get_item(index, self, meta)
-            new_result = old_value_get_result.binary_op(
-                node.op[:-1], by, self, meta
-            )
-            match old_value_get_result, new_result:
-                case Value(), BLError():
-                    return new_result
-                case BLError(), _:
-                    return old_value_get_result
-                case _, Value():
-                    value = new_result
-                    subscriptee.set_item(index, value, self, meta)
                     return value
         if isinstance(pattern, nodes.DotPattern):
             subscriptee = self.visit_expr(pattern.accessee)
