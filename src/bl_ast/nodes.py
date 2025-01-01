@@ -1,6 +1,7 @@
 """AST node classes"""
 
 
+from abc import ABC
 from dataclasses import dataclass
 
 from lark import Token
@@ -16,7 +17,7 @@ from .base import _AstNode
 # Statements
 
 
-class _Stmt(_AstNode):
+class _Stmt(_AstNode, ABC):
     """Statement base class"""
     meta: Meta
 
@@ -148,7 +149,7 @@ class NopStmt(_Stmt):
 # Expressions
 
 
-class _Expr(_Stmt):
+class _Expr(_Stmt, ABC):
     """Expression base class"""
     meta: Meta
 
@@ -180,7 +181,7 @@ class Inplace(_Expr):
     right: _Expr
 
 
-class _Pattern(_AstNode):
+class _Pattern(_AstNode, ABC):
     """Assignment pattern base class"""
 
 
@@ -189,14 +190,6 @@ class VarPattern(_Pattern):
     """Variable name pattern, the simplest pattern"""
     meta: Meta
     name: str
-
-
-@dataclass(frozen=True)
-class SubscriptPattern(_Pattern):
-    """Subscript pattern"""
-    meta: Meta
-    subscriptee: _Expr
-    index: _Expr
 
 
 @dataclass(frozen=True)
@@ -211,17 +204,8 @@ class DotPattern(_Pattern):
 
 
 @dataclass(frozen=True)
-class Or(_Expr):
-    """Or operation"""
-    meta: Meta
-    left: _Expr
-    op: Token
-    right: _Expr
-
-
-@dataclass(frozen=True)
-class And(_Expr):
-    """And operation"""
+class Logical(_Expr):
+    """Logical operations"""
     meta: Meta
     left: _Expr
     op: Token
@@ -272,14 +256,6 @@ class New(_Expr):
 
 
 # Subscript
-
-
-@dataclass(frozen=True)
-class Subscript(_Expr):
-    """Subscript operation"""
-    meta: Meta
-    subscriptee: _Expr
-    index: _Expr
 
 
 # Dot access

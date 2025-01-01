@@ -1,5 +1,6 @@
 """Base, error and essential value classes"""
 
+from abc import ABC
 from typing import Self, TYPE_CHECKING
 from dataclasses import dataclass
 
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 # ---- Result type ----
 
 
-class Result:
+class Result(ABC):
     """Interpreter result base class"""
 
 
@@ -29,11 +30,11 @@ class Success(Result):
 any value)"""
 
 
-class Exit(Result):
+class Exit(Result, ABC):
     """Object signaling early exit"""
 
 
-class ExpressionResult(Result):
+class ExpressionResult(Result, ABC):
     """Expression result base class"""
 
     def binary_op(
@@ -151,12 +152,20 @@ class ExpressionResult(Result):
         match op:
             case "-":
                 return self.neg(interpreter, meta)
+            case "!":
+                return self.logical_not(interpreter, meta)
         return error_not_implemented.copy().set_meta(meta)
 
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Negation"""
+        return error_not_implemented.copy().set_meta(meta)
+
+    def logical_not(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Conversion to boolean"""
         return error_not_implemented.copy().set_meta(meta)
 
     def get_attr(
@@ -189,12 +198,6 @@ class ExpressionResult(Result):
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Conversion to representation for debugging"""
-        return error_not_implemented.copy().set_meta(meta)
-
-    def to_bool(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
-        """Conversion to boolean"""
         return error_not_implemented.copy().set_meta(meta)
 
 

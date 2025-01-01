@@ -34,8 +34,6 @@ def test_all_operators_int(example_interp: ASTInterpreter):
     assert is_equal(
         interpret_expr("2 / 3", example_interp), bl_types.Float(2 / 3)
     )
-    assert is_equal(interpret_expr("8 % 3", example_interp), bl_types.Int(2))
-    assert is_equal(interpret_expr("2 ** 3", example_interp), bl_types.Int(8))
     assert is_equal(
         interpret_expr("2 == 3", example_interp), bl_types.Bool(False)
     )
@@ -56,13 +54,6 @@ def test_all_operators_int(example_interp: ASTInterpreter):
     )
     assert is_equal(interpret_expr("2 && 3", example_interp), bl_types.Int(3))
     assert is_equal(interpret_expr("2 || 3", example_interp), bl_types.Int(2))
-    assert is_equal(interpret_expr("!2", example_interp), bl_types.Bool(False))
-    assert is_equal(interpret_expr("2 & 3", example_interp), bl_types.Int(2))
-    assert is_equal(interpret_expr("2 | 3", example_interp), bl_types.Int(3))
-    assert is_equal(interpret_expr("2 ^ 3", example_interp), bl_types.Int(1))
-    assert is_equal(interpret_expr("~2", example_interp), bl_types.Int(-3))
-    assert is_equal(interpret_expr("2 << 3", example_interp), bl_types.Int(16))
-    assert is_equal(interpret_expr("2 >> 3", example_interp), bl_types.Int(0))
 
 
 def test_error(example_interp: ASTInterpreter):

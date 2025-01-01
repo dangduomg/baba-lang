@@ -30,20 +30,10 @@ class Value(ExpressionResult):
     ) -> "Bool":
         return BOOLS[self is not other]
 
-    def logical_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "Bool":
-        return BOOLS[not self.to_bool(interpreter, meta)]
-
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "String | BLError":
         return String("<value>")
-
-    def to_string(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "String | BLError":
-        return self.dump(interpreter, meta)
 
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
