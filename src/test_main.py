@@ -4,8 +4,7 @@ from pytest import fixture
 
 from main import interpret, interpret_expr
 from interpreter import ASTInterpreter, bl_types
-from interpreter.bl_types import errors
-from interpreter.bl_types.base import ExpressionResult
+from interpreter.bl_types import ExpressionResult
 
 
 @fixture
@@ -59,8 +58,8 @@ def test_all_operators_int(example_interp: ASTInterpreter):
 def test_error(example_interp: ASTInterpreter):
     """Test for errors"""
     res = interpret_expr("1 / 0", example_interp)
-    assert isinstance(res, errors.BLError)
-    assert res.value == errors.error_div_by_zero.value
+    assert isinstance(res, bl_types.BLError)
+    assert res.value.class_ == bl_types.essentials.DivByZeroException
 
 
 def test_variable(example_interp: ASTInterpreter):
