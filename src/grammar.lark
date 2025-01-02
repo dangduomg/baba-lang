@@ -12,8 +12,6 @@ body: stmt*
      | break_stmt
      | continue_stmt
      | return_stmt
-     | throw_stmt
-     | try_stmt
      | include_stmt
      | function_stmt
      | module_stmt
@@ -69,8 +67,8 @@ OR_OP: "||"
     | comp
 AND_OP: "&&"
 
-?comp: bit_or COMP_OP bit_or -> binary_op
-     | bit_or
+?comp: sum COMP_OP sum -> binary_op
+     | sum
 COMP_OP: "==" | "!=" | /<(?!<)/ | "<=" | />(?!>)/ | ">="
 
 ?sum: sum SUM_OP prod -> binary_op
