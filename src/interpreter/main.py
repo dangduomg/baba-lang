@@ -162,13 +162,14 @@ class ASTInterpreter(ASTVisitor):
         meta = node.meta
         name = node.name
         super_ = node.super
-        body = node.body
+        entries = node.entries
         # Create new environment
         self.globals = Env(self, parent=self.globals)
         # Evaluate the body
-        match res := self.visit_stmt(body):
-            case BLError():
-                return res
+        for entry in entries:
+            match res := self.visit_stmt(entry):
+                case BLError():
+                    return res
         vars_ = {
             str(name): var.value
             for name, var in self.globals.vars.items()
@@ -185,7 +186,7 @@ class ASTInterpreter(ASTVisitor):
                 case bl_types.Class():
                     pass
                 case BLError():
-                    return res
+                    return superclass
                 case _:
                     return BLError(cast_to_instance(
                         bl_types.IncorrectTypeException.new([], self, meta)
