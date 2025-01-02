@@ -1,6 +1,6 @@
 """Built-in functions"""
 
-from typing import Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast
 
 from lark.tree import Meta
 
@@ -12,7 +12,8 @@ if TYPE_CHECKING:
 
 
 def print_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, *args: Value
 ) -> Null:
     """Print objects"""
     # pylint: disable=unused-argument
@@ -21,7 +22,8 @@ def print_(
 
 
 def input_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, *args: Value
 ) -> String:
     """Prompt for user input"""
     # pylint: disable=unused-argument
@@ -31,7 +33,8 @@ def input_(
 
 
 def int_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> Int | BLError:
     """Convert to integer"""
     # pylint: disable=unused-argument
@@ -46,7 +49,8 @@ def int_(
 
 
 def float_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> Float | BLError:
     """Convert to float"""
     # pylint: disable=unused-argument
@@ -61,7 +65,8 @@ def float_(
 
 
 def dump(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> String | BLError:
     """Convert to string"""
     # pylint: disable=unused-argument
