@@ -9,25 +9,17 @@ that's about it"""
 
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
-from lark.tree import Meta
+from .essentials import Value, String, Class, ObjectClass, Instance
 
-from .essentials import ExpressionResult, Value
 
-if TYPE_CHECKING:
-    from ..main import ASTInterpreter
+ItemClass = Class(String("Item"), ObjectClass, {})
+ItemClass.new = lambda args, interpreter, meta: Item(args[0])
 
 
 @dataclass(frozen=True)
-class Item(Value):
+class Item(Instance):
     """Iterator item"""
 
-    value: Value
-
-    def get_attr(
-        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        if attr == "value":
-            return self.value
-        return super().get_attr(attr, interpreter, meta)
+    def __init__(self, value: Value) -> None:
+        super().__init__(ItemClass, {"value": value})
