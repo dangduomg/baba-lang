@@ -11,7 +11,9 @@ from lark.tree import Meta
 
 from bl_ast.nodes import FormArgs, Body
 
-from .abc_protocols import Result, Exit, SupportsBLCall
+from .abc_protocols import (
+    Result, Exit, SupportsBLCall, SupportsWrappedByPythonFunction
+)
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -706,11 +708,34 @@ class Float(Value):
 @dataclass(frozen=True)
 class Call:
     """Call site type for tracebacks"""
-    function: "SupportsBLCall"
+    function: SupportsBLCall
     meta: Meta | None
 
 
-@dataclass(frozen=True)
+@dataclass
+class PythonFunction(Value):
+    """Python function wrapper type"""
+
+    function: SupportsWrappedByPythonFunction
+    this: "Instance | None" = None
+
+    def call(
+        self, args: list[Value], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        return self.function(meta, interpreter, self.this, *args)
+
+    def bind(self, this: "Instance") -> "PythonFunction":
+        """Return a version of PythonFunction bound to an object"""
+        return PythonFunction(self.function, this)
+
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String:
+        return String(f"<python function {self.function!r}>")
+
+
+@dataclass
 class BLFunction(Value):
     """baba-lang function type"""
 
@@ -760,10 +785,10 @@ class BLFunction(Value):
             Instance, NotImplementedException.new([], interpreter, meta)
         ))
 
-    def bind(self, object_: "Instance") -> "BLFunction":
+    def bind(self, this: "Instance") -> "BLFunction":
         """Return a version of BLFunction bound to an object"""
         return BLFunction(
-            self.name, self.form_args, self.body, self.env, object_
+            self.name, self.form_args, self.body, self.env, this
         )
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
@@ -780,7 +805,7 @@ class BLFunction(Value):
 class Class(Value):
     """baba-lang class"""
 
-    name: str
+    name: String
     super: "Class | None" = None
     vars: dict[str, Value] = field(default_factory=dict)
 
@@ -813,18 +838,28 @@ class Class(Value):
 
 
 # Base class for all objects
-ObjectClass = Class("Object")
+ObjectClass = Class(String("Object"))
 
 # Base class for all exceptions
-ExceptionClass = Class("Exception", ObjectClass)
-NotImplementedException = Class("NotImplementedException", ExceptionClass)
-DivByZeroException = Class("DivByZeroException", ExceptionClass)
-AttrNotFoundException = Class("AttrNotFoundException", ExceptionClass)
-VarNotFoundException = Class("VarNotFoundException", ExceptionClass)
-IncorrectTypeException = Class("IncorrectTypeException", ExceptionClass)
+ExceptionClass = Class(String("Exception"), ObjectClass, {
+    "__dump__": PythonFunction(
+        lambda meta, intp, /, this, *_:
+        String(f"{this.class_.name.value} {this.dump(intp, meta).value}")
+    ),
+})
+
+# Exceptions
+NotImplementedException = Class(
+    String("NotImplementedException"), ExceptionClass
+)
+DivByZeroException = Class(String("DivByZeroException"), ExceptionClass)
+AttrNotFoundException = Class(String("AttrNotFoundException"), ExceptionClass)
+VarNotFoundException = Class(String("VarNotFoundException"), ExceptionClass)
+IncorrectTypeException = Class(
+    String("IncorrectTypeException"), ExceptionClass
+)
 
 
-@dataclass(frozen=True)
 class Instance(Value):
     """baba-lang instance"""
 
@@ -833,6 +868,10 @@ class Instance(Value):
     class_: Class
     vars: dict[str, Value]
 
+    def __init__(self, class_: Class, vars_: dict[str, Value]):
+        self.class_ = class_
+        self.vars = vars_
+
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
@@ -840,7 +879,7 @@ class Instance(Value):
             return self.vars[attr]
         except KeyError:
             match res := self.class_.get_attr(attr, interpreter, meta):
-                case BLFunction():
+                case BLFunction() | PythonFunction():
                     return res.bind(self)
                 case _:
                     return res

@@ -7,7 +7,7 @@ from typing import Protocol, TYPE_CHECKING, runtime_checkable
 from lark.tree import Meta
 
 if TYPE_CHECKING:
-    from .essentials import ExpressionResult, Value
+    from .essentials import ExpressionResult, Value, Instance
     from ..main import ASTInterpreter
 
 
@@ -29,11 +29,15 @@ class SupportsBLCall(Protocol):
     # pylint: disable=too-few-public-methods
     # pylint: disable=missing-function-docstring
 
+    this: "Instance | None"
+
     @abstractmethod
     def call(
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> "ExpressionResult": ...
+
+    def bind(self, this: "Instance") -> "SupportsBLCall": ...
 
 
 class SupportsWrappedByPythonFunction(Protocol):
@@ -45,5 +49,6 @@ class SupportsWrappedByPythonFunction(Protocol):
 
     @abstractmethod
     def __call__(
-        self, meta: Meta | None, interpreter: "ASTInterpreter", /, *args
+        self, meta: Meta | None, interpreter: "ASTInterpreter",
+        this: "Instance | None", /, *args
     ) -> "ExpressionResult": ...
