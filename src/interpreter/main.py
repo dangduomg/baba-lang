@@ -2,7 +2,7 @@
 
 
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 from lark.tree import Meta
 from lark.exceptions import UnexpectedInput
@@ -13,9 +13,8 @@ from bl_ast.base import ASTVisitor
 from . import built_ins, bl_types
 from .bl_types import (
     Result, ExpressionResult, Success, BLError, Value, PythonFunction, Call,
-    Instance, NotImplementedException, exits,
+    Instance, NotImplementedException, exits, Env, Return,
 )
-from .env import Env
 
 
 class ASTInterpreter(ASTVisitor):
@@ -28,7 +27,7 @@ class ASTInterpreter(ASTVisitor):
     path: str
 
     globals: Env
-    locals: Optional[Env] = None
+    locals: Env | None = None
 
     calls: list[Call]
 
@@ -128,7 +127,7 @@ class ASTInterpreter(ASTVisitor):
                 if isinstance(res, BLError):
                     return res
                 if isinstance(res, Value):
-                    return exits.Return(res)
+                    return Return(res)
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 self.globals.new_var(
