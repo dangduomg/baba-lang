@@ -9,9 +9,9 @@ from lark.tree import Meta
 
 from .essentials import (
     ExpressionResult, Value, BLError, String, Int, Null, NULL, Class,
-    Instance, ExceptionClass, IncorrectTypeException,
+    PythonFunction, Instance, ObjectClass, ExceptionClass,
+    IncorrectTypeException,
 )
-from .pyfunction import PythonFunction
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -20,18 +20,43 @@ if TYPE_CHECKING:
 # List
 
 
-@dataclass(frozen=True)
-class BLList(Value):
+ListClass = Class(String("List"), ObjectClass, {
+    "get": PythonFunction(
+        lambda meta, intp, /, this, index, *_: this.get(meta, intp, index)
+    ),
+    "set": PythonFunction(
+        lambda meta, intp, /, this, index, value, *_:
+        this.set(meta, intp, index, value)
+    ),
+    "length": PythonFunction(
+        lambda meta, intp, /, this, *_: this.length(meta, intp)
+    ),
+    "insert": PythonFunction(
+        lambda meta, intp, /, this, index, item, *_:
+        this.insert(meta, intp, index, item)
+    ),
+    "remove_at": PythonFunction(
+        lambda meta, intp, /, this, index, *_:
+        this.remove_at(meta, intp, index)
+    ),
+})
+
+
+class BLList(Instance):
     """List type"""
 
     elems: list[Value]
+
+    def __init__(self, elems: list[Value]) -> None:
+        super().__init__(ListClass, {})
+        self.elems = elems
 
     def add(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
-            case BLList(other_elems):
+            case BLList(elems=other_elems):
                 return BLList(self.elems + other_elems)
         return super().add(other, interpreter, meta)
 
@@ -43,22 +68,6 @@ class BLList(Value):
             case Int(times):
                 return BLList(self.elems * times)
         return super().add(other, interpreter, meta)
-
-    def get_attr(
-        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        match attr:
-            case 'get':
-                return PythonFunction(self.get)
-            case 'set':
-                return PythonFunction(self.set)
-            case 'length':
-                return PythonFunction(self.length)
-            case 'insert':
-                return PythonFunction(self.insert)
-            case 'remove_at':
-                return PythonFunction(self.remove_at)
-        return super().get_attr(attr, interpreter, meta)
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         dmp = methodcaller("dump", interpreter, meta)
@@ -128,32 +137,40 @@ class BLList(Value):
 
 
 # List errors
-OutOfRangeException = Class(ExceptionClass)
+OutOfRangeException = Class(String("OutOfRangeException"), ExceptionClass)
+
 
 # Dict
 
 
-@dataclass(frozen=True)
-class BLDict(Value):
+DictClass = Class(String("Dict"), ObjectClass, {
+    "get": PythonFunction(
+        lambda meta, intp, /, this, key, *_: this.get(meta, intp, key)
+    ),
+    "set": PythonFunction(
+        lambda meta, intp, /, this, key, value, *_:
+        this.set(meta, intp, key, value)
+    ),
+    "length": PythonFunction(
+        lambda meta, intp, /, this, *_: this.length(meta, intp)
+    ),
+    "keys": PythonFunction(
+        lambda meta, intp, /, this, *_: this.keys(meta, intp)
+    ),
+    "remove": PythonFunction(
+        lambda meta, intp, /, this, key, *_: this.remove(meta, intp, key)
+    ),
+})
+
+
+class BLDict(Instance):
     """Dict type"""
 
     content: dict[Value, Value]
 
-    def get_attr(
-        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        match attr:
-            case 'get':
-                return PythonFunction(self.get)
-            case 'set':
-                return PythonFunction(self.set)
-            case 'size':
-                return PythonFunction(self.length)
-            case 'keys':
-                return PythonFunction(self.keys)
-            case 'remove':
-                return PythonFunction(self.remove)
-        return super().get_attr(attr, interpreter, meta)
+    def __init__(self, content: dict[Value, Value]) -> None:
+        super().__init__(DictClass, {})
+        self.content = content
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         dmp = methodcaller("dump", interpreter, meta)
@@ -218,7 +235,7 @@ class BLDict(Value):
 
 
 # Dict errors
-KeyNotFoundException = Class(ExceptionClass)
+KeyNotFoundException = Class(String("KeyNotFoundException"), ExceptionClass)
 
 
 # Module
@@ -246,4 +263,6 @@ class Module(Value):
 
 
 # Module errors
-ModuleVarNotFoundException = Class(ExceptionClass)
+ModuleVarNotFoundException = Class(
+    String("ModuleVarNotFoundException"), ExceptionClass
+)

@@ -194,7 +194,7 @@ class ASTInterpreter(ASTVisitor):
                         )
                     ))
         self.globals.new_var(
-            name, bl_types.Class(superclass, vars_)
+            name, bl_types.Class(bl_types.String(name), superclass, vars_)
         )
         return Success()
 
@@ -439,6 +439,12 @@ class ASTInterpreter(ASTVisitor):
 
 
 # Interpreter errors
-InvalidIncludeException = bl_types.Class(bl_types.ExceptionClass)
-IncludeSyntaxErrException = bl_types.Class(bl_types.ExceptionClass)
-IncludeRuntimeErrException = bl_types.Class(bl_types.ExceptionClass)
+InvalidIncludeException = bl_types.Class(
+    bl_types.String("InvalidIncludeException"), bl_types.ExceptionClass
+)
+IncludeSyntaxErrException = bl_types.Class(
+    bl_types.String("IncludeSyntaxErrException"), bl_types.ExceptionClass
+)
+IncludeRuntimeErrException = bl_types.Class(
+    bl_types.String("IncludeRuntimeErrException"), bl_types.ExceptionClass
+)
