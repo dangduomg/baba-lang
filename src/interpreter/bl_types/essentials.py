@@ -1,9 +1,8 @@
 """Base, error and essential value classes"""
 
-from abc import ABC, abstractmethod
-from typing import (
-    Self, Protocol, TYPE_CHECKING, override, cast, runtime_checkable
-)
+
+from abc import ABC
+from typing import Self, TYPE_CHECKING, override, cast
 from dataclasses import dataclass, field
 from collections.abc import Callable
 
@@ -12,9 +11,7 @@ from lark.tree import Meta
 
 from bl_ast.nodes import FormArgs, Body
 
-from .exits import Return
-
-from ..env import Env
+from .abc_protocols import Result, Exit, SupportsBLCall
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -25,11 +22,10 @@ if TYPE_CHECKING:
 # pylint: disable=unused-argument
 
 
-# ---- Result type ----
+# TODO: split this file up this is an absolute monolith
 
 
-class Result(ABC):
-    """Interpreter result base class"""
+# section Result
 
 
 @dataclass(frozen=True)
@@ -38,8 +34,10 @@ class Success(Result):
 any value)"""
 
 
-class Exit(Result, ABC):
-    """Object signaling early exit"""
+@dataclass(frozen=True)
+class Return(Exit):
+    """Return statement"""
+    value: "Value"
 
 
 class ExpressionResult(Result, ABC):
@@ -232,7 +230,7 @@ class ExpressionResult(Result, ABC):
         ))
 
 
-# ---- Error type ----
+# section Error
 
 
 @dataclass
@@ -340,7 +338,10 @@ class BLError(Exit, ExpressionResult):
         return self
 
 
-# Errors
+# endsection
+
+
+# section Values
 
 
 class Value(ExpressionResult):
@@ -486,6 +487,9 @@ class String(Value):
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "String":
         return String(f"{self.value!r}")
+
+
+# section Numbers
 
 
 @dataclass(frozen=True)
@@ -696,24 +700,13 @@ class Float(Value):
         return String(repr(self.value))
 
 
-@runtime_checkable
-class SupportsBLCall(Protocol):
-    """Protocol for functions that support being called in baba-lang"""
-
-    # pylint: disable=too-few-public-methods
-    # pylint: disable=missing-function-docstring
-
-    @abstractmethod
-    def call(
-        self, args: list["Value"], interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> "ExpressionResult": ...
+# section Functions
 
 
 @dataclass(frozen=True)
 class Call:
     """Call site type for tracebacks"""
-    function: SupportsBLCall
+    function: "SupportsBLCall"
     meta: Meta | None
 
 
@@ -724,7 +717,7 @@ class BLFunction(Value):
     name: str
     form_args: FormArgs
     body: Body
-    env: Env | None = None
+    env: "Env | None" = None
     this: "Instance | None" = None
 
     def call(
@@ -780,10 +773,14 @@ class BLFunction(Value):
         return String(f"<function '{self.name}'>")
 
 
+# section OOP
+
+
 @dataclass(frozen=True)
 class Class(Value):
     """baba-lang class"""
 
+    name: str
     super: "Class | None" = None
     vars: dict[str, Value] = field(default_factory=dict)
 
@@ -816,15 +813,15 @@ class Class(Value):
 
 
 # Base class for all objects
-ObjectClass = Class()
+ObjectClass = Class("Object")
 
 # Base class for all exceptions
-ExceptionClass = Class(ObjectClass)
-NotImplementedException = Class(ExceptionClass)
-DivByZeroException = Class(ExceptionClass)
-AttrNotFoundException = Class(ExceptionClass)
-VarNotFoundException = Class(ExceptionClass)
-IncorrectTypeException = Class(ExceptionClass)
+ExceptionClass = Class("Exception", ObjectClass)
+NotImplementedException = Class("NotImplementedException", ExceptionClass)
+DivByZeroException = Class("DivByZeroException", ExceptionClass)
+AttrNotFoundException = Class("AttrNotFoundException", ExceptionClass)
+VarNotFoundException = Class("VarNotFoundException", ExceptionClass)
+IncorrectTypeException = Class("IncorrectTypeException", ExceptionClass)
 
 
 @dataclass(frozen=True)
@@ -985,3 +982,69 @@ class Instance(Value):
             case BLFunction():
                 return res.bind(self).call(args, interpreter, meta)
         return res
+
+
+# section Environment
+
+
+@dataclass
+class Var:
+    """Interpreter mutable binding"""
+
+    value: Value
+
+
+class Env:
+    """Interpreter environment"""
+
+    interpreter: "ASTInterpreter"
+    vars: dict[str, Var]
+    parent: "Env | None"
+
+    def __init__(
+        self, interpreter: "ASTInterpreter",
+        vars_: dict[str, Var] | None = None, parent: "Env | None" = None,
+    ):
+        if vars_ is None:
+            self.vars = {}
+        else:
+            self.vars = vars_
+        self.interpreter = interpreter
+        self.parent = parent
+
+    def new_var(self, name: str, value: Value) -> None:
+        """Set a new/existing variable"""
+        self.vars[name] = Var(value)
+
+    def get_var(self, name: str, meta: Meta | None) -> ExpressionResult:
+        """Retrieve the value of a variable"""
+        resolve_result = self.resolve_var(name, meta)
+        match resolve_result:
+            case Var(value=value):
+                return value
+            case BLError():
+                return resolve_result
+
+    def set_var(self, name: str, value: Value, meta: Meta | None
+                ) -> BLError | None:
+        """Assign to an existing variable name"""
+        resolve_result = self.resolve_var(name, meta)
+        match resolve_result:
+            case Var():
+                resolve_result.value = value
+            case BLError():
+                return resolve_result
+
+    def resolve_var(self, name: str, meta: Meta | None) -> Var | BLError:
+        """Resolve a variable name"""
+        if name in self.vars:
+            return self.vars[name]
+        if self.parent is not None:
+            return self.parent.resolve_var(name, meta)
+        return BLError(cast(
+            Instance, VarNotFoundException.new([], self.interpreter, meta)
+        ))
+
+    def copy(self) -> 'Env':
+        """Copy the environment (for capturing variables in closures)"""
+        return Env(self.interpreter, self.vars.copy(), self.parent)
