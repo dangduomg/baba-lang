@@ -1,11 +1,13 @@
 """Built-in functions"""
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .bl_types.essentials import BLError, IncorrectTypeException
-from .bl_types import Value, Int, Float, String, Null, NULL, Instance
+from .bl_types import (
+    Value, BLError, Int, Float, String, Null, NULL, Instance,
+    IncorrectTypeException, cast_to_instance,
+)
 
 if TYPE_CHECKING:
     from .main import ASTInterpreter
@@ -43,9 +45,9 @@ def int_(
             return Int(int(value))
         case Int():
             return arg
-    return BLError(cast(
-        Instance, IncorrectTypeException.new([], interpreter, meta)
-    ))
+    return BLError(cast_to_instance(
+        IncorrectTypeException.new([], interpreter, meta)
+    ), meta)
 
 
 def float_(
@@ -59,9 +61,9 @@ def float_(
             return Float(float(value))
         case Float():
             return arg
-    return BLError(cast(
-        Instance, IncorrectTypeException.new([], interpreter, meta)
-    ))
+    return BLError(cast_to_instance(
+        IncorrectTypeException.new([], interpreter, meta)
+    ), meta)
 
 
 def dump(

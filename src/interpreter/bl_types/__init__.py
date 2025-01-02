@@ -9,6 +9,7 @@ from .essentials import (
     Bool, BOOLS, Null, NULL, PythonFunction, BLFunction, Call, Class, Instance,
     ObjectClass, ExceptionClass, NotImplementedException,
     IncorrectTypeException, VarNotFoundException, Env, Return,
+    cast_to_instance,
 )
 from .colls import BLList, BLDict, Module
 from .iterator import Item
