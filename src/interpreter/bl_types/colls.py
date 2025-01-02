@@ -9,7 +9,7 @@ from lark.tree import Meta
 
 from .essentials import (
     ExpressionResult, Value, BLError, String, Int, Null, NULL, Class,
-    PythonFunction, Instance, ObjectClass, ExceptionClass,
+    PythonFunction, Instance, cast_to_instance, ObjectClass, ExceptionClass,
     IncorrectTypeException,
 )
 
@@ -18,6 +18,21 @@ if TYPE_CHECKING:
 
 
 # List
+
+
+def list_new(
+    args: list[Value], interpreter: "ASTInterpreter", meta: Meta | None
+) -> ExpressionResult:
+    """Create a new list"""
+    match args:
+        case []:
+            return BLList([])
+        case [BLList() as arg]:
+            return arg
+        case _:
+            return BLError(cast_to_instance(
+                IncorrectTypeException.new([], interpreter, meta)
+            ), meta)
 
 
 ListClass = Class(String("List"), ObjectClass, {
@@ -40,6 +55,7 @@ ListClass = Class(String("List"), ObjectClass, {
         this.remove_at(meta, intp, index)
     ),
 })
+ListClass.new = list_new
 
 
 class BLList(Instance):
@@ -83,13 +99,12 @@ class BLList(Instance):
                 try:
                     return self.elems[index_val]
                 except IndexError:
-                    return BLError(cast(
-                        Instance,
+                    return BLError(cast_to_instance(
                         OutOfRangeException.new([], interpreter, meta),
-                    ))
-        return BLError(cast(
-            Instance, IncorrectTypeException.new([], interpreter, meta)
-        ))
+                    ), meta)
+        return BLError(cast_to_instance(
+            IncorrectTypeException.new([], interpreter, meta)
+        ), meta)
 
     def set(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /,
@@ -102,13 +117,12 @@ class BLList(Instance):
                     self.elems[index_val] = value
                     return value
                 except IndexError:
-                    return BLError(cast(
-                        Instance,
+                    return BLError(cast_to_instance(
                         OutOfRangeException.new([], interpreter, meta),
-                    ))
-        return BLError(cast(
-            Instance, IncorrectTypeException.new([], interpreter, meta)
-        ))
+                    ), meta)
+        return BLError(cast_to_instance(
+            IncorrectTypeException.new([], interpreter, meta)
+        ), meta)
 
     def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
@@ -143,6 +157,21 @@ OutOfRangeException = Class(String("OutOfRangeException"), ExceptionClass)
 # Dict
 
 
+def dict_new(
+    args: list[Value], interpreter: "ASTInterpreter", meta: Meta | None
+) -> ExpressionResult:
+    """Create a new dictionary"""
+    match args:
+        case []:
+            return BLDict({})
+        case [BLDict() as arg]:
+            return arg
+        case _:
+            return BLError(cast_to_instance(
+                IncorrectTypeException.new([], interpreter, meta)
+            ), meta)
+
+
 DictClass = Class(String("Dict"), ObjectClass, {
     "get": PythonFunction(
         lambda meta, intp, /, this, key, *_: this.get(meta, intp, key)
@@ -161,6 +190,7 @@ DictClass = Class(String("Dict"), ObjectClass, {
         lambda meta, intp, /, this, key, *_: this.remove(meta, intp, key)
     ),
 })
+DictClass.new = dict_new
 
 
 class BLDict(Instance):
@@ -192,10 +222,10 @@ class BLDict(Instance):
                     return BLError(cast(
                         Instance,
                         KeyNotFoundException.new([], interpreter, meta),
-                    ))
-        return BLError(cast(
-            Instance, IncorrectTypeException.new([], interpreter, meta)
-        ))
+                    ), meta)
+        return BLError(cast_to_instance(
+            IncorrectTypeException.new([], interpreter, meta)
+        ), meta)
 
     def set(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /,
@@ -206,9 +236,9 @@ class BLDict(Instance):
             case Value(), Value():
                 self.content[key] = value
                 return value
-        return BLError(cast(
-            Instance, IncorrectTypeException.new([], interpreter, meta)
-        ))
+        return BLError(cast_to_instance(
+            IncorrectTypeException.new([], interpreter, meta)
+        ), meta)
 
     def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
@@ -254,9 +284,9 @@ class Module(Value):
         try:
             return self.vars[attr]
         except KeyError:
-            return BLError(cast(
-                Instance, ModuleVarNotFoundException.new([], interpreter, meta)
-            ))
+            return BLError(cast_to_instance(
+                ModuleVarNotFoundException.new([], interpreter, meta)
+            ), meta)
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(f"<module '{self.name}'>")
