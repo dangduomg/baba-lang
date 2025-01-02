@@ -903,7 +903,7 @@ class Instance(Value):
             return self.vars[attr]
         except KeyError:
             match res := self.class_.get_attr(attr, interpreter, meta):
-                case BLFunction() | PythonFunction():
+                case SupportsBLCall():
                     return res.bind(self)
                 case _:
                     return res
