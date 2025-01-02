@@ -89,10 +89,8 @@ class StaticChecker(ASTVisitor):
             ):
                 self.visit(right)
             case (
-                nodes.And(left=left, right=right)
-                | nodes.Or(left=left, right=right)
+                nodes.Logical(left=left, right=right)
                 | nodes.BinaryOp(left=left, right=right)
-                | nodes.Subscript(subscriptee=left, index=right)
             ):
                 self.visit(left)
                 self.visit(right)
