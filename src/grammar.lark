@@ -37,11 +37,13 @@ continue_stmt: _CONTINUE ";"
 
 function_stmt: _FUN IDENT "(" form_args ")" "{" body "}"
 
-module_stmt: _MODULE IDENT "{" module_entry* "}"
+module_stmt: _MODULE IDENT "{" module_entries "}"
+module_entries: module_entry*
 module_entry: module_var_stmt | function_stmt | class_stmt
 module_var_stmt: IDENT "=" expr ";"
 
-class_stmt: _CLASS IDENT [_EXTENDS IDENT] "{" class_entry* "}"
+class_stmt: _CLASS IDENT [_EXTENDS IDENT] "{" class_entries "}"
+class_entries: class_entry*
 class_entry: module_var_stmt | function_stmt
 
 // Expression grammar
