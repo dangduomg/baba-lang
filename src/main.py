@@ -5,6 +5,7 @@ video game "Baba is You".
 """
 
 
+import time
 import importlib.util
 import logging
 import os
@@ -160,15 +161,19 @@ def main() -> int:
         interp_func = interpret_expr
     else:
         interp_func = interpret
+    start = time.perf_counter()
     res = interp_with_error_handling(
         interp_func, src, ASTInterpreter(path)
     )
+    end = time.perf_counter()
     match res:
         case UnexpectedInput() | BLError():
             return 1
         case Value():
             if args.expression:
                 print(res.dump(None).value)
+    print()
+    print('Execution time:', end - start)
     return 0
 
 
