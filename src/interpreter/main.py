@@ -2,7 +2,6 @@
 
 
 from pathlib import Path
-from typing import cast
 
 from lark.tree import Meta
 from lark.exceptions import UnexpectedInput
@@ -13,7 +12,7 @@ from bl_ast.base import ASTVisitor
 from . import built_ins, bl_types
 from .bl_types import (
     Result, ExpressionResult, Success, BLError, Value, PythonFunction, Call,
-    Instance, NotImplementedException, exits, Env, Return,
+    NotImplementedException, exits, Env, Return, cast_to_instance,
 )
 
 
@@ -51,9 +50,9 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_expr(node)
             case nodes._Stmt():
                 return self.visit_stmt(node)
-        return BLError(cast(
-            Instance, NotImplementedException.new([], self, node.meta)
-        ))
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], self, node.meta)
+        ), node.meta)
 
     def visit_stmt(self, node: nodes._Stmt) -> Result:
         """Visit a statement node"""
@@ -154,22 +153,23 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_class(node)
             case nodes.IncludeStmt():
                 return self.visit_include(node)
-        return BLError(cast(
-            Instance, NotImplementedException.new([], self, node.meta)
-        ))
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], self, node.meta)
+        ), node.meta)
 
     def visit_class(self, node: nodes.ClassStmt) -> Result:
         """Visit a class statement node"""
         meta = node.meta
         name = node.name
         super_ = node.super
-        body = node.body
+        entries = node.entries
         # Create new environment
         self.globals = Env(self, parent=self.globals)
         # Evaluate the body
-        match res := self.visit_stmt(body):
-            case BLError():
-                return res
+        for entry in entries:
+            match res := self.visit_stmt(entry):
+                case BLError():
+                    return res
         vars_ = {
             str(name): var.value
             for name, var in self.globals.vars.items()
@@ -186,15 +186,13 @@ class ASTInterpreter(ASTVisitor):
                 case bl_types.Class():
                     pass
                 case BLError():
-                    return res
+                    return superclass
                 case _:
-                    return BLError(cast(
-                        Instance, bl_types.IncorrectTypeException.new(
-                            [], self, meta
-                        )
-                    ))
+                    return BLError(cast_to_instance(
+                        bl_types.IncorrectTypeException.new([], self, meta)
+                    ), meta)
         self.globals.new_var(
-            name, bl_types.Class(superclass, vars_)
+            name, bl_types.Class(bl_types.String(name), superclass, vars_)
         )
         return Success()
 
@@ -206,9 +204,9 @@ class ASTInterpreter(ASTVisitor):
             # Find from current working directory
             f = open(Path.cwd() / path, encoding='utf-8')
         except FileNotFoundError:
-            return BLError(cast(
-                Instance, InvalidIncludeException.new([], self, meta)
-            ))
+            return BLError(cast_to_instance(
+                InvalidIncludeException.new([], self, meta)
+            ), meta)
         with f:
             src = f.read()
             # Execute Python source code
@@ -217,33 +215,33 @@ class ASTInterpreter(ASTVisitor):
                 return Success()
             # Invalid include target
             if not path.endswith('.bl'):
-                return BLError(cast(
-                    Instance, InvalidIncludeException.new([], self, meta)
-                ))
+                return BLError(cast_to_instance(
+                    InvalidIncludeException.new([], self, meta)
+                ), meta)
             try:
                 include_ast = parse_to_ast(src)
             except UnexpectedInput:
-                return BLError(cast(
-                    Instance, IncludeSyntaxErrException.new([], self, meta)
-                ))
+                return BLError(cast_to_instance(
+                    IncludeSyntaxErrException.new([], self, meta)
+                ), meta)
             match self.visit(include_ast):
                 case BLError(meta=meta):
                     if meta is None:
-                        return BLError(cast(
-                            Instance, IncludeRuntimeErrException.new(
+                        return BLError(cast_to_instance(
+                            IncludeRuntimeErrException.new(
                                 [], self, meta
                             )
-                        ))
-                    return BLError(cast(
-                        Instance, IncludeRuntimeErrException.new(
+                        ), meta)
+                    return BLError(cast_to_instance(
+                        IncludeRuntimeErrException.new(
                             [], self, meta
                         )
-                    ))
+                    ), meta)
                 case Success():
                     return Success()
-        return BLError(cast(
-            Instance, InvalidIncludeException.new([], self, meta)
-        ))
+        return BLError(cast_to_instance(
+            InvalidIncludeException.new([], self, meta)
+        ), meta)
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
@@ -344,9 +342,9 @@ class ASTInterpreter(ASTVisitor):
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 return bl_types.BLFunction("<anonymous>", form_args, body, env)
-        return BLError(cast(
-            Instance, NotImplementedException.new([], self, node.meta)
-        ))
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], self, node.meta)
+        ), node.meta)
 
     def assign(
         self, meta: Meta, pattern: nodes._Pattern, value: Value
@@ -362,9 +360,9 @@ class ASTInterpreter(ASTVisitor):
             ):
                 accessee = self.visit_expr(accessee_)
                 return accessee.set_attr(attr, value, self, meta)
-        return BLError(cast(
-            Instance, NotImplementedException.new([], self, meta)
-        ))
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], self, meta)
+        ), meta)
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
         """Visit an in-place assignment node"""
@@ -373,9 +371,9 @@ class ASTInterpreter(ASTVisitor):
         if isinstance(rhs_result, BLError):
             return rhs_result
         if not isinstance(rhs_result, Value):
-            return BLError(cast(
-                Instance, NotImplementedException.new([], self, meta)
-            ))
+            return BLError(cast_to_instance(
+                NotImplementedException.new([], self, meta)
+            ), meta)
         by = rhs_result
         pattern = node.pattern
         if isinstance(pattern, nodes.VarPattern):
@@ -410,9 +408,9 @@ class ASTInterpreter(ASTVisitor):
                     value = new_result
                     subscriptee.set_attr(pattern.attr_name, value, self, meta)
                     return value
-        return BLError(cast(
-            Instance, NotImplementedException.new([], self, meta)
-        ))
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], self, meta)
+        ), meta)
 
     def _get_var(self, name: str, meta: Meta) -> ExpressionResult:
         """Get a variable either from locals or globals"""
@@ -439,6 +437,12 @@ class ASTInterpreter(ASTVisitor):
 
 
 # Interpreter errors
-InvalidIncludeException = bl_types.Class(bl_types.ExceptionClass)
-IncludeSyntaxErrException = bl_types.Class(bl_types.ExceptionClass)
-IncludeRuntimeErrException = bl_types.Class(bl_types.ExceptionClass)
+InvalidIncludeException = bl_types.Class(
+    bl_types.String("InvalidIncludeException"), bl_types.ExceptionClass
+)
+IncludeSyntaxErrException = bl_types.Class(
+    bl_types.String("IncludeSyntaxErrException"), bl_types.ExceptionClass
+)
+IncludeRuntimeErrException = bl_types.Class(
+    bl_types.String("IncludeRuntimeErrException"), bl_types.ExceptionClass
+)

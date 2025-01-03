@@ -1,18 +1,21 @@
 """Built-in functions"""
 
-from typing import Optional, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .bl_types.essentials import BLError, IncorrectTypeException
-from .bl_types import Value, Int, Float, String, Null, NULL, Instance
+from .bl_types import (
+    Value, BLError, Int, Float, String, Null, NULL, Instance,
+    IncorrectTypeException, cast_to_instance,
+)
 
 if TYPE_CHECKING:
     from .main import ASTInterpreter
 
 
 def print_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, *args: Value
 ) -> Null:
     """Print objects"""
     # pylint: disable=unused-argument
@@ -21,7 +24,8 @@ def print_(
 
 
 def input_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, *args: Value
 ) -> String:
     """Prompt for user input"""
     # pylint: disable=unused-argument
@@ -31,7 +35,8 @@ def input_(
 
 
 def int_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> Int | BLError:
     """Convert to integer"""
     # pylint: disable=unused-argument
@@ -40,13 +45,14 @@ def int_(
             return Int(int(value))
         case Int():
             return arg
-    return BLError(cast(
-        Instance, IncorrectTypeException.new([], interpreter, meta)
-    ))
+    return BLError(cast_to_instance(
+        IncorrectTypeException.new([], interpreter, meta)
+    ), meta)
 
 
 def float_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> Float | BLError:
     """Convert to float"""
     # pylint: disable=unused-argument
@@ -55,13 +61,14 @@ def float_(
             return Float(float(value))
         case Float():
             return arg
-    return BLError(cast(
-        Instance, IncorrectTypeException.new([], interpreter, meta)
-    ))
+    return BLError(cast_to_instance(
+        IncorrectTypeException.new([], interpreter, meta)
+    ), meta)
 
 
 def dump(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> String | BLError:
     """Convert to string"""
     # pylint: disable=unused-argument

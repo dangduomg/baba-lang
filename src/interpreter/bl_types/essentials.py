@@ -11,7 +11,9 @@ from lark.tree import Meta
 
 from bl_ast.nodes import FormArgs, Body
 
-from .abc_protocols import Result, Exit, SupportsBLCall
+from .abc_protocols import (
+    Result, Exit, SupportsBLCall, SupportsWrappedByPythonFunction
+)
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -23,6 +25,14 @@ if TYPE_CHECKING:
 
 
 # TODO: split this file up this is an absolute monolith
+
+
+# section Helpers
+
+
+def cast_to_instance(value: "ExpressionResult") -> "Instance":
+    """Cast a value to an instance"""
+    return cast("Instance", value)
 
 
 # section Result
@@ -73,8 +83,8 @@ class ExpressionResult(Result, ABC):
                 return self.is_greater(other, interpreter, meta)
             case ">=":
                 return self.is_greater_or_equal(other, interpreter, meta)
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
     def add(
@@ -155,8 +165,8 @@ class ExpressionResult(Result, ABC):
         match other:
             case BLError():
                 return other
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
     def unary_op(
@@ -168,32 +178,32 @@ class ExpressionResult(Result, ABC):
                 return self.neg(interpreter, meta)
             case "!":
                 return self.logical_not(interpreter, meta)
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Negation"""
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
     def logical_not(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Conversion to boolean"""
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
+        ), meta)
 
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Access an attribute"""
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
     def set_attr(
@@ -208,8 +218,8 @@ class ExpressionResult(Result, ABC):
         meta: Meta | None
     ) -> "ExpressionResult":
         """Call self as a function"""
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
     def new(
@@ -217,28 +227,31 @@ class ExpressionResult(Result, ABC):
         meta: Meta | None
     ) -> "ExpressionResult":
         """Instantiate an object"""
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
         """Conversion to representation for debugging"""
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
         ), meta)
 
 
 # section Error
 
 
-@dataclass
 class BLError(Exit, ExpressionResult):
     """Error result type"""
 
     value: "Instance"
     meta: Meta | None = None
+
+    def __init__(self, value: "Instance", meta: Meta | None) -> None:
+        self.value = value
+        self.value.vars["meta"] = PythonValue(meta)
 
     @override
     def add(
@@ -366,6 +379,19 @@ class Value(ExpressionResult):
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "String | BLError":
         return String("<value>")
+
+
+@dataclass(frozen=True)
+class PythonValue(Value):
+    """Python value wrapper"""
+
+    value: object
+
+    @override
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String":
+        return String(f"<python value {self.value!r}>")
 
 
 @dataclass(frozen=True)
@@ -541,9 +567,9 @@ class Int(Value):
                 try:
                     return Float(self.value / other_val)
                 except ZeroDivisionError:
-                    return BLError(cast(
-                        Instance, DivByZeroException.new([], interpreter, meta)
-                    ))
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
         return super().divide(other, interpreter, meta)
 
     def is_equal(
@@ -640,9 +666,9 @@ class Float(Value):
                 try:
                     return Float(self.value / other_val)
                 except ZeroDivisionError:
-                    return BLError(cast(
-                        Instance, DivByZeroException.new([], interpreter, meta)
-                    ))
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
         return super().divide(other, interpreter, meta)
 
     def is_equal(
@@ -707,11 +733,34 @@ class Float(Value):
 @dataclass(frozen=True)
 class Call:
     """Call site type for tracebacks"""
-    function: "SupportsBLCall"
+    function: SupportsBLCall
     meta: Meta | None
 
 
-@dataclass(frozen=True)
+@dataclass
+class PythonFunction(Value):
+    """Python function wrapper type"""
+
+    function: SupportsWrappedByPythonFunction
+    this: "Instance | None" = None
+
+    def call(
+        self, args: list[Value], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        return self.function(meta, interpreter, self.this, *args)
+
+    def bind(self, this: "Instance") -> "PythonFunction":
+        """Return a version of PythonFunction bound to an object"""
+        return PythonFunction(self.function, this)
+
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String:
+        return String(f"<python function {self.function!r}>")
+
+
+@dataclass
 class BLFunction(Value):
     """baba-lang function type"""
 
@@ -736,9 +785,9 @@ class BLFunction(Value):
             for farg, arg in zip(form_args, args, strict=True):
                 env.new_var(farg, arg)
         except ValueError:
-            return BLError(cast(
-                Instance, IncorrectTypeException.new([], interpreter, meta)
-            ))
+            return BLError(cast_to_instance(
+                IncorrectTypeException.new([], interpreter, meta)
+            ), meta)
         # If function is bound to an object, add that object
         if self.this is not None:
             env.new_var("this", self.this)
@@ -757,14 +806,14 @@ class BLFunction(Value):
                 return value
             case BLError():
                 return res
-        return BLError(cast(
-            Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
+        ), meta)
 
-    def bind(self, object_: "Instance") -> "BLFunction":
+    def bind(self, this: "Instance") -> "BLFunction":
         """Return a version of BLFunction bound to an object"""
         return BLFunction(
-            self.name, self.form_args, self.body, self.env, object_
+            self.name, self.form_args, self.body, self.env, this
         )
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
@@ -777,11 +826,11 @@ class BLFunction(Value):
 # section OOP
 
 
-@dataclass(frozen=True)
+@dataclass
 class Class(Value):
     """baba-lang class"""
 
-    name: str
+    name: String
     super: "Class | None" = None
     vars: dict[str, Value] = field(default_factory=dict)
 
@@ -793,9 +842,9 @@ class Class(Value):
         except KeyError:
             if self.super is not None:
                 return self.super.get_attr(attr, interpreter, meta)
-            return BLError(cast(
-                Instance, AttrNotFoundException.new([], interpreter, meta)
-            ))
+            return BLError(cast_to_instance(
+                AttrNotFoundException.new([], interpreter, meta)
+            ), meta)
 
     def new(
         self, args: list[Value], interpreter: "ASTInterpreter",
@@ -814,18 +863,28 @@ class Class(Value):
 
 
 # Base class for all objects
-ObjectClass = Class("Object")
+ObjectClass = Class(String("Object"))
 
 # Base class for all exceptions
-ExceptionClass = Class("Exception", ObjectClass)
-NotImplementedException = Class("NotImplementedException", ExceptionClass)
-DivByZeroException = Class("DivByZeroException", ExceptionClass)
-AttrNotFoundException = Class("AttrNotFoundException", ExceptionClass)
-VarNotFoundException = Class("VarNotFoundException", ExceptionClass)
-IncorrectTypeException = Class("IncorrectTypeException", ExceptionClass)
+ExceptionClass = Class(String("Exception"), ObjectClass, {
+    "__dump__": PythonFunction(
+        lambda meta, intp, /, this, *_:
+        String(f"{this.class_.name.value} {this.dump(intp, meta).value}")
+    ),
+})
+
+# Exceptions
+NotImplementedException = Class(
+    String("NotImplementedException"), ExceptionClass
+)
+DivByZeroException = Class(String("DivByZeroException"), ExceptionClass)
+AttrNotFoundException = Class(String("AttrNotFoundException"), ExceptionClass)
+VarNotFoundException = Class(String("VarNotFoundException"), ExceptionClass)
+IncorrectTypeException = Class(
+    String("IncorrectTypeException"), ExceptionClass
+)
 
 
-@dataclass(frozen=True)
 class Instance(Value):
     """baba-lang instance"""
 
@@ -834,6 +893,10 @@ class Instance(Value):
     class_: Class
     vars: dict[str, Value]
 
+    def __init__(self, class_: Class, vars_: dict[str, Value]):
+        self.class_ = class_
+        self.vars = vars_
+
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
@@ -841,7 +904,7 @@ class Instance(Value):
             return self.vars[attr]
         except KeyError:
             match res := self.class_.get_attr(attr, interpreter, meta):
-                case BLFunction():
+                case SupportsBLCall():
                     return res.bind(self)
                 case _:
                     return res
@@ -948,9 +1011,9 @@ class Instance(Value):
                 if res.value.class_ == VarNotFoundException:
                     class_to_str = self.class_.dump(interpreter, meta).value
                     return String(f"<object of {class_to_str}>")
-            return BLError(cast(
-                Instance, IncorrectTypeException.new([], interpreter, meta)
-            ))
+            return BLError(cast_to_instance(
+                IncorrectTypeException.new([], interpreter, meta)
+            ), meta)
         return res
 
     def _overloaded_binary_op(self, name: str, fallback_name: str) -> Callable:
@@ -970,9 +1033,9 @@ class Instance(Value):
                             other, interpreter, meta
                         )
                 return res
-            return BLError(cast(
-                Instance, NotImplementedException.new([], interpreter, meta)
-            ))
+            return BLError(cast_to_instance(
+                NotImplementedException.new([], interpreter, meta)
+            ), meta)
         return _wrapper
 
     def _call_method_if_exists(
@@ -1042,9 +1105,9 @@ class Env:
             return self.vars[name]
         if self.parent is not None:
             return self.parent.resolve_var(name, meta)
-        return BLError(cast(
-            Instance, VarNotFoundException.new([], self.interpreter, meta)
-        ))
+        return BLError(cast_to_instance(
+            VarNotFoundException.new([], self.interpreter, meta)
+        ), meta)
 
     def copy(self) -> 'Env':
         """Copy the environment (for capturing variables in closures)"""
