@@ -19,7 +19,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/main.py",
             "args": [
-                "${workspaceFolder}/personal/errorfile.bl"
+                "${workspaceFolder}/personal/file.bl"
             ]
         }
     ]
