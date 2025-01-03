@@ -63,8 +63,39 @@ class BodyType(Enum):
     MODULE = 3
 
 
-class StaticChecker(ASTVisitor):
-    """Static checker class"""
+class SyntaxChecker(ASTVisitor):
+    """
+    SyntaxChecker is a class that performs compile-time syntax checking on an
+    abstract syntax tree (AST) by visiting its nodes. It checks for stray
+    'return', 'break', and 'continue' statements, and raises a StaticError if
+    any of these statements are used outside of a function or loop,
+    respectively.
+
+    Attributes:
+        modes (list[BodyType]):
+            A list that keeps track of the current context
+            (e.g., MODULE, FUNCTION, LOOP).
+
+    Methods:
+        __init__():
+            Initializes the SyntaxChecker with the initial mode set to MODULE.
+
+        visit(node: nodes._AstNode) -> nodes._AstNode:
+            Visits a node in the AST and delegates to the appropriate visit
+            method based on the node type.
+
+        visit_expr(node: nodes._Expr) -> nodes._Expr:
+            Visits an expression node and processes its sub-nodes based on
+            their type.
+
+        visit_stmt(node: nodes._Stmt) -> nodes._Stmt:
+            Visits a statement node and processes its sub-nodes based on their
+            type.
+
+        visit_body(node: nodes.Body) -> nodes.Body:
+            Visits a body node, which contains a list of statements, and
+            processes each statement.
+    """
 
     # pylint: disable=too-few-public-methods
 
@@ -76,6 +107,15 @@ class StaticChecker(ASTVisitor):
     def visit(self, node: nodes._AstNode) -> nodes._AstNode:
         # pylint: disable=too-many-locals
         # pylint: disable=protected-access
+        match node:
+            case nodes._Expr():
+                return self.visit_expr(node)
+            case nodes._Stmt():
+                return self.visit_stmt(node)
+        return node
+
+    def visit_expr(self, node: nodes._Expr) -> nodes._Expr:
+        """Visit an expression node"""
         match node:
             case (
                 nodes.Exprs(expressions=expressions)
@@ -106,8 +146,6 @@ class StaticChecker(ASTVisitor):
                 self.modes.append(BodyType.FUNCTION)
                 self.visit(body)
                 self.modes.pop()
-            case nodes._Stmt():
-                return self.visit_stmt(node)
         return node
 
     def visit_stmt(self, node: nodes._Stmt) -> nodes._Stmt:
@@ -217,3 +255,27 @@ class StaticChecker(ASTVisitor):
                         break
             statements[i] = self.visit_stmt(stmt)
         return node
+
+
+class StaticChecker(ASTVisitor):
+    """
+    Static checker for the mini-baba-lang language.
+
+    Methods
+    -------
+    visit(node: nodes._AstNode) -> nodes._AstNode:
+        Visit an AST node and perform syntax checking.
+
+    visit_expr(node: nodes._Expr) -> nodes._Expr:
+        Visit an expression node and perform syntax checking.
+    """
+
+    def visit(self, node: nodes._AstNode) -> nodes._AstNode:
+        """Visit an AST node"""
+        pass1 = SyntaxChecker()
+        return pass1.visit(node)
+
+    def visit_expr(self, node: nodes._Expr) -> nodes._Expr:
+        """Visit an expression node"""
+        pass1 = SyntaxChecker()
+        return pass1.visit_expr(node)
