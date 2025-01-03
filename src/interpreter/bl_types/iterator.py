@@ -17,7 +17,7 @@ ItemClass = Class(String("Item"), ObjectClass, {})
 ItemClass.new = lambda args, interpreter, meta: Item(args[0])
 
 
-@dataclass(frozen=True)
+@dataclass(init=False)
 class Item(Instance):
     """Iterator item"""
 

@@ -243,6 +243,7 @@ class ExpressionResult(Result, ABC):
 # section Error
 
 
+@dataclass(init=False)
 class BLError(Exit, ExpressionResult):
     """Error result type"""
 
@@ -252,6 +253,7 @@ class BLError(Exit, ExpressionResult):
     def __init__(self, value: "Instance", meta: Meta | None) -> None:
         self.value = value
         self.value.vars["meta"] = PythonValue(meta)
+        self.meta = meta
 
     @override
     def add(
@@ -859,19 +861,47 @@ class Class(Value):
         return inst
 
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
-        return String("<class>")
+        return String(f"<class {self.name.value}>")
 
 
 # Base class for all objects
 ObjectClass = Class(String("Object"))
 
+
 # Base class for all exceptions
-ExceptionClass = Class(String("Exception"), ObjectClass, {
-    "__dump__": PythonFunction(
-        lambda meta, intp, /, this, *_:
-        String(f"{this.class_.name.value} {this.dump(intp, meta).value}")
-    ),
-})
+
+
+def exc_init(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: "Instance | None",
+    /, msg: String, *_
+) -> Null | BLError:
+    """Initialize an exception"""
+    if this is not None:
+        this.vars["msg"] = msg
+        return NULL
+    return BLError(cast_to_instance(
+        NotImplementedException.new([], interpreter, meta)
+    ), meta)
+
+
+def exc_dump(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: "Instance | None",
+    /, *_
+) -> String | BLError:
+    """Debugging representation of exception"""
+    if this is not None:
+        return String(f"{this.class_.name.value}")
+    return BLError(cast_to_instance(
+        NotImplementedException.new([], interpreter, meta)
+    ), meta)
+
+
+exc_methods: dict[str, Value] = {
+    "__init__": PythonFunction(exc_init),
+    "__dump__": PythonFunction(exc_dump),
+}
+
+ExceptionClass = Class(String("Exception"), ObjectClass, exc_methods)
 
 # Exceptions
 NotImplementedException = Class(
@@ -885,6 +915,7 @@ IncorrectTypeException = Class(
 )
 
 
+@dataclass(init=False)
 class Instance(Value):
     """baba-lang instance"""
 
@@ -1008,9 +1039,10 @@ class Instance(Value):
         res = self._call_method_if_exists("__dump__", [], interpreter, meta)
         if not isinstance(res, String):
             if isinstance(res, BLError):
-                if res.value.class_ == VarNotFoundException:
+                if res.value.class_ == AttrNotFoundException:
                     class_to_str = self.class_.dump(interpreter, meta).value
                     return String(f"<object of {class_to_str}>")
+                return res
             return BLError(cast_to_instance(
                 IncorrectTypeException.new([], interpreter, meta)
             ), meta)
@@ -1043,7 +1075,7 @@ class Instance(Value):
         meta: Meta | None
     ) -> ExpressionResult:
         match res := self.get_attr(name, interpreter, meta):
-            case BLFunction():
+            case SupportsBLCall():
                 return res.bind(self).call(args, interpreter, meta)
         return res
 
