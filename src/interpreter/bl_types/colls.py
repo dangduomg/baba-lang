@@ -8,10 +8,11 @@ from operator import methodcaller
 from lark.tree import Meta
 
 from .essentials import (
-    ExpressionResult, Value, BLError, String, Int, Null, NULL, Class,
+    ExpressionResult, Value, BLError, String, Int, Bool, Null, NULL, Class,
     PythonFunction, Instance, cast_to_instance, ObjectClass, ExceptionClass,
     IncorrectTypeException,
 )
+from .abc_protocols import SupportsBLCall
 
 if TYPE_CHECKING:
     from ..main import ASTInterpreter
@@ -46,13 +47,30 @@ ListClass = Class(String("List"), ObjectClass, {
     "length": PythonFunction(
         lambda meta, intp, /, this, *_: this.length(meta, intp)
     ),
+    "map": PythonFunction(
+        lambda meta, intp, /, this, f, *_: this.map(meta, intp, f)
+    ),
+    "filter": PythonFunction(
+        lambda meta, intp, /, this, f, *_: this.filter(meta, intp, f)
+    ),
+    "reduce": PythonFunction(
+        lambda meta, intp, /, this, f, *_: this.reduce(meta, intp, f)
+    ),
     "insert": PythonFunction(
         lambda meta, intp, /, this, index, item, *_:
         this.insert(meta, intp, index, item)
     ),
+    "push": PythonFunction(
+        lambda meta, intp, /, this, item, *_:
+        this.insert(meta, intp, this.length(meta, intp), item)
+    ),
     "remove_at": PythonFunction(
         lambda meta, intp, /, this, index, *_:
         this.remove_at(meta, intp, index)
+    ),
+    "pop": PythonFunction(
+        lambda meta, intp, /, this, *_:
+        this.remove_at(meta, intp, this.length(meta, intp).subtract(Int(1)))
     ),
 })
 ListClass.new = list_new
@@ -148,6 +166,64 @@ class BLList(Instance):
         # pylint: disable=unused-argument
         self.elems.pop(index.value)
         return NULL
+
+    def map(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        f: SupportsBLCall, *_
+    ) -> "BLList | BLError":
+        """Map a function over a list"""
+        # pylint: disable=unused-argument
+        elems = []
+        for elem in self.elems:
+            match res := f.call([elem], interpreter, meta):
+                case Value():
+                    elems.append(res)
+                case BLError():
+                    return res
+        return BLList(elems)
+
+    def filter(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        f: SupportsBLCall, *_
+    ) -> "BLList | BLError":
+        """Filter a list"""
+        # pylint: disable=unused-argument
+        elems = []
+        for elem in self.elems:
+            res = (
+                f.call([elem], interpreter, meta)
+                .logical_not(interpreter, meta)
+            )
+            match res:
+                case Bool(value=value):
+                    if not value:
+                        elems.append(elem)
+                case BLError():
+                    return res
+                case _:
+                    return BLError(cast_to_instance(
+                        IncorrectTypeException.new([], interpreter, meta)
+                    ), meta)
+        return BLList(elems)
+
+    def reduce(
+        self, meta: Meta | None, interpreter: "ASTInterpreter", /,
+        f: SupportsBLCall, *_
+    ) -> "Value | BLError":
+        """Reduce a list"""
+        # pylint: disable=unused-argument
+        if not self.elems:
+            return BLError(cast_to_instance(
+                OutOfRangeException.new([], interpreter, meta)
+            ), meta)
+        acc = self.elems[0]
+        for elem in self.elems[1:]:
+            match res := f.call([acc, elem], interpreter, meta):
+                case Value():
+                    acc = res
+                case BLError():
+                    return res
+        return acc
 
 
 # List errors
