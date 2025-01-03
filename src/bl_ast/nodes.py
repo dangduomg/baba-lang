@@ -1,6 +1,7 @@
 """AST node classes"""
 
 
+from abc import ABC
 from dataclasses import dataclass
 
 from lark import Token
@@ -16,7 +17,7 @@ from .base import _AstNode
 # Statements
 
 
-class _Stmt(_AstNode):
+class _Stmt(_AstNode, ABC):
     """Statement base class"""
     meta: Meta
 
@@ -42,13 +43,6 @@ class ReturnStmt(_Stmt):
     value: '_Expr | None'
 
 
-@dataclass(frozen=True)
-class ThrowStmt(_Stmt):
-    """Throw statement"""
-    meta: Meta
-    value: '_Expr'
-
-
 @dataclass
 class IfStmt(_Stmt):
     """If statements"""
@@ -72,16 +66,7 @@ class WhileStmt(_Stmt):
     meta: Meta
     condition: '_Expr'
     body: Body
-    eval_condition_after: bool = False
-
-
-@dataclass
-class ForEachStmt(_Stmt):
-    """For-each (for..in) statement"""
-    meta: Meta
-    pattern: 'VarPattern'
-    iterable: '_Expr'
-    body: Body
+    eval_cond_after_body: bool = False
 
 
 @dataclass(frozen=True)
@@ -94,16 +79,6 @@ class BreakStmt(_Stmt):
 class ContinueStmt(_Stmt):
     """Continue statement"""
     meta: Meta
-
-
-@dataclass(frozen=True)
-class TryStmt(_Stmt):
-    """Try-catch statement"""
-    meta: Meta
-    try_body: Body
-    catch_var: Token | None
-    catch_body: Body
-    finally_body: Body | None
 
 
 @dataclass
@@ -127,7 +102,14 @@ class ModuleStmt(_Stmt):
     """Module"""
     meta: Meta
     name: Token
-    body: Body
+    entries: "ModuleEntries"
+
+
+@dataclass(frozen=True)
+class ModuleEntries(_AstNode, AsList):
+    """Class entries"""
+    meta: Meta
+    entries: list[_Stmt]
 
 
 @dataclass(frozen=True)
@@ -136,7 +118,14 @@ class ClassStmt(_Stmt):
     meta: Meta
     name: Token
     super: Token | None
-    body: Body
+    entries: "ClassEntries"
+
+
+@dataclass(frozen=True)
+class ClassEntries(_AstNode, AsList):
+    """Class entries"""
+    meta: Meta
+    entries: list[_Stmt]
 
 
 @dataclass(frozen=True)
@@ -148,7 +137,7 @@ class NopStmt(_Stmt):
 # Expressions
 
 
-class _Expr(_Stmt):
+class _Expr(_Stmt, ABC):
     """Expression base class"""
     meta: Meta
 
@@ -180,7 +169,7 @@ class Inplace(_Expr):
     right: _Expr
 
 
-class _Pattern(_AstNode):
+class _Pattern(_AstNode, ABC):
     """Assignment pattern base class"""
 
 
@@ -189,14 +178,6 @@ class VarPattern(_Pattern):
     """Variable name pattern, the simplest pattern"""
     meta: Meta
     name: str
-
-
-@dataclass(frozen=True)
-class SubscriptPattern(_Pattern):
-    """Subscript pattern"""
-    meta: Meta
-    subscriptee: _Expr
-    index: _Expr
 
 
 @dataclass(frozen=True)
@@ -211,17 +192,8 @@ class DotPattern(_Pattern):
 
 
 @dataclass(frozen=True)
-class Or(_Expr):
-    """Or operation"""
-    meta: Meta
-    left: _Expr
-    op: Token
-    right: _Expr
-
-
-@dataclass(frozen=True)
-class And(_Expr):
-    """And operation"""
+class Logical(_Expr):
+    """Logical operations"""
     meta: Meta
     left: _Expr
     op: Token
@@ -272,14 +244,6 @@ class New(_Expr):
 
 
 # Subscript
-
-
-@dataclass(frozen=True)
-class Subscript(_Expr):
-    """Subscript operation"""
-    meta: Meta
-    subscriptee: _Expr
-    index: _Expr
 
 
 # Dot access

@@ -1,47 +1,42 @@
 """Built-in functions"""
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .bl_types.base import BLError
-from .bl_types.errors import error_not_implemented
-from .bl_types import Value, Int, Float, Bool, String, Null, NULL
+from .bl_types import (
+    Value, BLError, Int, Float, String, Null, NULL, Instance,
+    IncorrectTypeException, cast_to_instance,
+)
 
 if TYPE_CHECKING:
     from .main import ASTInterpreter
 
 
 def print_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, *args: Value
 ) -> Null:
     """Print objects"""
     # pylint: disable=unused-argument
-    print(*(arg.to_string(interpreter, meta).value for arg in args))
-    return NULL
-
-
-def print_dump(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
-) -> Null:
-    """'Dump' (print detailed, debug-friendly representation) objects"""
-    # pylint: disable=unused-argument
-    print(*(arg.dump(interpreter, meta) for arg in args))
+    print(*(arg.dump(interpreter, meta).value for arg in args))
     return NULL
 
 
 def input_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, *args: Value
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, *args: Value
 ) -> String:
     """Prompt for user input"""
     # pylint: disable=unused-argument
     return String(
-        input(args[0].to_string(interpreter, meta).value if args else "")
+        input(args[0].dump(interpreter, meta).value if args else "")
     )
 
 
 def int_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> Int | BLError:
     """Convert to integer"""
     # pylint: disable=unused-argument
@@ -50,11 +45,14 @@ def int_(
             return Int(int(value))
         case Int():
             return arg
-    return error_not_implemented.copy().set_meta(meta)
+    return BLError(cast_to_instance(
+        IncorrectTypeException.new([], interpreter, meta)
+    ), meta)
 
 
 def float_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> Float | BLError:
     """Convert to float"""
     # pylint: disable=unused-argument
@@ -63,20 +61,15 @@ def float_(
             return Float(float(value))
         case Float():
             return arg
-    return error_not_implemented.copy().set_meta(meta)
+    return BLError(cast_to_instance(
+        IncorrectTypeException.new([], interpreter, meta)
+    ), meta)
 
 
-def bool_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
-) -> Bool | BLError:
-    """Convert to boolean"""
-    # pylint: disable=unused-argument
-    return arg.to_bool(interpreter, meta)
-
-
-def str_(
-    meta: Optional[Meta], interpreter: "ASTInterpreter", /, arg: Value, *_
+def dump(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
 ) -> String | BLError:
     """Convert to string"""
     # pylint: disable=unused-argument
-    return arg.to_string(interpreter, meta)
+    return arg.dump(interpreter, meta)

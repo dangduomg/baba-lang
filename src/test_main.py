@@ -4,8 +4,7 @@ from pytest import fixture
 
 from main import interpret, interpret_expr
 from interpreter import ASTInterpreter, bl_types
-from interpreter.bl_types import errors
-from interpreter.bl_types.base import ExpressionResult
+from interpreter.bl_types import ExpressionResult
 
 
 @fixture
@@ -34,8 +33,6 @@ def test_all_operators_int(example_interp: ASTInterpreter):
     assert is_equal(
         interpret_expr("2 / 3", example_interp), bl_types.Float(2 / 3)
     )
-    assert is_equal(interpret_expr("8 % 3", example_interp), bl_types.Int(2))
-    assert is_equal(interpret_expr("2 ** 3", example_interp), bl_types.Int(8))
     assert is_equal(
         interpret_expr("2 == 3", example_interp), bl_types.Bool(False)
     )
@@ -56,20 +53,13 @@ def test_all_operators_int(example_interp: ASTInterpreter):
     )
     assert is_equal(interpret_expr("2 && 3", example_interp), bl_types.Int(3))
     assert is_equal(interpret_expr("2 || 3", example_interp), bl_types.Int(2))
-    assert is_equal(interpret_expr("!2", example_interp), bl_types.Bool(False))
-    assert is_equal(interpret_expr("2 & 3", example_interp), bl_types.Int(2))
-    assert is_equal(interpret_expr("2 | 3", example_interp), bl_types.Int(3))
-    assert is_equal(interpret_expr("2 ^ 3", example_interp), bl_types.Int(1))
-    assert is_equal(interpret_expr("~2", example_interp), bl_types.Int(-3))
-    assert is_equal(interpret_expr("2 << 3", example_interp), bl_types.Int(16))
-    assert is_equal(interpret_expr("2 >> 3", example_interp), bl_types.Int(0))
 
 
 def test_error(example_interp: ASTInterpreter):
     """Test for errors"""
     res = interpret_expr("1 / 0", example_interp)
-    assert isinstance(res, errors.BLError)
-    assert res.value == errors.error_div_by_zero.value
+    assert isinstance(res, bl_types.BLError)
+    assert res.value.class_ == bl_types.essentials.DivByZeroException
 
 
 def test_variable(example_interp: ASTInterpreter):

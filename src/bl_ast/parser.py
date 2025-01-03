@@ -3,7 +3,7 @@
 import ast
 from pathlib import Path
 
-from lark import Lark, ast_utils, v_args
+from lark import Lark, ast_utils, v_args, Token
 from lark.visitors import Transformer, Discard, _DiscardType
 from lark.tree import Meta
 
@@ -32,12 +32,11 @@ class Extras(Transformer):
     def do_while_stmt(
         self, meta: Meta, body: nodes.Body, cond: nodes._Expr
     ) -> nodes.WhileStmt:
-        return nodes.WhileStmt(meta, cond, body, eval_condition_after=True)
+        return nodes.WhileStmt(meta, cond, body, eval_cond_after_body=True)
 
     @v_args(inline=True, meta=True)
-    def c_for_stmt(
-        self,
-        meta: Meta,
+    def for_stmt(
+        self, meta: Meta,
         initializer: nodes._Expr | None,
         condition: nodes._Expr | None,
         updater: nodes._Expr | None,
@@ -55,6 +54,12 @@ class Extras(Transformer):
         loop = nodes.WhileStmt(meta, condition, loop_body)
         statements.append(loop)
         return nodes.Body(meta, statements)
+
+    @v_args(inline=True, meta=True)
+    def module_var_stmt(
+        self, meta: Meta, name: Token, value: nodes._Expr
+    ) -> nodes.Assign:
+        return nodes.Assign(meta, nodes.VarPattern(meta, name), value)
 
     def nop_stmt(self, children: list) -> _DiscardType:
         return Discard

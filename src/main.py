@@ -26,8 +26,8 @@ if importlib.util.find_spec('readline'):
     import readline  # noqa: F401
 
 
-PROG = 'baba-lang'
-VERSION = '0.4.4'
+PROG = 'mini-baba-lang'
+VERSION = '0.5.0'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
 
@@ -65,8 +65,8 @@ def interpret_expr(
         src: str, interpreter: ASTInterpreter = default_interp
 ) -> ExpressionResult:
     """Interpret an expression"""
-    ast_ = parse_expr_to_ast(src)
-    default_static_checker.visit(ast_)
+    raw_ast = parse_expr_to_ast(src)
+    ast_ = default_static_checker.visit_expr(raw_ast)
     return interpreter.visit_expr(ast_)
 
 
@@ -102,16 +102,16 @@ def handle_runtime_errors(
 ) -> None:
     """Print runtime errors nicely"""
     match error:
-        case BLError(value=msg, meta=meta):
+        case BLError(value=value, meta=meta):
             match meta:
                 case Meta(line=line, column=column):
                     print(f'Runtime error at line {line}, column {column}:')
-                    print(msg)
+                    print(value.dump(interpreter, meta).value)
                     print()
                     print(get_context(meta, src))
                 case None:
                     print('Error:')
-                    print(msg)
+                    print(value.dump(interpreter, meta).value)
             print('Traceback:')
             for call in interpreter.calls:
                 if call.meta is not None:
