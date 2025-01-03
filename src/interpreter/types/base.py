@@ -1,6 +1,6 @@
 """Base, error and essential value classes"""
 
-from typing import Self, TYPE_CHECKING
+from typing import Self, TYPE_CHECKING, override
 from dataclasses import dataclass
 
 from lark import Token
@@ -490,6 +490,12 @@ string"""
         return self
 
     def to_string(self, meta: Meta | None) -> Self:
+        return self
+
+    @override
+    def to_bool(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
         return self
 
 
