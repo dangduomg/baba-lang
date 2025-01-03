@@ -415,7 +415,7 @@ class ASTInterpreter(ASTVisitor):
         """Set a variable either in locals or globals"""
         if self.locals is not None:
             res = self.locals.set_var(name, value, meta)
-            if res is not None:  # if its an error
+            if res is None:  # if its not an error
                 return res
         return self.globals.set_var(name, value, meta)
 
