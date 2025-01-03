@@ -3,6 +3,7 @@
 
 from pathlib import Path
 
+from lark import Token
 from lark.tree import Meta
 from lark.exceptions import UnexpectedInput
 
@@ -262,8 +263,12 @@ class ASTInterpreter(ASTVisitor):
                     return rhs_result
                 if isinstance(rhs_result, Value):
                     return self.assign(meta, pattern, rhs_result)
-            case nodes.Inplace():
-                return self.visit_inplace(node)
+            case nodes.Inplace(meta=meta, pattern=pattern, op=op, right=right):
+                rhs_result = self.visit_expr(right)
+                if isinstance(rhs_result, BLError):
+                    return rhs_result
+                if isinstance(rhs_result, Value):
+                    return self.inplace(meta, pattern, op, rhs_result)
             case nodes.Logical(left=left, op=op, right=right):
                 not_left_res = (
                     self.visit_expr(left).logical_not(self, left.meta)
@@ -356,8 +361,7 @@ class ASTInterpreter(ASTVisitor):
                 self._new_var(name, value)
                 return value
             case nodes.DotPattern(
-                accessee=accessee_,
-                attr_name=attr,
+                accessee=accessee_, attr_name=attr
             ):
                 accessee = self.visit_expr(accessee_)
                 return accessee.set_attr(attr, value, self, meta)
@@ -365,53 +369,42 @@ class ASTInterpreter(ASTVisitor):
             NotImplementedException.new([], self, meta)
         ), meta)
 
-    def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
+    def inplace(
+        self, meta: Meta, pattern: nodes._Pattern, op: Token, right: Value
+    ) -> ExpressionResult:
         """Visit an in-place assignment node"""
-        meta = node.meta
-        rhs_result = self.visit_expr(node.right)
-        if isinstance(rhs_result, BLError):
-            return rhs_result
-        if not isinstance(rhs_result, Value):
+        # to solve the unbound problem
+        accessee = bl_types.ObjectClass.new([], self, meta)
+        if isinstance(pattern, nodes.VarPattern):
+            old_value_get_result = self._get_var(pattern.name, meta)
+        elif isinstance(pattern, nodes.DotPattern):
+            accessee = self.visit_expr(pattern.accessee)
+            old_value_get_result = accessee.get_attr(
+                pattern.attr_name, self, meta
+            )
+        else:
             return BLError(cast_to_instance(
                 NotImplementedException.new([], self, meta)
             ), meta)
-        by = rhs_result
-        pattern = node.pattern
+        if isinstance(old_value_get_result, BLError):
+            return old_value_get_result
+        new_result = old_value_get_result.binary_op(
+            op[:-1], right, self, meta
+        )
+        match new_result:
+            case BLError():
+                return new_result
+            case Value():
+                pass
+            case _:
+                return BLError(cast_to_instance(
+                    NotImplementedException.new([], self, meta)
+                ), meta)
         if isinstance(pattern, nodes.VarPattern):
-            name = pattern.name
-            old_value_get_result = self._get_var(name, meta)
-            new_result = old_value_get_result.binary_op(
-                node.op[:-1], by, self, meta
-            )
-            match old_value_get_result, new_result:
-                case Value(), BLError():
-                    return new_result
-                case BLError(), _:
-                    return old_value_get_result
-                case _, Value():
-                    value = new_result
-                    self.globals.set_var(name, value, node.meta)
-                    return value
+            self.globals.set_var(pattern.name, new_result, meta)
         if isinstance(pattern, nodes.DotPattern):
-            subscriptee = self.visit_expr(pattern.accessee)
-            old_value_get_result = subscriptee.get_attr(
-                pattern.attr_name, self, meta
-            )
-            new_result = old_value_get_result.binary_op(
-                node.op[:-1], by, self, meta
-            )
-            match old_value_get_result, new_result:
-                case Value(), BLError():
-                    return new_result
-                case BLError(), _:
-                    return old_value_get_result
-                case _, Value():
-                    value = new_result
-                    subscriptee.set_attr(pattern.attr_name, value, self, meta)
-                    return value
-        return BLError(cast_to_instance(
-            NotImplementedException.new([], self, meta)
-        ), meta)
+            accessee.set_attr(pattern.attr_name, new_result, self, meta)
+        return new_result
 
     def _get_var(self, name: str, meta: Meta) -> ExpressionResult:
         """Get a variable either from locals or globals"""
