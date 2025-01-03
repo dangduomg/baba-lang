@@ -10,14 +10,14 @@ from lark.exceptions import UnexpectedInput
 from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
-from . import built_ins, bl_types
-from .bl_types import exits, function, pywrapper, Value, NULL, Item
-from .bl_types.base import Result, ExpressionResult, Success, BLError
-from .bl_types.errors import (
+from . import built_ins, types
+from .types import exits, function, pywrapper, Value
+from .types.base import Result, ExpressionResult, Success, BLError
+from .types.errors import (
     error_not_implemented, error_include_syntax, error_inside_include,
     error_invalid_include,
 )
-from .bl_types.function import PythonFunction
+from .types.function import PythonFunction
 from .env import Env
 
 
@@ -59,7 +59,6 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var(
             "py_constant", PythonFunction(pywrapper.py_constant)
         )
-        self.globals.new_var("Object", bl_types.ObjectClass)
 
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access
@@ -73,8 +72,6 @@ class ASTInterpreter(ASTVisitor):
     def visit_stmt(self, node: nodes._Stmt) -> Result:
         """Visit a statement node"""
         match node:
-            case nodes.NopStmt():
-                return Success()
             case nodes.Body(statements=statements):
                 for stmt in statements:
                     if isinstance(res := self.visit(stmt), exits.Exit):
@@ -84,9 +81,9 @@ class ASTInterpreter(ASTVisitor):
                 match cond := self.visit_expr(condition).to_bool(self, meta):
                     case BLError():
                         return cond
-                    case bl_types.Bool(True):
+                    case types.Bool(True):
                         return self.visit_stmt(body)
-                    case bl_types.Bool(False):
+                    case types.Bool(False):
                         return Success()
             case nodes.IfElseStmt(
                 meta=meta, condition=condition,
@@ -96,12 +93,14 @@ class ASTInterpreter(ASTVisitor):
                 match cond:
                     case BLError():
                         return cond
-                    case bl_types.Bool(True):
+                    case types.Bool(True):
                         return self.visit_stmt(then_body)
-                    case bl_types.Bool(False):
+                    case types.Bool(False):
                         return self.visit_stmt(else_body)
             case nodes.WhileStmt(
-                meta=meta, condition=condition, body=body,
+                meta=meta,
+                condition=condition,
+                body=body,
                 eval_condition_after=eval_condition_after,
             ):
                 eval_condition = not eval_condition_after
@@ -111,7 +110,7 @@ class ASTInterpreter(ASTVisitor):
                         match cond:
                             case BLError():
                                 return cond
-                            case bl_types.Bool(False):
+                            case types.Bool(False):
                                 return Success()
                     res = self.visit_stmt(body)
                     if isinstance(res, exits.Continue):
@@ -120,28 +119,6 @@ class ASTInterpreter(ASTVisitor):
                         return res
                     if eval_condition_after:
                         eval_condition = True
-            case nodes.ForEachStmt(
-                meta=meta, pattern=pattern, iterable=iterable, body=body
-            ):
-                match iterator := (
-                    self.visit_expr(iterable).iterate(self, meta)
-                ):
-                    case BLError():
-                        return iterator
-                while (next_ := iterator.next(self, meta)) is not NULL:
-                    match next_:
-                        case BLError():
-                            return next_
-                        case Item(value):
-                            self.assign(meta, pattern, value)
-                        case _:
-                            return error_not_implemented.copy().set_meta(meta)
-                    res = self.visit_stmt(body)
-                    if isinstance(res, exits.Continue):
-                        pass
-                    elif isinstance(res, exits.Exit):
-                        return res
-                return Success()
             case nodes.BreakStmt():
                 return exits.Break()
             case nodes.ContinueStmt():
@@ -152,38 +129,10 @@ class ASTInterpreter(ASTVisitor):
                     return res
                 if isinstance(res, Value):
                     return exits.Return(res)
-            case nodes.ThrowStmt(meta=meta, value=value):
-                match res := self.visit_expr(value):
-                    case BLError():
-                        return res
-                    case bl_types.String(value=value):
-                        return BLError(value, meta)
-            case nodes.TryStmt(
-                try_body=try_body, catch_var=catch_var, catch_body=catch_body,
-                finally_body=finally_body,
-            ):
-                match res := self.visit_stmt(try_body):
-                    case BLError():
-                        if catch_var is not None:
-                            self._new_var(
-                                catch_var, bl_types.String(res.value)
-                            )
-                        if finally_body is None:
-                            return self.visit_stmt(catch_body)
-                        match res := self.visit_stmt(catch_body):
-                            case exits.Exit():
-                                self.visit_stmt(finally_body)
-                                return res
-                            case Success():
-                                return self.visit_stmt(finally_body)
-                    case Success():
-                        if finally_body is not None:
-                            return self.visit_stmt(finally_body)
-                        return res
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 self.globals.new_var(
-                    name, bl_types.BLFunction(str(name), form_args, body, env)
+                    name, types.BLFunction(str(name), form_args, body, env)
                 )
                 return Success()
             case nodes.ModuleStmt(name=name, body=body):
@@ -193,56 +142,30 @@ class ASTInterpreter(ASTVisitor):
                 match res := self.visit_stmt(body):
                     case BLError():
                         return res
-                vars_ = {
-                    str(name): var.value
-                    for name, var in self.globals.vars.items()
-                }
+                vars_ = {str(name): var.value
+                         for name, var in self.globals.vars.items()}
                 # Clean up
                 if self.globals.parent is not None:
                     self.globals = self.globals.parent
-                self.globals.new_var(name, bl_types.Module(name, vars_))
+                self.globals.new_var(name, types.Module(name, vars_))
                 return Success()
-            case nodes.ClassStmt():
-                return self.visit_class(node)
+            case nodes.ClassStmt(name=name, body=body):
+                # Create new environment
+                self.globals = Env(parent=self.globals)
+                # Evaluate the body
+                match res := self.visit_stmt(body):
+                    case BLError():
+                        return res
+                vars_ = {str(name): var.value
+                         for name, var in self.globals.vars.items()}
+                # Clean up
+                if self.globals.parent is not None:
+                    self.globals = self.globals.parent
+                self.globals.new_var(name, types.Class(name, vars_))
+                return Success()
             case nodes.IncludeStmt():
                 return self.visit_include(node)
         return error_not_implemented.copy().set_meta(node.meta)
-
-    def visit_class(self, node: nodes.ClassStmt) -> Result:
-        """Visit a class statement node"""
-        meta = node.meta
-        name = node.name
-        super_ = node.super
-        body = node.body
-        # Create new environment
-        self.globals = Env(parent=self.globals)
-        # Evaluate the body
-        match res := self.visit_stmt(body):
-            case BLError():
-                return res
-        vars_ = {
-            str(name): var.value
-            for name, var in self.globals.vars.items()
-        }
-        # Clean up
-        if self.globals.parent is not None:
-            self.globals = self.globals.parent
-        # Create the class
-        if super_ is None:
-            superclass = bl_types.ObjectClass
-        else:
-            superclass = self._get_var(super_, meta)
-            match superclass:
-                case bl_types.Class():
-                    pass
-                case BLError():
-                    return res
-                case _:
-                    return error_not_implemented.copy().set_meta(meta)
-        self.globals.new_var(
-            name, bl_types.Class(name, vars_, superclass)
-        )
-        return Success()
 
     def visit_include(self, node: nodes.IncludeStmt) -> Result:
         """Visit an include statement node"""
@@ -293,7 +216,7 @@ class ASTInterpreter(ASTVisitor):
         """Visit an expression node"""
         match node:
             case nodes.Exprs(expressions=expressions):
-                final_res = bl_types.NULL
+                final_res = types.NULL
                 for expr in expressions:
                     res = self.visit_expr(expr)
                     if isinstance(res, BLError):
@@ -301,12 +224,8 @@ class ASTInterpreter(ASTVisitor):
                     if isinstance(res, Value):
                         final_res = res
                 return final_res
-            case nodes.Assign(meta=meta, pattern=pattern, right=right):
-                rhs_result = self.visit_expr(right)
-                if isinstance(rhs_result, BLError):
-                    return rhs_result
-                if isinstance(rhs_result, Value):
-                    return self.assign(meta, pattern, rhs_result)
+            case nodes.Assign():
+                return self.visit_assign(node)
             case nodes.Inplace():
                 return self.visit_inplace(node)
             case nodes.And(left=left, op=op, right=right):
@@ -314,23 +233,23 @@ class ASTInterpreter(ASTVisitor):
                 match left_res:
                     case BLError():
                         return left_res
-                    case bl_types.Bool(True):
+                    case types.Bool(True):
                         return left_res
-                    case bl_types.Bool(False):
+                    case types.Bool(False):
                         return self.visit_expr(right)
             case nodes.Or(left=left, op=op, right=right):
                 left_res = self.visit_expr(left).to_bool(self, left.meta)
                 match left_res:
                     case BLError():
                         return left_res
-                    case bl_types.Bool(False):
+                    case types.Bool(False):
                         return left_res
-                    case bl_types.Bool(True):
+                    case types.Bool(True):
                         return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
                 return (
                     self.visit_expr(left)
-                    .binary_op(op, self.visit_expr(right), self, meta)
+                        .binary_op(op, self.visit_expr(right), self, meta)
                 )
             case nodes.Subscript(meta=meta, subscriptee=subscriptee,
                                  index=index):
@@ -347,38 +266,36 @@ class ASTInterpreter(ASTVisitor):
                     args.append(arg_visited)
                 callee = self.visit_expr(callee)
                 return callee.call(args, self, meta)
-            case nodes.New(meta=meta, class_name=name, args=args_):
+            case nodes.New(meta=meta, class_name=name, args=args_in_ast):
                 # Visit all args, stop if one is an error
                 args = []
-                if args_ is not None:
-                    for arg in args_.args:
-                        arg_visited = self.visit_expr(arg)
-                        if not isinstance(arg_visited, Value):
-                            return arg_visited
-                        args.append(arg_visited)
+                for arg in args_in_ast.args:
+                    arg_visited = self.visit_expr(arg)
+                    if not isinstance(arg_visited, Value):
+                        return arg_visited
+                    args.append(arg_visited)
                 match class_ := self._get_var(name, meta):
-                    case bl_types.Class():
+                    case types.Class():
                         return class_.new(args, self, meta)
-                    case BLError():
-                        return class_
+                return class_
             case nodes.Prefix(meta=meta, op=op, operand=operand):
                 return self.visit_expr(operand).unary_op(op, self, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
-                return self.visit_expr(accessee).get_attr(attr, self, meta)
+                return self.visit_expr(accessee).get_attr(attr, meta)
             case nodes.Var(meta=meta, name=name):
                 return self._get_var(name, meta)
             case nodes.String(value=value):
-                return bl_types.String(value)
+                return types.String(value)
             case nodes.Int(value=value):
-                return bl_types.Int(value)
+                return types.Int(value)
             case nodes.Float(value=value):
-                return bl_types.Float(value)
+                return types.Float(value)
             case nodes.TrueLiteral():
-                return bl_types.BOOLS[True]
+                return types.BOOLS[True]
             case nodes.FalseLiteral():
-                return bl_types.BOOLS[False]
+                return types.BOOLS[False]
             case nodes.NullLiteral():
-                return bl_types.NULL
+                return types.NULL
             case nodes.List(elems=elems_in_ast):
                 elems = []
                 for e in elems_in_ast:
@@ -386,40 +303,44 @@ class ASTInterpreter(ASTVisitor):
                     if not isinstance(e_visited, Value):
                         return e_visited
                     elems.append(e_visited)
-                return bl_types.BLList(elems)
+                return types.BLList(elems)
             case nodes.Dict(pairs=pairs):
                 content = {}
                 for pair in pairs:
                     k_visited = self.visit(pair.key)
                     v_visited = self.visit(pair.value)
                     content[k_visited] = v_visited
-                return bl_types.BLDict(content)
+                return types.BLDict(content)
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
-                return bl_types.BLFunction("<anonymous>", form_args, body, env)
-        return error_not_implemented.copy().set_meta(node.meta)
+                return types.BLFunction("<anonymous>", form_args, body, env)
+        return error_not_implemented.copy()
 
-    def assign(
-        self, meta: Meta, pattern: nodes._Pattern, value: Value
-    ) -> ExpressionResult:
+    def visit_assign(self, node: nodes.Assign) -> ExpressionResult:
         """Visit an assignment node"""
-        match pattern:
-            case nodes.VarPattern(name=name):
-                self._new_var(name, value)
-                return value
-            case nodes.SubscriptPattern(
-                subscriptee=subscriptee_,
-                index=index_,
-            ):
-                subscriptee = self.visit_expr(subscriptee_)
-                index = self.visit_expr(index_)
-                return subscriptee.set_item(index, value, self, meta)
-            case nodes.DotPattern(
-                accessee=accessee_,
-                attr_name=attr,
-            ):
-                accessee = self.visit_expr(accessee_)
-                return accessee.set_attr(attr, value, meta)
+        rhs_result = self.visit_expr(node.right)
+        meta = node.meta
+        if isinstance(rhs_result, BLError):
+            return rhs_result
+        if isinstance(rhs_result, Value):
+            value = rhs_result
+            match node.pattern:
+                case nodes.VarPattern(name=name):
+                    self._new_var(name, value)
+                    return value
+                case nodes.SubscriptPattern(
+                    subscriptee=subscriptee_,
+                    index=index_,
+                ):
+                    subscriptee = self.visit_expr(subscriptee_)
+                    index = self.visit_expr(index_)
+                    return subscriptee.set_item(index, value, self, meta)
+                case nodes.DotPattern(
+                    accessee=accessee_,
+                    attr_name=attr,
+                ):
+                    accessee = self.visit_expr(accessee_)
+                    return accessee.set_attr(attr, value, meta)
         return error_not_implemented.copy().set_meta(meta)
 
     def visit_inplace(self, node: nodes.Inplace) -> ExpressionResult:
@@ -445,7 +366,7 @@ class ASTInterpreter(ASTVisitor):
                     return old_value_get_result
                 case _, Value():
                     value = new_result
-                    self.globals.set_var(name, value, node.meta)
+                    self._set_var(name, value, node.meta)
                     return value
         if isinstance(pattern, nodes.SubscriptPattern):
             subscriptee = self.visit_expr(pattern.subscriptee)
@@ -465,8 +386,8 @@ class ASTInterpreter(ASTVisitor):
                     return value
         if isinstance(pattern, nodes.DotPattern):
             subscriptee = self.visit_expr(pattern.accessee)
-            old_value_get_result = subscriptee.get_attr(
-                pattern.attr_name, self, meta
+            old_value_get_result = (
+                subscriptee.get_attr(pattern.attr_name, meta)
             )
             new_result = old_value_get_result.binary_op(
                 node.op[:-1], by, self, meta

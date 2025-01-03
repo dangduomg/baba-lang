@@ -2,6 +2,7 @@
 
 
 from dataclasses import dataclass
+from typing import Optional
 
 from lark import Token
 from lark.ast_utils import AsList
@@ -39,17 +40,10 @@ class IncludeStmt(_Stmt):
 class ReturnStmt(_Stmt):
     """Return statement"""
     meta: Meta
-    value: '_Expr | None'
+    value: Optional['_Expr']
 
 
 @dataclass(frozen=True)
-class ThrowStmt(_Stmt):
-    """Throw statement"""
-    meta: Meta
-    value: '_Expr'
-
-
-@dataclass
 class IfStmt(_Stmt):
     """If statements"""
     meta: Meta
@@ -57,31 +51,22 @@ class IfStmt(_Stmt):
     body: Body
 
 
-@dataclass
+@dataclass(frozen=True)
 class IfElseStmt(_Stmt):
     """If..else statements"""
     meta: Meta
     condition: '_Expr'
     then_body: Body
-    else_body: _Stmt
+    else_body: Body
 
 
-@dataclass
+@dataclass(frozen=True)
 class WhileStmt(_Stmt):
     """While (and do..while) statements"""
     meta: Meta
     condition: '_Expr'
     body: Body
     eval_condition_after: bool = False
-
-
-@dataclass
-class ForEachStmt(_Stmt):
-    """For-each (for..in) statement"""
-    meta: Meta
-    pattern: 'VarPattern'
-    iterable: '_Expr'
-    body: Body
 
 
 @dataclass(frozen=True)
@@ -97,16 +82,6 @@ class ContinueStmt(_Stmt):
 
 
 @dataclass(frozen=True)
-class TryStmt(_Stmt):
-    """Try-catch statement"""
-    meta: Meta
-    try_body: Body
-    catch_var: Token | None
-    catch_body: Body
-    finally_body: Body | None
-
-
-@dataclass
 class FunctionStmt(_Stmt):
     """Function declaration"""
     meta: Meta
@@ -135,14 +110,7 @@ class ClassStmt(_Stmt):
     """Class"""
     meta: Meta
     name: Token
-    super: Token | None
     body: Body
-
-
-@dataclass(frozen=True)
-class NopStmt(_Stmt):
-    """No-op statement"""
-    meta: Meta
 
 
 # Expressions
@@ -268,7 +236,7 @@ class New(_Expr):
     """Instantiation operation"""
     meta: Meta
     class_name: Token
-    args: SpecArgs | None
+    args: SpecArgs
 
 
 # Subscript
@@ -342,7 +310,7 @@ class NullLiteral(_Expr):
     meta: Meta
 
 
-@dataclass
+@dataclass(frozen=True)
 class FunctionLiteral(_Expr):
     """Function literal"""
     meta: Meta

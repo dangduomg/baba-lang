@@ -5,6 +5,7 @@ video game "Baba is You".
 """
 
 
+import time
 import importlib.util
 import logging
 import os
@@ -56,8 +57,8 @@ def interpret(
     src: str, interpreter: ASTInterpreter = default_interp
 ) -> Result:
     """Interpret a script"""
-    raw_ast = parse_to_ast(src)
-    ast_ = default_static_checker.visit(raw_ast)
+    ast_ = parse_to_ast(src)
+    default_static_checker.visit(ast_)
     return interpreter.visit(ast_)
 
 
@@ -159,14 +160,19 @@ def main() -> int:
         interp_func = interpret_expr
     else:
         interp_func = interpret
-    interpreter = ASTInterpreter(path)
-    res = interp_with_error_handling(interp_func, src, interpreter)
+    start = time.perf_counter()
+    res = interp_with_error_handling(
+        interp_func, src, ASTInterpreter(path)
+    )
+    end = time.perf_counter()
     match res:
         case UnexpectedInput() | BLError():
             return 1
         case Value():
             if args.expression:
-                print(res.dump(interpreter, None).value)
+                print(res.dump(None).value)
+    print()
+    print('Execution time:', end - start)
     return 0
 
 
@@ -182,7 +188,7 @@ def main_interactive() -> int:
             try:
                 match res := interpret_expr(input_):
                     case Value():
-                        print(res.dump(default_interp, None).value)
+                        print(res.dump(None).value)
                     case BLError():
                         handle_runtime_errors(default_interp, input_, res)
             except UnexpectedInput:

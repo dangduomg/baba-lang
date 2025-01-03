@@ -12,8 +12,6 @@ body: stmt*
      | break_stmt
      | continue_stmt
      | return_stmt
-     | throw_stmt
-     | try_stmt
      | include_stmt
      | function_stmt
      | module_stmt
@@ -25,8 +23,6 @@ include_stmt: _INCLUDE STRING ";"
 
 return_stmt: _RETURN [expr] ";"
 
-throw_stmt: _THROW expr ";"
-
 if_stmt: _IF expr "{" body "}"
 
 if_else_stmt: _IF expr "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" body "}")
@@ -35,19 +31,16 @@ while_stmt: _WHILE expr "{" body "}"
 
 do_while_stmt: _DO "{" body "}" _WHILE expr ";"
 
-for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}" -> c_for_stmt
-        | _FOR pattern _IN expr "{" body "}" -> for_each_stmt
+for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
 
 break_stmt: _BREAK ";"
 continue_stmt: _CONTINUE ";"
-
-try_stmt: _TRY "{" body "}" _CATCH [IDENT] "{" body "}" [_FINALLY "{" body "}"]
 
 function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
 
 module_stmt: _MODULE IDENT "{" body "}"
 
-class_stmt: _CLASS IDENT [_EXTENDS IDENT] "{" body "}"
+class_stmt: _CLASS IDENT "{" body "}"
 
 // Expression grammar
 
@@ -112,7 +105,7 @@ POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
-     | _NEW IDENT ["(" spec_args ")"] -> new
+     | _NEW IDENT "(" spec_args ")" -> new
      | "(" expr ")"
 
 literal: STRING -> string
@@ -148,7 +141,6 @@ IDENT: /(?!/ RESERVED  /)/ CNAME /\b/
 
 RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE
         | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE | _CLASS | _NEW
-        | _EXTENDS | _IN | _THROW | _TRY | _CATCH | _FINALLY
 _TRUE: /true\b/
 _FALSE: /false\b/
 _NULL: /null\b/
@@ -165,12 +157,6 @@ _CONTINUE: /continue\b/
 _INCLUDE: /include\b/
 _MODULE: /module\b/
 _CLASS: /class\b/
-_EXTENDS: /extends\b/
-_IN: /in\b/
-_THROW: /throw\b/
-_TRY: /try\b/
-_CATCH: /catch\b/
-_FINALLY: /finally\b/
 
 %import common.CNAME
 %import common.INT

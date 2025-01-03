@@ -74,10 +74,11 @@ class BLFunction(Value):
             self.name, self.form_args, self.body, self.env, object_
         )
 
-    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
+    def dump(self, meta: Meta | None) -> String:
         if self.this is not None:
-            this_to_str = self.this.dump(interpreter, meta).value
-            return String(f"<method '{self.name}' bound to {this_to_str}>")
+            return String(
+                f"<method '{self.name}' bound to {self.this.dump(meta).value}>"
+            )
         return String(f"<function '{self.name}'>")
 
 
@@ -106,14 +107,10 @@ class PythonFunction(Value):
     ) -> ExpressionResult:
         return self.function(meta, interpreter, *args)
 
-    def dump(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> String:
+    def dump(self, meta: Meta | None) -> String:
         return String(f"<python function {self.function!r}>")
 
-    def to_string(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> String:
+    def to_string(self, meta: Meta | None) -> String:
         return String(f"<python function '{self.function.__name__}'>")
 
 
