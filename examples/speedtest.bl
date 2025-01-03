@@ -1,0 +1,31 @@
+fun speedTest() {
+    max = 2000;
+    print("speedtest");
+    print("started");
+    testNumbers(max);
+    print("done");
+}
+
+fun testNumbers(n) {
+    for (i = n; i > 0; i -= 1) {
+        if isPerfectNumber(i) {
+            print(i);
+        }
+    }
+}
+
+fun isPerfectNumber(n) {
+    return sumDivisors(n) == n;
+}
+
+fun sumDivisors(n) {
+    res = 0;
+    for (i = 1; i < n; i += 1) {
+        if n % i == 0 {
+            res += i;
+        }
+    }
+    return res;
+}
+
+speedTest();
