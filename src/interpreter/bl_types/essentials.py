@@ -75,7 +75,7 @@ class ExpressionResult(Result, ABC):
                 return self.is_greater_or_equal(other, interpreter, meta)
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
     def add(
         self, other: "ExpressionResult", interpreter: "ASTInterpreter",
@@ -157,7 +157,7 @@ class ExpressionResult(Result, ABC):
                 return other
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
     def unary_op(
         self, op: Token, interpreter: "ASTInterpreter", meta: Meta | None
@@ -170,7 +170,7 @@ class ExpressionResult(Result, ABC):
                 return self.logical_not(interpreter, meta)
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -178,7 +178,7 @@ class ExpressionResult(Result, ABC):
         """Negation"""
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
     def logical_not(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -194,7 +194,7 @@ class ExpressionResult(Result, ABC):
         """Access an attribute"""
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
     def set_attr(
         self, attr: str, value: "ExpressionResult",
@@ -210,7 +210,7 @@ class ExpressionResult(Result, ABC):
         """Call self as a function"""
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
     def new(
         self, args: list["Value"], interpreter: "ASTInterpreter",
@@ -219,7 +219,7 @@ class ExpressionResult(Result, ABC):
         """Instantiate an object"""
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -227,7 +227,7 @@ class ExpressionResult(Result, ABC):
         """Conversion to representation for debugging"""
         return BLError(cast(
             Instance, NotImplementedException.new([], interpreter, meta)
-        ))
+        ), meta)
 
 
 # section Error
@@ -238,6 +238,7 @@ class BLError(Exit, ExpressionResult):
     """Error result type"""
 
     value: "Instance"
+    meta: Meta | None = None
 
     @override
     def add(
