@@ -98,19 +98,33 @@ class FormArgs(_AstNode, AsList):
 
 
 @dataclass(frozen=True)
-class ModuleStmt(_Stmt, AsList):
+class ModuleStmt(_Stmt):
     """Module"""
     meta: Meta
     name: Token
+    entries: "ModuleEntries"
+
+
+@dataclass(frozen=True)
+class ModuleEntries(_AstNode, AsList):
+    """Class entries"""
+    meta: Meta
     entries: list[_Stmt]
 
 
 @dataclass(frozen=True)
-class ClassStmt(_Stmt, AsList):
+class ClassStmt(_Stmt):
     """Class"""
     meta: Meta
     name: Token
     super: Token | None
+    entries: "ClassEntries"
+
+
+@dataclass(frozen=True)
+class ClassEntries(_AstNode, AsList):
+    """Class entries"""
+    meta: Meta
     entries: list[_Stmt]
 
 

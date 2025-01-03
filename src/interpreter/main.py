@@ -133,13 +133,14 @@ class ASTInterpreter(ASTVisitor):
                     name, bl_types.BLFunction(str(name), form_args, body, env)
                 )
                 return Success()
-            case nodes.ModuleStmt(name=name, body=body):
+            case nodes.ModuleStmt(name=name, entries=entries):
                 # Create new environment
                 self.globals = Env(self, parent=self.globals)
                 # Evaluate the body
-                match res := self.visit_stmt(body):
-                    case BLError():
-                        return res
+                for entry in entries.entries:
+                    match res := self.visit_stmt(entry):
+                        case BLError():
+                            return res
                 vars_ = {
                     str(name): var.value
                     for name, var in self.globals.vars.items()
@@ -166,7 +167,7 @@ class ASTInterpreter(ASTVisitor):
         # Create new environment
         self.globals = Env(self, parent=self.globals)
         # Evaluate the body
-        for entry in entries:
+        for entry in entries.entries:
             match res := self.visit_stmt(entry):
                 case BLError():
                     return res
