@@ -366,7 +366,7 @@ class ASTInterpreter(ASTVisitor):
                     return old_value_get_result
                 case _, Value():
                     value = new_result
-                    self.globals.set_var(name, value, node.meta)
+                    self._set_var(name, value, node.meta)
                     return value
         if isinstance(pattern, nodes.SubscriptPattern):
             subscriptee = self.visit_expr(pattern.subscriptee)
