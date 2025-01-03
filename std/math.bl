@@ -9,6 +9,9 @@ module Math {
     INF = py_constant('math', 'inf');
     NAN = py_constant('math', 'nan');
 
+    frexp = py_function('math', 'frexp');
+    ldexp = py_function('math', 'ldexp');
+
     min = py_function('builtins', 'min');
     max = py_function('builtins', 'max');
     abs = py_function('builtins', 'abs');
