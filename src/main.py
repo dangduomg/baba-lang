@@ -94,9 +94,8 @@ def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str:
     before = text[start:pos].rsplit(b'\n', 1)[-1]
     after = text[pos:end].split(b'\n', 1)[0]
     return (
-        (before + after + b'\n' + b' ' * len(before.expandtabs()) +
-            b'^\n').decode("ascii", "backslashreplace")
-    )
+        before + after + b'\n' + b' ' * len(before.expandtabs()) + b'^\n'
+    ).decode("ascii", "backslashreplace")
 
 
 def handle_runtime_errors(
