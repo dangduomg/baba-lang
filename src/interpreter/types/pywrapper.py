@@ -83,7 +83,7 @@ class ConvenientPythonWrapper(PythonFunction):
             return NULL
         if isinstance(res, str):
             return String(res)
-        if isinstance(res, list):
+        if isinstance(res, (tuple, list, set, frozenset)):
             return BLList([w(e) for e in res])
         if isinstance(res, dict):
             return BLDict({w(k): w(res[k]) for k in res})
