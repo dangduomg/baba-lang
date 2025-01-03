@@ -476,6 +476,7 @@ class String(Value):
                 return BOOLS[self.value == other_val]
         return super().is_equal(other, interpreter, meta)
 
+    @override
     def is_less(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -485,6 +486,7 @@ class String(Value):
                 return BOOLS[self.value < other_val]
         return super().is_less(other, interpreter, meta)
 
+    @override
     def is_less_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -494,6 +496,7 @@ class String(Value):
                 return BOOLS[self.value <= other_val]
         return super().is_less_or_equal(other, interpreter, meta)
 
+    @override
     def is_greater(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -503,6 +506,7 @@ class String(Value):
                 return BOOLS[self.value > other_val]
         return super().is_greater(other, interpreter, meta)
 
+    @override
     def is_greater_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -512,6 +516,7 @@ class String(Value):
                 return BOOLS[self.value >= other_val]
         return super().is_greater_or_equal(other, interpreter, meta)
 
+    @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "String":
@@ -527,6 +532,7 @@ class Int(Value):
 
     value: int
 
+    @override
     def add(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -538,6 +544,7 @@ class Int(Value):
                 return Float(self.value + other_val)
         return super().add(other, interpreter, meta)
 
+    @override
     def subtract(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -549,6 +556,7 @@ class Int(Value):
                 return Float(self.value - other_val)
         return super().subtract(other, interpreter, meta)
 
+    @override
     def multiply(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -560,6 +568,7 @@ class Int(Value):
                 return Float(self.value * other_val)
         return super().multiply(other, interpreter, meta)
 
+    @override
     def divide(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -574,6 +583,7 @@ class Int(Value):
                     ), meta)
         return super().divide(other, interpreter, meta)
 
+    @override
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -583,6 +593,7 @@ class Int(Value):
                 return BOOLS[self.value == other_val]
         return super().is_equal(other, interpreter, meta)
 
+    @override
     def is_less(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -592,6 +603,7 @@ class Int(Value):
                 return BOOLS[self.value < other_val]
         return super().is_less(other, interpreter, meta)
 
+    @override
     def is_less_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -601,6 +613,7 @@ class Int(Value):
                 return BOOLS[self.value <= other_val]
         return super().is_less_or_equal(other, interpreter, meta)
 
+    @override
     def is_greater(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -610,6 +623,7 @@ class Int(Value):
                 return BOOLS[self.value > other_val]
         return super().is_greater(other, interpreter, meta)
 
+    @override
     def is_greater_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -619,9 +633,11 @@ class Int(Value):
                 return BOOLS[self.value >= other_val]
         return super().is_greater_or_equal(other, interpreter, meta)
 
+    @override
     def neg(self, interpreter: "ASTInterpreter", meta: Meta | None) -> "Int":
         return Int(-self.value)
 
+    @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(repr(self.value))
 
@@ -632,6 +648,7 @@ class Float(Value):
 
     value: float
 
+    @override
     def add(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -641,6 +658,7 @@ class Float(Value):
                 return Float(self.value + other_val)
         return super().add(other, interpreter, meta)
 
+    @override
     def subtract(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -650,6 +668,7 @@ class Float(Value):
                 return Float(self.value - other_val)
         return super().subtract(other, interpreter, meta)
 
+    @override
     def multiply(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -659,6 +678,7 @@ class Float(Value):
                 return Float(self.value * other_val)
         return super().multiply(other, interpreter, meta)
 
+    @override
     def divide(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -673,6 +693,7 @@ class Float(Value):
                     ), meta)
         return super().divide(other, interpreter, meta)
 
+    @override
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -682,6 +703,7 @@ class Float(Value):
                 return BOOLS[self.value == other_val]
         return super().is_equal(other, interpreter, meta)
 
+    @override
     def is_less(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -691,6 +713,7 @@ class Float(Value):
                 return BOOLS[self.value < other_val]
         return super().is_less(other, interpreter, meta)
 
+    @override
     def is_less_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -700,6 +723,7 @@ class Float(Value):
                 return BOOLS[self.value <= other_val]
         return super().is_less_or_equal(other, interpreter, meta)
 
+    @override
     def is_greater(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -709,6 +733,7 @@ class Float(Value):
                 return BOOLS[self.value > other_val]
         return super().is_greater(other, interpreter, meta)
 
+    @override
     def is_greater_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -718,11 +743,13 @@ class Float(Value):
                 return BOOLS[self.value >= other_val]
         return super().is_greater_or_equal(other, interpreter, meta)
 
+    @override
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "Float":
         return Float(-self.value)
 
+    @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> String:
@@ -746,6 +773,7 @@ class PythonFunction(Value):
     function: SupportsWrappedByPythonFunction
     this: "Instance | None" = None
 
+    @override
     def call(
         self, args: list[Value], interpreter: "ASTInterpreter",
         meta: Meta | None
@@ -756,6 +784,7 @@ class PythonFunction(Value):
         """Return a version of PythonFunction bound to an object"""
         return PythonFunction(self.function, this)
 
+    @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> String:
@@ -772,6 +801,7 @@ class BLFunction(Value):
     env: "Env | None" = None
     this: "Instance | None" = None
 
+    @override
     def call(
         self, args: list[Value], interpreter: "ASTInterpreter",
         meta: Meta | None
@@ -818,6 +848,7 @@ class BLFunction(Value):
             self.name, self.form_args, self.body, self.env, this
         )
 
+    @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         if self.this is not None:
             this_to_str = self.this.dump(interpreter, meta).value
@@ -836,6 +867,7 @@ class Class(Value):
     super: "Class | None" = None
     vars: dict[str, Value] = field(default_factory=dict)
 
+    @override
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
@@ -848,6 +880,7 @@ class Class(Value):
                 AttrNotFoundException.new([], interpreter, meta)
             ), meta)
 
+    @override
     def new(
         self, args: list[Value], interpreter: "ASTInterpreter",
         meta: Meta | None
@@ -860,6 +893,7 @@ class Class(Value):
                     return res
         return inst
 
+    @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(f"<class {self.name.value}>")
 
@@ -928,6 +962,7 @@ class Instance(Value):
         self.class_ = class_
         self.vars = vars_
 
+    @override
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
@@ -940,6 +975,7 @@ class Instance(Value):
                 case _:
                     return res
 
+    @override
     def set_attr(
         self, attr: str, value: ExpressionResult,
         interpreter: "ASTInterpreter", meta: Meta | None,
@@ -952,6 +988,7 @@ class Instance(Value):
                 return value
         return super().set_attr(attr, value, interpreter, meta)
 
+    @override
     def add(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -960,6 +997,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def subtract(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -968,6 +1006,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def multiply(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -976,6 +1015,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def divide(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -984,6 +1024,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -992,6 +1033,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def is_less(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -1000,6 +1042,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def is_less_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -1008,6 +1051,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def is_greater(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -1016,6 +1060,7 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def is_greater_or_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -1024,15 +1069,15 @@ class Instance(Value):
             other, interpreter, meta
         )
 
+    @override
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
-        res = self._call_method_if_exists("__neg__", [], interpreter, meta)
-        if isinstance(res, BLError):
-            if res.value.class_ == VarNotFoundException:
-                return super().neg(interpreter, meta)
-        return res
+        return self._overloaded_unary_op("__neg__", "neg")(
+            interpreter, meta
+        )
 
+    @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> String | BLError:
@@ -1068,6 +1113,19 @@ class Instance(Value):
             return BLError(cast_to_instance(
                 NotImplementedException.new([], interpreter, meta)
             ), meta)
+        return _wrapper
+
+    def _overloaded_unary_op(self, name: str, fallback_name: str) -> Callable:
+        def _wrapper(
+            interpreter: "ASTInterpreter", meta: Meta | None
+        ) -> ExpressionResult:
+            res = self._call_method_if_exists(name, [], interpreter, meta)
+            if isinstance(res, BLError):
+                if res.value.class_ == VarNotFoundException:
+                    return super().__getattribute__(fallback_name)(
+                        interpreter, meta
+                    )
+            return res
         return _wrapper
 
     def _call_method_if_exists(
@@ -1141,6 +1199,6 @@ class Env:
             VarNotFoundException.new([], self.interpreter, meta)
         ), meta)
 
-    def copy(self) -> 'Env':
+    def copy(self) -> "Env":
         """Copy the environment (for capturing variables in closures)"""
         return Env(self.interpreter, self.vars.copy(), self.parent)
