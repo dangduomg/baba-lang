@@ -1,3 +1,8 @@
+/**
+  * speedtest.bl -- Test for interpretation speed of baba-lang
+  */
+
+
 fun speedTest() {
     max = 2000;
     print("speedtest");
