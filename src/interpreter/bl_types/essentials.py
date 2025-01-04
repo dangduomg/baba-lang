@@ -1144,7 +1144,6 @@ class Instance(Value):
 @dataclass
 class Var:
     """Interpreter mutable binding"""
-
     value: Value
 
 

@@ -152,14 +152,14 @@ def main() -> int:
     if args.path is None:
         return main_interactive()
     path = os.path.abspath(args.path)
-    src_stream = open(args.path, encoding='utf-8')
+    src_stream = open(path, encoding='utf-8')
     with src_stream:
         src = src_stream.read()
     if args.expression:
         interp_func = interpret_expr
     else:
         interp_func = interpret
-    interpreter = ASTInterpreter(path)
+    interpreter = ASTInterpreter()
     res = interp_with_error_handling(interp_func, src, interpreter)
     match res:
         case UnexpectedInput() | BLError():

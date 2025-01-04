@@ -24,15 +24,12 @@ class ASTInterpreter(ASTVisitor):
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
 
-    path: str
-
     globals: Env
     locals: Env | None = None
 
     calls: list[Call]
 
-    def __init__(self, path=''):
-        self.path = path
+    def __init__(self):
         self.calls = []
 
         self.globals = Env(self)
