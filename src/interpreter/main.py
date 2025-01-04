@@ -398,7 +398,7 @@ class ASTInterpreter(ASTVisitor):
                     NotImplementedException.new([], self, meta)
                 ), meta)
         if isinstance(pattern, nodes.VarPattern):
-            self.globals.set_var(pattern.name, new_result, meta)
+            self._set_var(pattern.name, new_result, meta)
         if isinstance(pattern, nodes.DotPattern):
             accessee.set_attr(pattern.attr_name, new_result, self, meta)
         return new_result
@@ -415,9 +415,11 @@ class ASTInterpreter(ASTVisitor):
         """Set a variable either in locals or globals"""
         if self.locals is not None:
             res = self.locals.set_var(name, value, meta)
-            if res is not None:  # if its an error
-                return res
-        return self.globals.set_var(name, value, meta)
+            match res:
+                case BLError(value=value):
+                    if value.class_ == bl_types.VarNotFoundException:
+                        return self.globals.set_var(name, value, meta)
+                    return res
 
     def _new_var(self, name: str, value: Value) -> None:
         """Assign a new variable either in locals or globals"""
