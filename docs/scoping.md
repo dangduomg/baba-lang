@@ -85,5 +85,21 @@ The variable `b`, meanwhile, is in function-local scope, so, according to lexica
 
 ### Implications with nested functions
 
-In baba-lang, functions can be nested
+In baba-lang, functions can be nested, resulting in this somewhat counterintuitive example:
 ```
+fun counter() {
+    i = 0;
+    fun inc() {
+        i += 1;
+        return i;
+    }
+    return inc;
+}
+
+my_counter = counter();
+
+print(my_counter());  # 1
+print(my_counter());  # 2
+print(my_counter());  # 3
+```
+The variable `i` seems to "outlive" its scope (local to `counter`), as it is still accessed and modified by the `inc` function, even after `counter` finished executing. However, it does not violate
