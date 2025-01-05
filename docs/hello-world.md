@@ -29,9 +29,9 @@ source "<your venv root>/bin/activate"
 3. Create a file in your script directory. Let's call it `hello-world.bl`. baba-lang source code uses the extension `.bl`
 4. Write this to the file using your favorite editor and save it.
 
-    # my first baba-lang program!
+        # my first baba-lang program!
 
-    print('Hello, world!');
+        print('Hello, world!');
 
 5. Run the baba-lang interpreter
 ```sh

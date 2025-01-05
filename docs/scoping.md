@@ -20,18 +20,18 @@ Scoping rules in baba-lang is simple. There are only three types of variables in
 
 2. Create file `scoping.bl` in your `my-bl-scripts` directory, then write this:
 
-    a = 1;
+        a = 1;
 
-    print("outside function f, a =", a);
+        print("outside function f, a =", a);
 
-    fun f() {
-        b = 2;
-        print("inside function f, b =", b);
-        print("inside function f, a =", a);
-    }
-    f();
+        fun f() {
+            b = 2;
+            print("inside function f, b =", b);
+            print("inside function f, a =", a);
+        }
+        f();
 
-    print("outside function f, b =", b);
+        print("outside function f, b =", b);
 
 3. Run the baba-lang interpreter
 ```sh
