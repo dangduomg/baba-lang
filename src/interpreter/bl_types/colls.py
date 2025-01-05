@@ -8,10 +8,11 @@ from operator import methodcaller
 from lark.tree import Meta
 
 from .essentials import (
-    ExpressionResult, Value, BLError, String, Int, Bool, Null, NULL, Class,
+    ExpressionResult, Value, BLError, String, Bool, Null, NULL, Class,
     PythonFunction, Instance, cast_to_instance, ObjectClass, ExceptionClass,
     IncorrectTypeException,
 )
+from .numbers import Int
 from .abc_protocols import SupportsBLCall
 
 if TYPE_CHECKING:
@@ -282,7 +283,7 @@ class BLDict(Instance):
         dmp = methodcaller("dump", interpreter, meta)
         pair_str_list = []
         for k, v in self.content.items():
-            pair_str_list.append(f"{dmp(k)}: {dmp(v)}")
+            pair_str_list.append(f"{dmp(k).value}: {dmp(v).value}")
         return String(f'{{{', '.join(pair_str_list)}}}')
 
     def get(
