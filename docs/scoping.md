@@ -102,4 +102,19 @@ print(my_counter());  # 1
 print(my_counter());  # 2
 print(my_counter());  # 3
 ```
-The variable `i` seems to "outlive" its scope (local to `counter`), as it is still accessed and modified by the `inc` function, even after `counter` finished executing. However, it does not violate
+The variable `i` seems to "outlive" its scope (local to `counter`), as it is still accessed and modified by an instance of the `inc` function (`my_counter`), even after `counter` finished executing. However, it does not violate lexical scoping rules, as `i` is in `counter`'s body, therefore in the enclosing scope of `inc`, so are always accessible by `inc`.
+
+baba-lang use closures to make this possible. Closures allow functions to be first-class citizens (can be assigned to variables, passed to arguments and returned from a function just like other )
+
+
+## Types of variables
+
+As detailed above, baba-lang has 3 types of variables:
+- Global variables: Variables that can be accessed anywhere after it is defined.
+- Local variables: Variables that can be accessed only inside the function it is defined in.
+- Non-local variables: Subtype of local variables, that are accessed.
+
+
+## Next
+
+Not done yet.

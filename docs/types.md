@@ -114,7 +114,7 @@ There are 2 Boolean literals: `true` and `false`. They are reserved keywords (ca
 
 ### Supported operators
 
-None yet.
+None. The logical operators works based on the truth value of its operands, but it works on any value and therefore are not considered here.
 
 
 ## Null type
@@ -142,4 +142,4 @@ The rest of the types will have their separate pages to detail them:
 
 ## Next
 
-Not done yet.
+[Scoping](scoping.md)

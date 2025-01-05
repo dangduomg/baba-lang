@@ -44,3 +44,4 @@ pip install -r requirements.txt
 1. [Hello world](hello-world.md)
 2. [Operators](operators.md)
 3. [Types](types.md)
+4. [Scoping](scoping.md)
