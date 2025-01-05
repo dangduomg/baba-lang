@@ -28,7 +28,7 @@ if importlib.util.find_spec('readline'):
 
 
 PROG = 'baba-lang'
-VERSION = '0.4.4'
+VERSION = '0.4.5-testing-2'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
 
