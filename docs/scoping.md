@@ -108,9 +108,9 @@ baba-lang use closures to make this possible. Closures allow functions to be fir
 ## Types of variables
 
 As detailed above, baba-lang has 3 types of variables:
-- Global variables: Variables that can be accessed anywhere after it is defined.
-- Local variables: Variables that can be accessed only inside the function it is defined in.
-- Non-local variables: Subtype of local variables, that are accessed.
+- **Global variables**: Variables that can be accessed anywhere after it is defined.
+- **Local variables**: Variables that can be accessed only inside the function it is defined in.
+- **Non-local variables**: Subtype of local variables that can be accessed by nested functions, therefore "outlive" its scope.
 
 
 ## Next
