@@ -22,11 +22,11 @@ Expressions in baba-lang are composed of operators. There are 32 operators in ba
 2. Run baba-lang without arguments to go to interactive mode.
 3. Try to enter a mathematical expression in baba-lang:
 
-        baba-lang 0.4.2
-        > 1 + 2 * 3 - 4
-        3
-        > 1 + 1 * 1 / 1 - 1
-        1.0
+    baba-lang 0.4.2
+    > 1 + 2 * 3 - 4
+    3
+    > 1 + 1 * 1 / 1 - 1
+    1.0
 
 4. baba-lang would evaluate the expression according to the rules you have learned at school (PEMDAS), like a glorified calculator. Experiment with other operators as well.
 5. Once you are done, type `Ctrl-Z` (Windows) or `Ctrl-D` (Linux) to exit the interpreter.
