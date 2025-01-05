@@ -38,19 +38,18 @@ Scoping rules in baba-lang is simple. There are only three types of variables in
 python3 src/main.py my-bl-scripts/scoping.bl
 ```
 This should be the output:
-```
-outside function f, a = 1
-inside function f, b = 2
-inside function f, a = 1
-Runtime error at line 12, column 34:
-Variable b is undefined
 
-print("outside function f, b =", b);
-                                 ^
+        outside function f, a = 1
+        inside function f, b = 2
+        inside function f, a = 1
+        Runtime error at line 12, column 34:
+        Variable b is undefined
 
-Traceback:
+        print("outside function f, b =", b);
+                                        ^
 
-```
+        Traceback:
+
 
 You can see that:
 - The variable `a` can be accessed both at the top level, and inside function `f`. It is a *global* variable.
