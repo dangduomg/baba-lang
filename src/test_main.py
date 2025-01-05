@@ -59,7 +59,7 @@ def test_error(example_interp: ASTInterpreter):
     """Test for errors"""
     res = interpret_expr("1 / 0", example_interp)
     assert isinstance(res, bl_types.BLError)
-    assert res.value.class_ == bl_types.essentials.DivByZeroException
+    assert res.value.class_ == bl_types.numbers.DivByZeroException
 
 
 def test_variable(example_interp: ASTInterpreter):
