@@ -69,9 +69,21 @@ OR_OP: "||"
     | comp
 AND_OP: "&&"
 
-?comp: sum COMP_OP sum -> binary_op
-     | sum
+?comp: bit_or COMP_OP bit_or -> binary_op
+     | bit_or
 COMP_OP: "==" | "!=" | /<(?!<)/ | "<=" | />(?!>)/ | ">="
+
+?bit_or: bit_or BIT_OR_OP bit_and -> binary_op
+       | bit_and
+BIT_OR_OP: "|" | "^"
+
+?bit_and: bit_and BIT_AND_OP shift -> binary_op
+        | shift
+BIT_AND_OP: "&"
+
+?shift: shift SHIFT_OP sum -> binary_op
+      | sum
+SHIFT_OP: "<<" | ">>"
 
 ?sum: sum SUM_OP prod -> binary_op
     | prod
@@ -83,7 +95,7 @@ PROD_OP: "*" | "/"
 
 ?prefix: PREFIX_OP prefix
        | postfix
-PREFIX_OP: "-"
+PREFIX_OP: "-" | "!"
 
 ?postfix: postfix "(" spec_args ")" -> call
         | postfix "." IDENT -> dot

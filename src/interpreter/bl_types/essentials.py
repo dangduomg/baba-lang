@@ -68,6 +68,12 @@ class ExpressionResult(Result, ABC):
                 return self.multiply(other, interpreter, meta)
             case "/":
                 return self.divide(other, interpreter, meta)
+            case "&":
+                return self.bit_and(other, interpreter, meta)
+            case "|":
+                return self.bit_or(other, interpreter, meta)
+            case "^":
+                return self.bit_xor(other, interpreter, meta)
             case "==":
                 return self.is_equal(other, interpreter, meta)
             case "!=":
@@ -84,7 +90,9 @@ class ExpressionResult(Result, ABC):
             case ">=":
                 return self.is_greater_or_equal(other, interpreter, meta)
         return BLError(cast_to_instance(
-            NotImplementedException.new([], interpreter, meta)
+            NotImplementedException.new(
+                [String(f"Operator {op} not supported")], interpreter, meta
+            )
         ), meta)
 
     def add(
@@ -113,6 +121,27 @@ class ExpressionResult(Result, ABC):
         meta: Meta | None
     ) -> "ExpressionResult":
         """Division"""
+        return self._unimplemented_binary_op(other, interpreter, meta)
+
+    def bit_and(
+        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> "ExpressionResult":
+        """Bitwise and"""
+        return self._unimplemented_binary_op(other, interpreter, meta)
+
+    def bit_or(
+        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> "ExpressionResult":
+        """Bitwise or"""
+        return self._unimplemented_binary_op(other, interpreter, meta)
+
+    def bit_xor(
+        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> "ExpressionResult":
+        """Bitwise exclusive or"""
         return self._unimplemented_binary_op(other, interpreter, meta)
 
     def is_equal(
@@ -271,6 +300,13 @@ class BLError(Exit, ExpressionResult):
 
     @override
     def multiply(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> Self:
+        return self
+
+    @override
+    def divide(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> Self:
