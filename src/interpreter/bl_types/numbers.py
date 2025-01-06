@@ -76,6 +76,56 @@ class Int(Value):
         return super().divide(other, interpreter, meta)
 
     @override
+    def bit_and(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val):
+                return Int(self.value & other_val)
+        return super().bit_and(other, interpreter, meta)
+
+    @override
+    def bit_or(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val):
+                return Int(self.value | other_val)
+        return super().bit_and(other, interpreter, meta)
+
+    @override
+    def bit_xor(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val):
+                return Int(self.value ^ other_val)
+        return super().bit_and(other, interpreter, meta)
+
+    @override
+    def left_shift(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val):
+                return Int(self.value << other_val)
+        return super().bit_and(other, interpreter, meta)
+
+    @override
+    def right_shift(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val):
+                return Int(self.value >> other_val)
+        return super().bit_and(other, interpreter, meta)
+
+    @override
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
