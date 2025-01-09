@@ -90,7 +90,7 @@ class Int(Value):
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
                     ), meta)
-        return super().divide(other, interpreter, meta)
+        return super().floor_div(other, interpreter, meta)
 
     @override
     def modulo(
@@ -105,7 +105,7 @@ class Int(Value):
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
                     ), meta)
-        return super().divide(other, interpreter, meta)
+        return super().modulo(other, interpreter, meta)
 
     @override
     def power(
@@ -122,7 +122,7 @@ class Int(Value):
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
                     ), meta)
-        return super().divide(other, interpreter, meta)
+        return super().power(other, interpreter, meta)
 
     @override
     def bit_and(
@@ -142,7 +142,7 @@ class Int(Value):
         match other:
             case Int(other_val):
                 return Int(self.value | other_val)
-        return super().bit_and(other, interpreter, meta)
+        return super().bit_or(other, interpreter, meta)
 
     @override
     def bit_xor(
@@ -152,7 +152,7 @@ class Int(Value):
         match other:
             case Int(other_val):
                 return Int(self.value ^ other_val)
-        return super().bit_and(other, interpreter, meta)
+        return super().bit_xor(other, interpreter, meta)
 
     @override
     def left_shift(
@@ -162,7 +162,7 @@ class Int(Value):
         match other:
             case Int(other_val):
                 return Int(self.value << other_val)
-        return super().bit_and(other, interpreter, meta)
+        return super().left_shift(other, interpreter, meta)
 
     @override
     def right_shift(
@@ -172,7 +172,7 @@ class Int(Value):
         match other:
             case Int(other_val):
                 return Int(self.value >> other_val)
-        return super().bit_and(other, interpreter, meta)
+        return super().right_shift(other, interpreter, meta)
 
     @override
     def is_equal(
@@ -313,7 +313,7 @@ class Float(Value):
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
                     ), meta)
-        return super().divide(other, interpreter, meta)
+        return super().floor_div(other, interpreter, meta)
 
     @override
     def modulo(
@@ -328,7 +328,7 @@ class Float(Value):
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
                     ), meta)
-        return super().divide(other, interpreter, meta)
+        return super().modulo(other, interpreter, meta)
 
     @override
     def power(
@@ -343,7 +343,7 @@ class Float(Value):
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
                     ), meta)
-        return super().divide(other, interpreter, meta)
+        return super().power(other, interpreter, meta)
 
     @override
     def is_equal(
