@@ -246,6 +246,14 @@ class New(_Expr):
 # Subscript
 
 
+@dataclass(frozen=True)
+class Subscript(_Expr):
+    """Subscript operator"""
+    meta: Meta
+    subscriptee: _Expr
+    index: _Expr
+
+
 # Dot access
 
 

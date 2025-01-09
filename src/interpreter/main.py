@@ -281,9 +281,14 @@ class ASTInterpreter(ASTVisitor):
                         return not_left_res.logical_not(self, left.meta)
                     return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
-                return (
-                    self.visit_expr(left)
-                    .binary_op(op, self.visit_expr(right), self, meta)
+                return self.visit_expr(left).binary_op(
+                    op, self.visit_expr(right), self, meta
+                )
+            case nodes.Subscript(
+                meta=meta, subscriptee=subscriptee, index=index
+            ):
+                return self.visit_expr(subscriptee).get_item(
+                    self.visit_expr(index), self, meta
                 )
             case nodes.Call(meta=meta, callee=callee, args=args_in_ast):
                 # Visit all args, stop if one is an error
