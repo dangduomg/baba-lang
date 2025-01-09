@@ -91,16 +91,19 @@ SUM_OP: "+" | "-"
 
 ?prod: prod PROD_OP prefix -> binary_op
      | prefix
-PROD_OP: "*" | "/"
+PROD_OP: "*" | "/" | "%/%" | "%"
 
 ?prefix: PREFIX_OP prefix
        | postfix
-PREFIX_OP: "-" | "!"
+PREFIX_OP: "+" | "-" | "~" | "!"
 
-?postfix: postfix "(" spec_args ")" -> call
+?postfix: postfix POW_OP prefix -> binary_op
+        | postfix "(" spec_args ")" -> call
+        | postfix "[" expr "]" -> subscript
         | postfix "." IDENT -> dot
         | atom
 spec_args: _comma_list{expr}?
+POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
