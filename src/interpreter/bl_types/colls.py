@@ -38,6 +38,9 @@ def list_new(
 
 
 ListClass = Class(String("List"), ObjectClass, {
+    "__getitem__": PythonFunction(
+        lambda meta, intp, /, this, index, *_: this.get(meta, intp, index)
+    ),
     "get": PythonFunction(
         lambda meta, intp, /, this, index, *_: this.get(meta, intp, index)
     ),
@@ -250,6 +253,9 @@ def dict_new(
 
 
 DictClass = Class(String("Dict"), ObjectClass, {
+    "__getitem__": PythonFunction(
+        lambda meta, intp, /, this, key, *_: this.get(meta, intp, key)
+    ),
     "get": PythonFunction(
         lambda meta, intp, /, this, key, *_: this.get(meta, intp, key)
     ),
