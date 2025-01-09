@@ -22,6 +22,8 @@ DivByZeroException = Class(String("DivByZeroException"), ExceptionClass)
 class Int(Value):
     """Integer type"""
 
+    # pylint: disable=too-many-public-methods
+
     value: int
 
     @override
@@ -69,6 +71,53 @@ class Int(Value):
             case Int(other_val) | Float(other_val):
                 try:
                     return Float(self.value / other_val)
+                except ZeroDivisionError:
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
+        return super().divide(other, interpreter, meta)
+
+    @override
+    def floor_div(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val) | Float(other_val):
+                try:
+                    return Float(self.value // other_val)
+                except ZeroDivisionError:
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
+        return super().divide(other, interpreter, meta)
+
+    @override
+    def modulo(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val) | Float(other_val):
+                try:
+                    return Float(self.value % other_val)
+                except ZeroDivisionError:
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
+        return super().divide(other, interpreter, meta)
+
+    @override
+    def power(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case Int(other_val) if self.value >= 0:
+                return Int(self.value ** other_val)
+            case Int(other_val) | Float(other_val):
+                try:
+                    return Float(self.value ** other_val)
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
@@ -176,8 +225,24 @@ class Int(Value):
         return super().is_greater_or_equal(other, interpreter, meta)
 
     @override
+    def plus(self, interpreter: "ASTInterpreter", meta: Meta | None) -> "Int":
+        return Int(+self.value)
+
+    @override
     def neg(self, interpreter: "ASTInterpreter", meta: Meta | None) -> "Int":
         return Int(-self.value)
+
+    @override
+    def bit_not(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "Int":
+        return Int(~self.value)
+
+    @override
+    def logical_not(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool:
+        return BOOLS[not self.value]
 
     @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
@@ -236,6 +301,51 @@ class Float(Value):
         return super().divide(other, interpreter, meta)
 
     @override
+    def floor_div(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case Float(other_val) | Int(other_val):
+                try:
+                    return Float(self.value // other_val)
+                except ZeroDivisionError:
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
+        return super().divide(other, interpreter, meta)
+
+    @override
+    def modulo(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case Float(other_val) | Int(other_val):
+                try:
+                    return Float(self.value % other_val)
+                except ZeroDivisionError:
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
+        return super().divide(other, interpreter, meta)
+
+    @override
+    def power(
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case Float(other_val) | Int(other_val):
+                try:
+                    return Float(self.value ** other_val)
+                except ZeroDivisionError:
+                    return BLError(cast_to_instance(
+                        DivByZeroException.new([], interpreter, meta)
+                    ), meta)
+        return super().divide(other, interpreter, meta)
+
+    @override
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -286,10 +396,22 @@ class Float(Value):
         return super().is_greater_or_equal(other, interpreter, meta)
 
     @override
+    def plus(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "Float":
+        return Float(+self.value)
+
+    @override
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "Float":
         return Float(-self.value)
+
+    @override
+    def logical_not(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool:
+        return BOOLS[not self.value]
 
     @override
     def dump(
