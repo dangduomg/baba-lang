@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 def cast_to_instance(value: "ExpressionResult") -> "Instance":
     """Cast a value to an instance"""
-    return cast("Instance", value)
+    return cast(Instance, value)
 
 
 # section Result
@@ -50,7 +50,7 @@ class Return(Exit):
     value: "Value"
 
 
-class ExpressionResult(Result, ABC):
+class ExpressionResultABC(Result, ABC):
     """Expression result base class"""
 
     # pylint: disable=unnecessary-ellipsis
@@ -316,6 +316,14 @@ class ExpressionResult(Result, ABC):
         ...
 
     @abstractmethod
+    def set_item(
+        self, index: "ExpressionResult", value: "ExpressionResult",
+        interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Assign a subscripted item"""
+        ...
+
+    @abstractmethod
     def call(
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
@@ -346,11 +354,14 @@ class ExpressionResult(Result, ABC):
         ...
 
 
+type ExpressionResult = "Value | BLError"
+
+
 # section Error
 
 
 @dataclass(init=False)
-class BLError(Exit, ExpressionResult):
+class BLError(Exit, ExpressionResultABC):
     """Error result type"""
 
     value: "Instance"
@@ -529,6 +540,13 @@ class BLError(Exit, ExpressionResult):
         return self
 
     @override
+    def set_item(
+        self, index: ExpressionResult, value: ExpressionResult,
+        interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
+        return self
+
+    @override
     def call(
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
@@ -556,101 +574,101 @@ class BLError(Exit, ExpressionResult):
 # section Values
 
 
-class Value(ExpressionResult):
+class Value(ExpressionResultABC, ABC):
     """Value base class"""
 
     @override
     def add(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         return self._unimplemented_binary_op('+', other, interpreter, meta)
 
     @override
     def subtract(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Subtraction"""
         return self._unimplemented_binary_op('-', other, interpreter, meta)
 
     @override
     def multiply(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Multiplication"""
         return self._unimplemented_binary_op('*', other, interpreter, meta)
 
     @override
     def divide(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Division"""
         return self._unimplemented_binary_op('/', other, interpreter, meta)
 
     @override
     def floor_div(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Floor division"""
         return self._unimplemented_binary_op("%/%", other, interpreter, meta)
 
     @override
     def modulo(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Modulo operator"""
         return self._unimplemented_binary_op("%", other, interpreter, meta)
 
     @override
     def power(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Power operator"""
         return self._unimplemented_binary_op("**", other, interpreter, meta)
 
     @override
     def bit_and(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Bitwise and"""
         return self._unimplemented_binary_op('&', other, interpreter, meta)
 
     @override
     def bit_or(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Bitwise or"""
         return self._unimplemented_binary_op('|', other, interpreter, meta)
 
     @override
     def bit_xor(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Bitwise exclusive or"""
         return self._unimplemented_binary_op('^', other, interpreter, meta)
 
     @override
     def left_shift(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Left shift"""
         return self._unimplemented_binary_op('<<', other, interpreter, meta)
 
     @override
     def right_shift(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Right shift"""
         return self._unimplemented_binary_op('>>', other, interpreter, meta)
 
@@ -663,9 +681,9 @@ class Value(ExpressionResult):
 
     @override
     def is_not_equal(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Inequality test"""
         return (
             self.is_equal(other, interpreter, meta)
@@ -674,33 +692,33 @@ class Value(ExpressionResult):
 
     @override
     def is_less(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Less than"""
         return self._unimplemented_binary_op('<', other, interpreter, meta)
 
     @override
     def is_less_or_equal(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Less than or equal to"""
         return self._unimplemented_binary_op('<=', other, interpreter, meta)
 
     @override
     def is_greater(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Greater than"""
         return self._unimplemented_binary_op('>', other, interpreter, meta)
 
     @override
     def is_greater_or_equal(
-        self, other: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Greater than or equal to"""
         return self._unimplemented_binary_op('>=', other, interpreter, meta)
 
@@ -712,41 +730,37 @@ class Value(ExpressionResult):
         match other:
             case BLError():
                 return other
-            case Value():
-                match self_dump := self.dump(interpreter, meta):
-                    case BLError():
-                        return self_dump
-                match other_dump := other.dump(interpreter, meta):
-                    case BLError():
-                        return other_dump
-                return BLError(cast_to_instance(
-                    NotImplementedException.new([String(
-                        f"Operator {op!r} is not supported for" +
-                        f"{self_dump.value} and {other_dump.value}"
-                    )], interpreter, meta)
-                ), meta)
+        match self_dump := self.dump(interpreter, meta):
+            case BLError():
+                return self_dump
+        match other_dump := other.dump(interpreter, meta):
+            case BLError():
+                return other_dump
         return BLError(cast_to_instance(
-            NotImplementedException.new([], interpreter, meta)
+            NotImplementedException.new([String(
+                f"Operator {op!r} is not supported for " +
+                f"{self_dump.value} and {other_dump.value}"
+            )], interpreter, meta)
         ), meta)
 
     @override
     def plus(
         self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Unary plus"""
         return self._unimplemented_unary_op("+", interpreter, meta)
 
     @override
     def neg(
         self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Negation"""
         return self._unimplemented_unary_op("-", interpreter, meta)
 
     @override
     def bit_not(
         self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Bitwise not"""
         return self._unimplemented_unary_op("~", interpreter, meta)
 
@@ -771,34 +785,36 @@ class Value(ExpressionResult):
     @override
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Access an attribute"""
         return BLError(cast_to_instance(
-            NotImplementedException.new([], interpreter, meta)
+            NotImplementedException.new(
+                [String("Attribute access is not supported")],
+                interpreter, meta
+            )
         ), meta)
 
     @override
     def set_attr(
-        self, attr: str, value: "ExpressionResult",
+        self, attr: str, value: ExpressionResult,
         interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Set an attribute"""
         match value:
             case BLError():
                 return value
         return BLError(cast_to_instance(
             NotImplementedException.new(
-                [String("Subscript assignment is not supported")],
+                [String("Attribute assignment is not supported")],
                 interpreter, meta,
             )
         ), meta)
 
     @override
     def get_item(
-        self, index: "ExpressionResult", interpreter: "ASTInterpreter",
+        self, index: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
-        """Access an item by subscripting"""
+    ) -> ExpressionResult:
         match index:
             case BLError():
                 return index
@@ -810,10 +826,28 @@ class Value(ExpressionResult):
         ), meta)
 
     @override
+    def set_item(
+        self, index: ExpressionResult, value: ExpressionResult,
+        interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        match index:
+            case BLError():
+                return index
+        match value:
+            case BLError():
+                return value
+        return BLError(cast_to_instance(
+            NotImplementedException.new(
+                [String("Subscript assignment is not supported")],
+                interpreter, meta,
+            )
+        ), meta)
+
+    @override
     def call(
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Call self as a function"""
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
@@ -823,7 +857,7 @@ class Value(ExpressionResult):
     def new(
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
-    ) -> "ExpressionResult":
+    ) -> ExpressionResult:
         """Instantiate an object"""
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
@@ -1123,13 +1157,21 @@ class Class(Value):
                 AttrNotFoundException.new([], interpreter, meta)
             ), meta)
 
+    def has_attr(self, attr: str) -> bool:
+        """Check if a class has an attribute"""
+        if attr in self.vars:
+            return True
+        if self.super is not None:
+            return self.super.has_attr(attr)
+        return False
+
     @override
     def new(
         self, args: list[Value], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
         inst = Instance(self, {})
-        if "__init__" in self.vars:  # __init__ is the constructor method
+        if self.has_attr("__init__"):  # __init__ is the constructor method
             constr = inst.get_attr("__init__", interpreter, meta)
             match res := constr.call(args, interpreter, meta):
                 case BLError():
@@ -1150,11 +1192,13 @@ ObjectClass = Class(String("Object"))
 
 def exc_init(
     meta: Meta | None, interpreter: "ASTInterpreter", this: "Instance | None",
-    /, msg: String, *_
+    /, *args
 ) -> Null | BLError:
     """Initialize an exception"""
     if this is not None:
-        this.vars["msg"] = msg
+        if args:
+            msg, *_ = args
+            this.vars["msg"] = msg
         return NULL
     return BLError(cast_to_instance(
         NotImplementedException.new([], interpreter, meta)
@@ -1166,11 +1210,14 @@ def exc_dump(
     /, *_
 ) -> String | BLError:
     """Debugging representation of exception"""
-    if this is not None:
+    if this is None:
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
+        ), meta)
+    if "msg" not in this.vars:
         return String(f"{this.class_.name.value}")
-    return BLError(cast_to_instance(
-        NotImplementedException.new([], interpreter, meta)
-    ), meta)
+    msg = this.vars['msg'].dump(interpreter, meta).value
+    return String(f"{this.class_.name.value}: {msg}")
 
 
 exc_methods: dict[str, Value] = {
@@ -1424,6 +1471,25 @@ class Instance(Value):
         )
 
     @override
+    def set_item(
+        self, index: ExpressionResult, value: ExpressionResult,
+        interpreter: "ASTInterpreter", meta: Meta | None,
+    ) -> ExpressionResult:
+        if isinstance(index, BLError):
+            return index
+        if isinstance(value, BLError):
+            return value
+        res = self._call_method_if_exists(
+            "__setitem__", [index, value], interpreter, meta
+        )
+        if isinstance(res, BLError):
+            if res.value.class_ == AttrNotFoundException:
+                return super().set_item(
+                    index, value, interpreter, meta
+                )
+        return res
+
+    @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> String | BLError:
@@ -1446,19 +1512,15 @@ class Instance(Value):
         ) -> ExpressionResult:
             if isinstance(other, BLError):
                 return other
-            if isinstance(other, Value):
-                res = self._call_method_if_exists(
-                    name, [other], interpreter, meta
-                )
-                if isinstance(res, BLError):
-                    if res.value.class_ == AttrNotFoundException:
-                        return getattr(super(type(self), self), fallback_name)(
-                            other, interpreter, meta
-                        )
-                return res
-            return BLError(cast_to_instance(
-                NotImplementedException.new([], interpreter, meta)
-            ), meta)
+            res = self._call_method_if_exists(
+                name, [other], interpreter, meta
+            )
+            if isinstance(res, BLError):
+                if res.value.class_ == AttrNotFoundException:
+                    return getattr(super(type(self), self), fallback_name)(
+                        other, interpreter, meta
+                    )
+            return res
         return _wrapper
 
     def _overloaded_unary_op(self, name: str, fallback_name: str) -> Callable:
@@ -1468,7 +1530,7 @@ class Instance(Value):
             res = self._call_method_if_exists(name, [], interpreter, meta)
             if isinstance(res, BLError):
                 if res.value.class_ == VarNotFoundException:
-                    return super().__getattribute__(fallback_name)(
+                    return getattr(super(type(self), self), fallback_name)(
                         interpreter, meta
                     )
             return res
@@ -1478,9 +1540,9 @@ class Instance(Value):
         self, name: str, args: list[Value], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
-        match res := self.get_attr(name, interpreter, meta):
-            case SupportsBLCall():
-                return res.bind(self).call(args, interpreter, meta)
+        res = self.get_attr(name, interpreter, meta)
+        if isinstance(res, SupportsBLCall):
+            return res.bind(self).call(args, interpreter, meta)
         return res
 
 
