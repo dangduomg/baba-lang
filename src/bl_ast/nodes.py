@@ -181,6 +181,14 @@ class VarPattern(_Pattern):
 
 
 @dataclass(frozen=True)
+class SubscriptPattern(_Pattern):
+    """Subscript pattern"""
+    meta: Meta
+    subscriptee: _Expr
+    index: _Expr
+
+
+@dataclass(frozen=True)
 class DotPattern(_Pattern):
     """Dot pattern"""
     meta: Meta

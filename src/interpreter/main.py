@@ -384,6 +384,11 @@ class ASTInterpreter(ASTVisitor):
             old_value_get_result = accessee.get_attr(
                 pattern.attr_name, self, meta
             )
+        elif isinstance(pattern, nodes.SubscriptPattern):
+            accessee = self.visit_expr(pattern.subscriptee)
+            old_value_get_result = accessee.get_item(
+                self.visit_expr(pattern.index), self, meta
+            )
         else:
             return BLError(cast_to_instance(
                 NotImplementedException.new([], self, meta)

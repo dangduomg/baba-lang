@@ -56,10 +56,12 @@ class_entry: module_var_stmt | function_stmt
 ?assign: pattern "=" expr
        | pattern INPLACE_OP expr -> inplace
        | or
-INPLACE_OP: "+=" | "-=" | "*=" | "/="
+INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%/%=" | "%=" | "&=" | "|=" | "^="
+          | "<<=" | ">>="
 
 ?pattern: IDENT -> var_pattern
         | postfix "." IDENT -> dot_pattern
+        | postfix "[" expr "]" -> subscript_pattern
 
 ?or: and OR_OP or
    | and
