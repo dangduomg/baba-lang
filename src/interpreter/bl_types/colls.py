@@ -41,6 +41,10 @@ ListClass = Class(String("List"), ObjectClass, {
     "__getitem__": PythonFunction(
         lambda meta, intp, /, this, index, *_: this.get(meta, intp, index)
     ),
+    "__setitem__": PythonFunction(
+        lambda meta, intp, /, this, index, value, *_:
+        this.set(meta, intp, index, value)
+    ),
     "get": PythonFunction(
         lambda meta, intp, /, this, index, *_: this.get(meta, intp, index)
     ),
@@ -255,6 +259,10 @@ def dict_new(
 DictClass = Class(String("Dict"), ObjectClass, {
     "__getitem__": PythonFunction(
         lambda meta, intp, /, this, key, *_: this.get(meta, intp, key)
+    ),
+    "__setitem__": PythonFunction(
+        lambda meta, intp, /, this, key, value, *_:
+        this.set(meta, intp, key, value)
     ),
     "get": PythonFunction(
         lambda meta, intp, /, this, key, *_: this.get(meta, intp, key)
