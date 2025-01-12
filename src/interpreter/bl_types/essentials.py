@@ -353,6 +353,13 @@ class ExpressionResultABC(Result, ABC):
         """Return a detailed string representation for debugging"""
         ...
 
+    @abstractmethod
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Return a user-friendly string representation"""
+        ...
+
 
 type ExpressionResult = "Value | BLError"
 
@@ -570,6 +577,12 @@ class BLError(Exit, ExpressionResultABC):
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> Self:
         return self
 
+    @override
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
+        return self
+
 
 # section Values
 
@@ -768,7 +781,7 @@ class Value(ExpressionResultABC, ABC):
     def logical_not(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "Bool | BLError":
-        return BOOLS[False]
+        return BOOLS[not self.to_bool(interpreter, meta).value]
 
     def _unimplemented_unary_op(
         self, op: str, interpreter: "ASTInterpreter", meta: Meta | None
@@ -867,16 +880,19 @@ class Value(ExpressionResultABC, ABC):
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "Bool | BLError":
-        return (
-            self.logical_not(interpreter, meta)
-            .logical_not(interpreter, meta)
-        )
+        return BOOLS[True]
 
     @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "String | BLError":
         return String("<value>")
+
+    @override
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String | BLError":
+        return self.dump(interpreter, meta)
 
 
 @dataclass(frozen=True)
@@ -899,10 +915,10 @@ class Bool(Value):
     value: bool
 
     @override
-    def logical_not(
+    def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "Bool":
-        return BOOLS[not self.value]
+    ) -> Self:
+        return self
 
     @override
     def dump(
@@ -919,10 +935,10 @@ class Null(Value):
     """Null value"""
 
     @override
-    def logical_not(
+    def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Bool:
-        return BOOLS[True]
+        return BOOLS[False]
 
     @override
     def dump(
@@ -1012,25 +1028,22 @@ class String(Value):
         return super().is_greater_or_equal(other, interpreter, meta)
 
     @override
-    def logical_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Bool | BLError:
-        return BOOLS[not self.value]
-
-    @override
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Bool | BLError:
-        return (
-            self.logical_not(interpreter, meta)
-            .logical_not(interpreter, meta)
-        )
+        return BOOLS[bool(self.value)]
 
     @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "String":
-        return String(f"{self.value!r}")
+        return String(repr(self.value))
+
+    @override
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
+        return self
 
 
 # section Functions
@@ -1454,14 +1467,6 @@ class Instance(Value):
         )
 
     @override
-    def logical_not(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Bool | BLError:
-        return self._overloaded_unary_op("__not__", "logical_not")(
-            interpreter, meta
-        )
-
-    @override
     def get_item(
         self, index: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -1488,6 +1493,14 @@ class Instance(Value):
                     index, value, interpreter, meta
                 )
         return res
+
+    @override
+    def to_bool(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool | BLError:
+        return self._overloaded_unary_op("__bool__", "to_bool")(
+            interpreter, meta
+        )
 
     @override
     def dump(

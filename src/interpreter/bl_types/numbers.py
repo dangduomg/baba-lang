@@ -239,14 +239,20 @@ class Int(Value):
         return Int(~self.value)
 
     @override
-    def logical_not(
+    def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Bool:
-        return BOOLS[not self.value]
+        return BOOLS[bool(self.value)]
 
     @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(repr(self.value))
+
+    @override
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String:
+        return String(str(self.value))
 
 
 @dataclass(frozen=True)
@@ -408,13 +414,19 @@ class Float(Value):
         return Float(-self.value)
 
     @override
-    def logical_not(
+    def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Bool:
-        return BOOLS[not self.value]
+        return BOOLS[bool(self.value)]
 
     @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> String:
         return String(repr(self.value))
+
+    @override
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String:
+        return String(str(self.value))

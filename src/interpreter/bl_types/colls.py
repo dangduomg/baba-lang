@@ -2,13 +2,13 @@
 
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, override
 from operator import methodcaller
 
 from lark.tree import Meta
 
 from .essentials import (
-    ExpressionResult, Value, BLError, String, Bool, Null, NULL, Class,
+    ExpressionResult, Value, BLError, String, Bool, BOOLS, Null, NULL, Class,
     PythonFunction, Instance, cast_to_instance, ObjectClass, ExceptionClass,
     IncorrectTypeException,
 )
@@ -93,6 +93,7 @@ class BLList(Instance):
         super().__init__(ListClass, {})
         self.elems = elems
 
+    @override
     def add(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -102,6 +103,7 @@ class BLList(Instance):
                 return BLList(self.elems + other_elems)
         return super().add(other, interpreter, meta)
 
+    @override
     def multiply(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
@@ -111,6 +113,13 @@ class BLList(Instance):
                 return BLList(self.elems * times)
         return super().add(other, interpreter, meta)
 
+    @override
+    def to_bool(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool:
+        return BOOLS[bool(self.elems)]
+
+    @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         dmp = methodcaller("dump", interpreter, meta)
         return String(f"[{', '.join(dmp(e).value for e in self.elems)}]")
@@ -293,6 +302,13 @@ class BLDict(Instance):
         super().__init__(DictClass, {})
         self.content = content
 
+    @override
+    def to_bool(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool:
+        return BOOLS[bool(self.content)]
+
+    @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         dmp = methodcaller("dump", interpreter, meta)
         pair_str_list = []
@@ -310,8 +326,7 @@ class BLDict(Instance):
                 try:
                     return self.content[key]
                 except KeyError:
-                    return BLError(cast(
-                        Instance,
+                    return BLError(cast_to_instance(
                         KeyNotFoundException.new([], interpreter, meta),
                     ), meta)
         return BLError(cast_to_instance(
@@ -369,6 +384,7 @@ class Module(Value):
     name: str
     vars: dict[str, Value]
 
+    @override
     def get_attr(
         self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
@@ -379,6 +395,7 @@ class Module(Value):
                 ModuleVarNotFoundException.new([], interpreter, meta)
             ), meta)
 
+    @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
         return String(f"<module '{self.name}'>")
 
