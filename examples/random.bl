@@ -25,7 +25,7 @@ class Random {
 }
 
 
-seed = int(input('seed: '));
+seed = to_int(input('seed: '));
 random = new Random(seed);
 
 print('\nthe first 5 random numbers are:');

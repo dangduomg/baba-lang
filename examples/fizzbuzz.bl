@@ -19,8 +19,8 @@ fun fizzbuzz(start, stop, step) {
 
 print('fizzbuzz program');
 print('');
-start = int(input('start from: '));
-stop = int(input('to: '));
-step = int(input('by: '));
+start = to_int(input('start from: '));
+stop = to_int(input('to: '));
+step = to_int(input('by: '));
 print('');
 fizzbuzz(start, stop, step);
