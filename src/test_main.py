@@ -4,7 +4,7 @@ from pytest import fixture
 
 from main import interpret, interpret_expr
 from interpreter import ASTInterpreter, bl_types
-from interpreter.bl_types import ExpressionResult
+from interpreter.bl_types import ExpressionResultABC
 
 
 @fixture
@@ -19,7 +19,7 @@ def example_interp() -> ASTInterpreter:
 def test_expression(example_interp: ASTInterpreter):
     """Test for expression parsing"""
     res = interpret_expr("2 + 3", example_interp)
-    assert isinstance(res, ExpressionResult)
+    assert isinstance(res, ExpressionResultABC)
     assert res.is_equal(bl_types.Int(5), example_interp, meta=None)
 
 
