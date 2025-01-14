@@ -36,8 +36,10 @@ class ASTInterpreter(ASTVisitor):
         # Populate some builtins
         self.globals.new_var("print", PythonFunction(built_ins.print_))
         self.globals.new_var("input", PythonFunction(built_ins.input_))
-        self.globals.new_var("int", PythonFunction(built_ins.int_))
-        self.globals.new_var("float", PythonFunction(built_ins.float_))
+        self.globals.new_var("to_int", PythonFunction(built_ins.to_int))
+        self.globals.new_var("to_float", PythonFunction(built_ins.to_float))
+        self.globals.new_var("dump", PythonFunction(built_ins.dump))
+        self.globals.new_var("to_string", PythonFunction(built_ins.to_string))
         self.globals.new_var("Object", bl_types.ObjectClass)
         self.globals.new_var("Exception", bl_types.ExceptionClass)
 
