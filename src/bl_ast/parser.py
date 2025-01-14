@@ -42,6 +42,20 @@ class Extras(Transformer):
         updater: nodes._Expr | None,
         body: nodes.Body,
     ) -> nodes.Body:
+        """C-style for statement desugar
+
+        Rough expansion result:
+
+        for (<initializer>; <condition>; <updater>) { ... }
+
+        ==>
+
+        <initializer>
+        while <condition> {
+            ...
+            <updater>
+        }
+        """
         statements = []
         loop_body_statements: list[nodes._Stmt] = [body]
         if initializer is not None:

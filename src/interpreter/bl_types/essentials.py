@@ -16,6 +16,7 @@ from .abc_protocols import (
 )
 
 if TYPE_CHECKING:
+    from .iterator import Item
     from ..main import ASTInterpreter
 
 
@@ -340,6 +341,20 @@ class ExpressionResultABC(Result, ABC):
         ...
 
     @abstractmethod
+    def to_iter(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Convert an iterable to an iterator"""
+        ...
+
+    @abstractmethod
+    def next(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "ExpressionResult":
+        """Advance an iterator"""
+        ...
+
+    @abstractmethod
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "ExpressionResult":
@@ -575,6 +590,18 @@ class BLError(Exit, ExpressionResultABC):
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Self:
+        return self
+
+    @override
+    def to_iter(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        return self
+
+    @override
+    def next(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
         return self
 
     @override
@@ -865,7 +892,6 @@ class Value(ExpressionResultABC, ABC):
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
-        """Call self as a function"""
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
         ), meta, interpreter.path)
@@ -875,7 +901,6 @@ class Value(ExpressionResultABC, ABC):
         self, args: list["Value"], interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
-        """Instantiate an object"""
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
         ), meta, interpreter.path)
@@ -885,6 +910,22 @@ class Value(ExpressionResultABC, ABC):
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "Bool | BLError":
         return BOOLS[True]
+
+    @override
+    def to_iter(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
+        ), meta, interpreter.path)
+
+    @override
+    def next(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "Item | Null | BLError":
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
+        ), meta, interpreter.path)
 
     @override
     def dump(

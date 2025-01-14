@@ -70,6 +70,15 @@ class WhileStmt(_Stmt):
 
 
 @dataclass(frozen=True)
+class ForEachStmt(_Stmt):
+    """Iterator for statements"""
+    meta: Meta
+    pattern: "_Pattern"
+    iterable: "_Expr"
+    body: Body
+
+
+@dataclass(frozen=True)
 class BreakStmt(_Stmt):
     """Break statement"""
     meta: Meta

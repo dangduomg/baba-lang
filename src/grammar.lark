@@ -31,6 +31,7 @@ while_stmt: _WHILE expr "{" body "}"
 do_while_stmt: _DO "{" body "}" _WHILE expr ";"
 
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
+        | _FOR pattern _IN expr "{" body "}" -> for_each_stmt
 
 break_stmt: _BREAK ";"
 continue_stmt: _CONTINUE ";"

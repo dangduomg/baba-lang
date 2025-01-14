@@ -123,6 +123,22 @@ class ASTInterpreter(ASTVisitor):
                         return res
                     if eval_cond_after_body:
                         eval_condition = True
+            case nodes.ForEachStmt(
+                meta=meta, pattern=pattern, iterable=iterable, body=body
+            ):
+                iterator = self.visit_expr(iterable).to_iter(self, meta)
+                while (el := iterator.next(self, meta)) is not bl_types.NULL:
+                    match el:
+                        case BLError():
+                            return el
+                        case bl_types.Item(vars={"value": value}):
+                            self.assign(meta, pattern, el)
+                            res = self.visit_stmt(body)
+                            if isinstance(res, exits.Continue):
+                                pass
+                            elif isinstance(res, exits.Exit):
+                                return res
+                return Success()
             case nodes.BreakStmt():
                 return exits.Break()
             case nodes.ContinueStmt():
