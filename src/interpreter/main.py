@@ -430,7 +430,7 @@ class ASTInterpreter(ASTVisitor):
                     if value.class_ == bl_types.VarNotFoundException:
                         return self.globals.set_var(name, value, meta)
                     return res
-        return None
+        return self.globals.set_var(name, value, meta)
 
     def _new_var(self, name: str, value: Value) -> None:
         """Assign a new variable either in locals or globals"""
