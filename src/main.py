@@ -26,7 +26,7 @@ if importlib.util.find_spec('readline'):
     import readline  # noqa: F401
 
 
-PROG = 'mini-baba-lang'
+PROG = 'baba-lang'
 VERSION = '0.5.0'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
