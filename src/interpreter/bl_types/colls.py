@@ -34,7 +34,7 @@ def list_new(
         case _:
             return BLError(cast_to_instance(
                 IncorrectTypeException.new([], interpreter, meta)
-            ), meta)
+            ), meta, interpreter.path)
 
 
 ListClass = Class(String("List"), ObjectClass, {
@@ -136,10 +136,10 @@ class BLList(Instance):
                 except IndexError:
                     return BLError(cast_to_instance(
                         OutOfRangeException.new([], interpreter, meta),
-                    ), meta)
+                    ), meta, interpreter.path)
         return BLError(cast_to_instance(
             IncorrectTypeException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     def set(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /,
@@ -154,10 +154,10 @@ class BLList(Instance):
                 except IndexError:
                     return BLError(cast_to_instance(
                         OutOfRangeException.new([], interpreter, meta),
-                    ), meta)
+                    ), meta, interpreter.path)
         return BLError(cast_to_instance(
             IncorrectTypeException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
@@ -220,7 +220,7 @@ class BLList(Instance):
                 case _:
                     return BLError(cast_to_instance(
                         IncorrectTypeException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return BLList(elems)
 
     def reduce(
@@ -232,7 +232,7 @@ class BLList(Instance):
         if not self.elems:
             return BLError(cast_to_instance(
                 OutOfRangeException.new([], interpreter, meta)
-            ), meta)
+            ), meta, interpreter.path)
         acc = self.elems[0]
         for elem in self.elems[1:]:
             match res := f.call([acc, elem], interpreter, meta):
@@ -262,7 +262,7 @@ def dict_new(
         case _:
             return BLError(cast_to_instance(
                 IncorrectTypeException.new([], interpreter, meta)
-            ), meta)
+            ), meta, interpreter.path)
 
 
 DictClass = Class(String("Dict"), ObjectClass, {
@@ -328,10 +328,10 @@ class BLDict(Instance):
                 except KeyError:
                     return BLError(cast_to_instance(
                         KeyNotFoundException.new([], interpreter, meta),
-                    ), meta)
+                    ), meta, interpreter.path)
         return BLError(cast_to_instance(
             IncorrectTypeException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     def set(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /,
@@ -344,7 +344,7 @@ class BLDict(Instance):
                 return value
         return BLError(cast_to_instance(
             IncorrectTypeException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     def length(
         self, meta: Meta | None, interpreter: "ASTInterpreter", /, *_
@@ -393,7 +393,7 @@ class Module(Value):
         except KeyError:
             return BLError(cast_to_instance(
                 ModuleVarNotFoundException.new([], interpreter, meta)
-            ), meta)
+            ), meta, interpreter.path)
 
     @override
     def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:

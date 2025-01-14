@@ -101,7 +101,7 @@ class ExpressionResultABC(Result, ABC):
                 [String(f"Operator {op!r} is not supported")], interpreter,
                 meta
             )
-        ), meta)
+        ), meta, interpreter.path)
 
     @abstractmethod
     def add(
@@ -262,7 +262,7 @@ class ExpressionResultABC(Result, ABC):
                 return self.logical_not(interpreter, meta)
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     @abstractmethod
     def plus(
@@ -372,12 +372,16 @@ class BLError(Exit, ExpressionResultABC):
     """Error result type"""
 
     value: "Instance"
-    meta: Meta | None = None
+    meta: Meta | None
+    path: str | None
 
-    def __init__(self, value: "Instance", meta: Meta | None) -> None:
+    def __init__(
+        self, value: "Instance", meta: Meta | None, path: str | None
+    ) -> None:
         self.value = value
         self.value.vars["meta"] = PythonValue(meta)
         self.meta = meta
+        self.path = path
 
     @override
     def add(
@@ -754,7 +758,7 @@ class Value(ExpressionResultABC, ABC):
                 f"Operator {op!r} is not supported for " +
                 f"{self_dump.value} and {other_dump.value}"
             )], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def plus(
@@ -793,7 +797,7 @@ class Value(ExpressionResultABC, ABC):
             NotImplementedException.new([String(
                 f"Operator {op!r} is not supported for {self_dump.value}"
             )], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def get_attr(
@@ -805,7 +809,7 @@ class Value(ExpressionResultABC, ABC):
                 [String("Attribute access is not supported")],
                 interpreter, meta
             )
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def set_attr(
@@ -821,7 +825,7 @@ class Value(ExpressionResultABC, ABC):
                 [String("Attribute assignment is not supported")],
                 interpreter, meta,
             )
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def get_item(
@@ -836,7 +840,7 @@ class Value(ExpressionResultABC, ABC):
                 [String("Subscripting is not supported")],
                 interpreter, meta,
             )
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def set_item(
@@ -854,7 +858,7 @@ class Value(ExpressionResultABC, ABC):
                 [String("Subscript assignment is not supported")],
                 interpreter, meta,
             )
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def call(
@@ -864,7 +868,7 @@ class Value(ExpressionResultABC, ABC):
         """Call self as a function"""
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def new(
@@ -874,7 +878,7 @@ class Value(ExpressionResultABC, ABC):
         """Instantiate an object"""
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     @override
     def to_bool(
@@ -1054,6 +1058,7 @@ class Call:
     """Call site type for tracebacks"""
     function: SupportsBLCall
     meta: Meta | None
+    path: str | None
 
 
 @dataclass
@@ -1097,7 +1102,7 @@ class BLFunction(Value):
         meta: Meta | None
     ) -> ExpressionResult:
         # Add the function to the "call stack"
-        interpreter.calls.append(Call(self, meta))
+        interpreter.traceback.append(Call(self, meta, interpreter.path))
         # Create an environment (call frame)
         old_env = interpreter.locals
         env = Env(interpreter, parent=self.env)
@@ -1109,7 +1114,7 @@ class BLFunction(Value):
         except ValueError:
             return BLError(cast_to_instance(
                 IncorrectTypeException.new([], interpreter, meta)
-            ), meta)
+            ), meta, interpreter.path)
         # If function is bound to an object, add that object
         if self.this is not None:
             env.new_var("this", self.this)
@@ -1121,16 +1126,16 @@ class BLFunction(Value):
         # Return!
         match res:
             case Success():
-                interpreter.calls.pop()
+                interpreter.traceback.pop()
                 return NULL
             case Return(value=value):
-                interpreter.calls.pop()
+                interpreter.traceback.pop()
                 return value
             case BLError():
                 return res
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
 
     def bind(self, this: "Instance") -> "BLFunction":
         """Return a version of BLFunction bound to an object"""
@@ -1168,7 +1173,7 @@ class Class(Value):
                 return self.super.get_attr(attr, interpreter, meta)
             return BLError(cast_to_instance(
                 AttrNotFoundException.new([], interpreter, meta)
-            ), meta)
+            ), meta, interpreter.path)
 
     def has_attr(self, attr: str) -> bool:
         """Check if a class has an attribute"""
@@ -1215,7 +1220,7 @@ def exc_init(
         return NULL
     return BLError(cast_to_instance(
         NotImplementedException.new([], interpreter, meta)
-    ), meta)
+    ), meta, interpreter.path)
 
 
 def exc_dump(
@@ -1226,7 +1231,7 @@ def exc_dump(
     if this is None:
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)
-        ), meta)
+        ), meta, interpreter.path)
     if "msg" not in this.vars:
         return String(f"{this.class_.name.value}")
     msg = this.vars['msg'].dump(interpreter, meta).value
@@ -1515,7 +1520,7 @@ class Instance(Value):
                 return res
             return BLError(cast_to_instance(
                 IncorrectTypeException.new([], interpreter, meta)
-            ), meta)
+            ), meta, interpreter.path)
         return res
 
     def _overloaded_binary_op(self, name: str, fallback_name: str) -> Callable:
@@ -1617,7 +1622,7 @@ class Env:
             return self.parent.resolve_var(name, meta)
         return BLError(cast_to_instance(
             VarNotFoundException.new([], self.interpreter, meta)
-        ), meta)
+        ), meta, self.interpreter.path)
 
     def copy(self) -> "Env":
         """Copy the environment (for capturing variables in closures)"""

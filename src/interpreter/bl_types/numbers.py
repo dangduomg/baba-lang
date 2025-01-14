@@ -74,7 +74,7 @@ class Int(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().divide(other, interpreter, meta)
 
     @override
@@ -89,7 +89,7 @@ class Int(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().floor_div(other, interpreter, meta)
 
     @override
@@ -104,7 +104,7 @@ class Int(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().modulo(other, interpreter, meta)
 
     @override
@@ -121,7 +121,7 @@ class Int(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().power(other, interpreter, meta)
 
     @override
@@ -303,7 +303,7 @@ class Float(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().divide(other, interpreter, meta)
 
     @override
@@ -318,7 +318,7 @@ class Float(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().floor_div(other, interpreter, meta)
 
     @override
@@ -333,7 +333,7 @@ class Float(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().modulo(other, interpreter, meta)
 
     @override
@@ -348,7 +348,7 @@ class Float(Value):
                 except ZeroDivisionError:
                     return BLError(cast_to_instance(
                         DivByZeroException.new([], interpreter, meta)
-                    ), meta)
+                    ), meta, interpreter.path)
         return super().power(other, interpreter, meta)
 
     @override

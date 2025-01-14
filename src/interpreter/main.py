@@ -2,6 +2,7 @@
 
 
 from pathlib import Path
+from dataclasses import dataclass
 
 from lark import Token
 from lark.tree import Meta
@@ -10,11 +11,20 @@ from lark.exceptions import UnexpectedInput
 from bl_ast import nodes, parse_to_ast
 from bl_ast.base import ASTVisitor
 
+from static_checker import StaticChecker, StaticError
+
 from . import built_ins, bl_types
 from .bl_types import (
     Result, ExpressionResult, Success, BLError, Value, PythonFunction, Call,
     NotImplementedException, exits, Env, Return, cast_to_instance,
 )
+
+
+@dataclass(frozen=True)
+class Script:
+    """baba-lang script instance"""
+    path: str | None
+    meta: Meta | None
 
 
 class ASTInterpreter(ASTVisitor):
@@ -27,10 +37,12 @@ class ASTInterpreter(ASTVisitor):
     globals: Env
     locals: Env | None = None
 
-    calls: list[Call]
+    traceback: list[Call | Script]
+    path: str | None
 
-    def __init__(self):
-        self.calls = []
+    def __init__(self, path=None):
+        self.traceback = [Script(path, None)]
+        self.path = path
 
         self.globals = Env(self)
         # Populate some builtins
@@ -43,6 +55,12 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("Object", bl_types.ObjectClass)
         self.globals.new_var("Exception", bl_types.ExceptionClass)
 
+    def run_src(self, src: str) -> Result:
+        """Run baba-lang source code as a string"""
+        raw_ast = parse_to_ast(src)
+        ast_ = StaticChecker().visit(raw_ast)
+        return self.visit(ast_)
+
     def visit(self, node: nodes._AstNode) -> Result:
         # pylint: disable=protected-access
         match node:
@@ -52,7 +70,7 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_stmt(node)
         return BLError(cast_to_instance(
             NotImplementedException.new([], self, node.meta)
-        ), node.meta)
+        ), node.meta, self.path)
 
     def visit_stmt(self, node: nodes._Stmt) -> Result:
         """Visit a statement node"""
@@ -65,11 +83,7 @@ class ASTInterpreter(ASTVisitor):
                         return res
                 return Success()
             case nodes.IfStmt(meta=meta, condition=condition, body=body):
-                cond = (
-                    self.visit_expr(condition)
-                    .logical_not(self, meta)
-                    .logical_not(self, meta)
-                )
+                cond = self.visit_expr(condition).to_bool(self, meta)
                 match cond:
                     case BLError():
                         return cond
@@ -81,11 +95,7 @@ class ASTInterpreter(ASTVisitor):
                 meta=meta, condition=condition,
                 then_body=then_body, else_body=else_body
             ):
-                cond = (
-                    self.visit_expr(condition)
-                    .logical_not(self, meta)
-                    .logical_not(self, meta)
-                )
+                cond = self.visit_expr(condition).to_bool(self, meta)
                 match cond:
                     case BLError():
                         return cond
@@ -100,11 +110,7 @@ class ASTInterpreter(ASTVisitor):
                 eval_condition = not eval_cond_after_body
                 while True:
                     if eval_condition:
-                        cond = (
-                            self.visit_expr(condition)
-                            .logical_not(self, meta)
-                            .logical_not(self, meta)
-                        )
+                        cond = self.visit_expr(condition).to_bool(self, meta)
                         match cond:
                             case BLError():
                                 return cond
@@ -155,8 +161,11 @@ class ASTInterpreter(ASTVisitor):
             case nodes.IncludeStmt():
                 return self.visit_include(node)
         return BLError(cast_to_instance(
-            NotImplementedException.new([], self, node.meta)
-        ), node.meta)
+            NotImplementedException.new(
+                [bl_types.String("Statement type not supported")], self,
+                node.meta
+            )
+        ), node.meta, self.path)
 
     def visit_class(self, node: nodes.ClassStmt) -> Result:
         """Visit a class statement node"""
@@ -180,69 +189,58 @@ class ASTInterpreter(ASTVisitor):
             self.globals = self.globals.parent
         # Create the class
         if super_ is None:
-            superclass = bl_types.ObjectClass
+            superclass_res = bl_types.ObjectClass
         else:
-            superclass = self._get_var(super_, meta)
-            match superclass:
+            superclass_res = self._get_var(super_, meta)
+            match superclass_res:
                 case bl_types.Class():
                     pass
                 case BLError():
-                    return superclass
+                    return superclass_res
                 case _:
                     return BLError(cast_to_instance(
                         bl_types.IncorrectTypeException.new([], self, meta)
-                    ), meta)
+                    ), meta, self.path)
         self.globals.new_var(
-            name, bl_types.Class(bl_types.String(name), superclass, vars_)
+            name, bl_types.Class(bl_types.String(name), superclass_res, vars_)
         )
         return Success()
 
     def visit_include(self, node: nodes.IncludeStmt) -> Result:
         """Visit an include statement node"""
-        path = node.path
-        meta = node.meta
+        if self.path is None:
+            old_path_obj = Path.cwd()
+            new_path_obj = Path(node.path).resolve()
+        else:
+            old_path_obj = Path(self.path).resolve()
+            cwd = old_path_obj.parent
+            new_path_obj = Path(cwd / node.path).resolve()
         try:
-            # Find from current working directory
-            f = open(Path.cwd() / path, encoding='utf-8')
+            with new_path_obj.open(encoding="utf-8") as f:
+                src = f.read()
         except FileNotFoundError:
             return BLError(cast_to_instance(
-                InvalidIncludeException.new([], self, meta)
-            ), meta)
-        with f:
-            src = f.read()
-            # Execute Python source code
-            if path.endswith('.py'):
-                exec(src, globals())  # pylint: disable=exec-used
-                return Success()
-            # Invalid include target
-            if not path.endswith('.bl'):
-                return BLError(cast_to_instance(
-                    InvalidIncludeException.new([], self, meta)
-                ), meta)
-            try:
-                include_ast = parse_to_ast(src)
-            except UnexpectedInput:
-                return BLError(cast_to_instance(
-                    IncludeSyntaxErrException.new([], self, meta)
-                ), meta)
-            match self.visit(include_ast):
-                case BLError(meta=meta):
-                    if meta is None:
-                        return BLError(cast_to_instance(
-                            IncludeRuntimeErrException.new(
-                                [], self, meta
-                            )
-                        ), meta)
-                    return BLError(cast_to_instance(
-                        IncludeRuntimeErrException.new(
-                            [], self, meta
-                        )
-                    ), meta)
-                case Success():
-                    return Success()
-        return BLError(cast_to_instance(
-            InvalidIncludeException.new([], self, meta)
-        ), meta)
+                InvalidIncludeException.new([bl_types.String(
+                    f"Source file '{new_path_obj}' can't be accessed"
+                )], self, node.meta)
+            ), node.meta, self.path)
+        self.path = str(new_path_obj)
+        self.traceback.append(Script(str(new_path_obj), node.meta))
+        try:
+            res = self.run_src(src)
+        except (UnexpectedInput, StaticError):
+            return BLError(cast_to_instance(
+                InvalidIncludeException.new([bl_types.String(
+                    f"Source file {new_path_obj} has a compile-time error. " +
+                    "Check it."
+                )], self, node.meta)
+            ), node.meta, self.path)
+        match res:
+            case BLError():
+                return res
+        self.traceback.pop()
+        self.path = str(old_path_obj)
+        return res
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
@@ -354,7 +352,7 @@ class ASTInterpreter(ASTVisitor):
                 return bl_types.BLFunction("<anonymous>", form_args, body, env)
         return BLError(cast_to_instance(
             NotImplementedException.new([], self, node.meta)
-        ), node.meta)
+        ), node.meta, self.path)
 
     def assign(
         self, meta: Meta, pattern: nodes._Pattern, value: Value
@@ -371,7 +369,7 @@ class ASTInterpreter(ASTVisitor):
                 return accessee.set_attr(attr, value, self, meta)
         return BLError(cast_to_instance(
             NotImplementedException.new([], self, meta)
-        ), meta)
+        ), meta, self.path)
 
     def inplace(
         self, meta: Meta, pattern: nodes._Pattern, op: Token, right: Value
@@ -394,7 +392,7 @@ class ASTInterpreter(ASTVisitor):
         else:
             return BLError(cast_to_instance(
                 NotImplementedException.new([], self, meta)
-            ), meta)
+            ), meta, self.path)
         if isinstance(old_value_get_result, BLError):
             return old_value_get_result
         new_result = old_value_get_result.binary_op(
@@ -408,7 +406,7 @@ class ASTInterpreter(ASTVisitor):
             case _:
                 return BLError(cast_to_instance(
                     NotImplementedException.new([], self, meta)
-                ), meta)
+                ), meta, self.path)
         if isinstance(pattern, nodes.VarPattern):
             self._set_var(pattern.name, new_result, meta)
         if isinstance(pattern, nodes.DotPattern):
@@ -432,6 +430,7 @@ class ASTInterpreter(ASTVisitor):
                     if value.class_ == bl_types.VarNotFoundException:
                         return self.globals.set_var(name, value, meta)
                     return res
+        return None
 
     def _new_var(self, name: str, value: Value) -> None:
         """Assign a new variable either in locals or globals"""
