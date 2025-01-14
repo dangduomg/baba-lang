@@ -39,12 +39,12 @@ function_stmt: _FUN IDENT "(" form_args ")" "{" body "}"
 
 module_stmt: _MODULE IDENT "{" module_entries "}"
 module_entries: module_entry*
-module_entry: module_var_stmt | function_stmt | class_stmt
+?module_entry: module_var_stmt | function_stmt | class_stmt
 module_var_stmt: IDENT "=" expr ";"
 
 class_stmt: _CLASS IDENT [_EXTENDS IDENT] "{" class_entries "}"
 class_entries: class_entry*
-class_entry: module_var_stmt | function_stmt
+?class_entry: module_var_stmt | function_stmt
 
 // Expression grammar
 
@@ -93,7 +93,7 @@ SUM_OP: "+" | "-"
 
 ?prod: prod PROD_OP prefix -> binary_op
      | prefix
-PROD_OP: "*" | "/" | "%/%" | "%"
+PROD_OP: /\*(?!\*)/ | "/" | "%/%" | "%"
 
 ?prefix: PREFIX_OP prefix
        | postfix
