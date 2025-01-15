@@ -720,7 +720,7 @@ class Value(ExpressionResultABC, ABC):
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> "Bool":
+    ) -> "Bool | BLError":
         return BOOLS[self is other]
 
     @override
@@ -1026,7 +1026,7 @@ class String(Value):
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> Bool:
+    ) -> Bool | BLError:
         match other:
             case String(other_val):
                 return BOOLS[self.value == other_val]
@@ -1447,9 +1447,11 @@ class Instance(Value):
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> Bool:
-        return self._overloaded_binary_op("__eq__", "is_equal")(
-            other, interpreter, meta
+    ) -> Bool | BLError:
+        return cast(
+            Bool | BLError, self._overloaded_binary_op("__eq__", "is_equal")(
+                other, interpreter, meta
+            )
         )
 
     @override

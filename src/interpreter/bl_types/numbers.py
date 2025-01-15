@@ -178,7 +178,7 @@ class Int(Value):
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> Bool:
+    ) -> Bool | BLError:
         match other:
             case Int(other_val) | Float(other_val):
                 return BOOLS[self.value == other_val]
@@ -355,7 +355,7 @@ class Float(Value):
     def is_equal(
         self, other: ExpressionResult, interpreter: "ASTInterpreter",
         meta: Meta | None,
-    ) -> Bool:
+    ) -> Bool | BLError:
         match other:
             case Float(other_val) | Int(other_val):
                 return BOOLS[self.value == other_val]
