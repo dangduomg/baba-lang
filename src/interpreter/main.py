@@ -193,7 +193,7 @@ class ASTInterpreter(ASTVisitor):
         self.globals = Env(self, parent=self.globals)
         # Evaluate the body
         for entry in entries.entries:
-            match res := self.visit_stmt(entry):
+            match res := self.visit(entry):
                 case BLError():
                     return res
         vars_ = {
