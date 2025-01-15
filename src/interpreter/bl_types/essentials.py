@@ -1546,7 +1546,17 @@ class Instance(Value):
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Bool | BLError:
-        return self._overloaded_unary_op("__bool__", "to_bool")(
+        return cast(
+            Bool | BLError, self._overloaded_typechecked_unary_op(
+                "__bool__", "to_bool", Bool
+            )(interpreter, meta)
+        )
+
+    @override
+    def to_iter(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        return self._overloaded_unary_op("__iter__", "to_iter")(
             interpreter, meta
         )
 
@@ -1554,19 +1564,46 @@ class Instance(Value):
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> String | BLError:
-        res = self._call_method_if_exists("__dump__", [], interpreter, meta)
-        if not isinstance(res, String):
-            if isinstance(res, BLError):
-                if res.value.class_ == AttrNotFoundException:
-                    class_to_str = self.class_.dump(interpreter, meta).value
-                    return String(f"<object of {class_to_str}>")
-                return res
-            return BLError(cast_to_instance(
-                IncorrectTypeException.new([], interpreter, meta)
-            ), meta, interpreter.path)
-        return res
+        return cast(
+            String | BLError, self._overloaded_typechecked_unary_op(
+                "__dump__", "dump", String
+            )(interpreter, meta)
+        )
 
-    def _overloaded_binary_op(self, name: str, fallback_name: str) -> Callable:
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> String | BLError:
+        return cast(
+            String | BLError, self._overloaded_typechecked_unary_op(
+                "__str__", "to_string", String
+            )(interpreter, meta)
+        )
+
+    def _overloaded_typechecked_unary_op(
+        self, name: str, fallback_name: str, expected_type: type
+    ) -> Callable[["ASTInterpreter", Meta | None], ExpressionResult]:
+        def _wrapper(
+            interpreter: "ASTInterpreter", meta: Meta | None
+        ) -> ExpressionResult:
+            res = self._call_method_if_exists(name, [], interpreter, meta)
+            if not isinstance(res, expected_type):
+                if isinstance(res, BLError):
+                    if res.value.class_ == AttrNotFoundException:
+                        return getattr(super(type(self), self), fallback_name)(
+                            interpreter, meta
+                        )
+                    return res
+                return BLError(cast_to_instance(
+                    IncorrectTypeException.new([], interpreter, meta)
+                ), meta, interpreter.path)
+            return res
+        return _wrapper
+
+    def _overloaded_binary_op(
+        self, name: str, fallback_name: str
+    ) -> Callable[
+        [ExpressionResult, "ASTInterpreter", Meta | None], ExpressionResult
+    ]:
         def _wrapper(
             other: ExpressionResult, interpreter: "ASTInterpreter",
             meta: Meta | None,
@@ -1584,13 +1621,15 @@ class Instance(Value):
             return res
         return _wrapper
 
-    def _overloaded_unary_op(self, name: str, fallback_name: str) -> Callable:
+    def _overloaded_unary_op(
+        self, name: str, fallback_name: str
+    ) -> Callable[["ASTInterpreter", Meta | None], ExpressionResult]:
         def _wrapper(
             interpreter: "ASTInterpreter", meta: Meta | None
         ) -> ExpressionResult:
             res = self._call_method_if_exists(name, [], interpreter, meta)
             if isinstance(res, BLError):
-                if res.value.class_ == VarNotFoundException:
+                if res.value.class_ == AttrNotFoundException:
                     return getattr(super(type(self), self), fallback_name)(
                         interpreter, meta
                     )
