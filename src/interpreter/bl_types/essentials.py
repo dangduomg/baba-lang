@@ -1570,6 +1570,7 @@ class Instance(Value):
             )(interpreter, meta)
         )
 
+    @override
     def to_string(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> String | BLError:
