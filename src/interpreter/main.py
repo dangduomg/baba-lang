@@ -15,8 +15,9 @@ from static_checker import StaticChecker, StaticError
 
 from . import built_ins, bl_types
 from .bl_types import (
-    Result, ExpressionResult, Success, BLError, Value, PythonFunction, Call,
-    NotImplementedException, exits, Env, Return, cast_to_instance,
+    pywrapper, Result, ExpressionResult, Success, BLError, Value,
+    PythonFunction, Call, NotImplementedException, exits, Env, Return,
+    cast_to_instance,
 )
 
 
@@ -54,6 +55,15 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("to_string", PythonFunction(built_ins.to_string))
         self.globals.new_var("Object", bl_types.ObjectClass)
         self.globals.new_var("Exception", bl_types.ExceptionClass)
+        self.globals.new_var("py_function", PythonFunction(
+            pywrapper.py_function
+        ))
+        self.globals.new_var("py_method", PythonFunction(
+            pywrapper.py_method
+        ))
+        self.globals.new_var("py_constant", PythonFunction(
+            pywrapper.py_constant
+        ))
 
     def run_src(self, src: str) -> Result:
         """Run baba-lang source code as a string"""
@@ -181,7 +191,7 @@ class ASTInterpreter(ASTVisitor):
                 self.globals = Env(self, parent=self.globals)
                 # Evaluate the body
                 for entry in entries.entries:
-                    match res := self.visit_stmt(entry):
+                    match res := self.visit(entry):
                         case BLError():
                             return res
                 vars_ = {
