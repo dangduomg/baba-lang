@@ -5,7 +5,6 @@ video game "Baba is You".
 """
 
 
-import time
 import importlib.util
 import logging
 import os
@@ -16,9 +15,9 @@ from collections.abc import Callable
 from lark.exceptions import UnexpectedInput
 from lark.tree import Meta
 
-from bl_ast import parse_expr_to_ast, parse_to_ast
+from bl_ast import parse_expr_to_ast
 from interpreter import (
-    ASTInterpreter, BLError, ExpressionResult, Result, Value
+    ASTInterpreter, BLError, ExpressionResult, Result, Value, Call, Script
 )
 from static_checker import StaticChecker, StaticError
 
@@ -28,7 +27,7 @@ if importlib.util.find_spec('readline'):
 
 
 PROG = 'baba-lang'
-VERSION = '0.4.5-testing-2'
+VERSION = '0.5.0'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
 
@@ -57,21 +56,19 @@ def interpret(
     src: str, interpreter: ASTInterpreter = default_interp
 ) -> Result:
     """Interpret a script"""
-    ast_ = parse_to_ast(src)
-    default_static_checker.visit(ast_)
-    return interpreter.visit(ast_)
+    return interpreter.run_src(src)
 
 
 def interpret_expr(
         src: str, interpreter: ASTInterpreter = default_interp
 ) -> ExpressionResult:
     """Interpret an expression"""
-    ast_ = parse_expr_to_ast(src)
-    default_static_checker.visit(ast_)
+    raw_ast = parse_expr_to_ast(src)
+    ast_ = default_static_checker.visit_expr(raw_ast)
     return interpreter.visit_expr(ast_)
 
 
-def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str:
+def get_context(meta: Meta, text: str, span: int = 40) -> str:
     """Returns a pretty string pinpointing the error in the text,
     with span amount of context characters around it.
 
@@ -83,43 +80,56 @@ def get_context(meta: Meta, text: str | bytes, span: int = 40) -> str:
     pos = meta.start_pos
     start = max(pos - span, 0)
     end = pos + span
-    if isinstance(text, str):
-        before = text[start:pos].rsplit('\n', 1)[-1]
-        after = text[pos:end].split('\n', 1)[0]
-        return (
-            before + after + '\n' + ' ' * len(before.expandtabs()) +
-            '^\n'
-        )
-    text = bytes(text)
-    before = text[start:pos].rsplit(b'\n', 1)[-1]
-    after = text[pos:end].split(b'\n', 1)[0]
+    before = text[start:pos].rsplit('\n', 1)[-1]
+    after = text[pos:end].split('\n', 1)[0]
     return (
-        before + after + b'\n' + b' ' * len(before.expandtabs()) + b'^\n'
-    ).decode("ascii", "backslashreplace")
+        before + after + '\n' + ' ' * len(before.expandtabs()) +
+        '^\n'
+    )
 
 
 def handle_runtime_errors(
-    interpreter: ASTInterpreter, src: str, error: BLError
+    interpreter: ASTInterpreter, error: BLError
 ) -> None:
     """Print runtime errors nicely"""
     match error:
-        case BLError(value=msg, meta=meta):
+        case BLError(value=value, meta=meta, path=path):
             match meta:
                 case Meta(line=line, column=column):
-                    print(f'Runtime error at line {line}, column {column}:')
-                    print(msg)
+                    print(f'Runtime error at line {line}, col {column}:')
+                    print(value.dump(interpreter, meta).value)
                     print()
-                    print(get_context(meta, src))
+                    if path is not None:
+                        with open(path, encoding='utf-8') as f:
+                            path_src = f.read()
+                        print(get_context(meta, path_src))
                 case None:
                     print('Error:')
-                    print(msg)
+                    print(value.dump(interpreter, meta).value)
             print('Traceback:')
-            for call in interpreter.calls:
-                if call.meta is not None:
-                    print(
-                        f'At line {call.meta.line}, column {call.meta.column}:'
-                    )
-                    print(get_context(call.meta, src))
+            print()
+            for i, frame in enumerate(interpreter.traceback[1:], 1):
+                match frame:
+                    case Call(path=path, meta=meta):
+                        pass
+                    case Script(meta=meta):
+                        prev_frame = interpreter.traceback[i-1]
+                        path = (
+                            prev_frame.path if prev_frame.path is not None
+                            else None
+                        )
+                line = meta.line if meta is not None else 0
+                column = meta.column if meta is not None else 0
+                print(
+                    f"At {path if path is not None else "<none>"}, " +
+                    f"line {line}, col {column}:"
+                )
+                print()
+                if path is not None:
+                    with open(path, encoding='utf-8') as f:
+                        path_src = f.read()
+                    if meta is not None:
+                        print(get_context(meta, path_src))
 
 
 def interp_with_error_handling(
@@ -143,7 +153,7 @@ def interp_with_error_handling(
         print()
         print(e.get_context(src))
         return e
-    handle_runtime_errors(interpreter, src, res)
+    handle_runtime_errors(interpreter, res)
     return res
 
 
@@ -153,26 +163,21 @@ def main() -> int:
     if args.path is None:
         return main_interactive()
     path = os.path.abspath(args.path)
-    src_stream = open(args.path, encoding='utf-8')
+    src_stream = open(path, encoding='utf-8')
     with src_stream:
         src = src_stream.read()
     if args.expression:
         interp_func = interpret_expr
     else:
         interp_func = interpret
-    start = time.perf_counter()
-    res = interp_with_error_handling(
-        interp_func, src, ASTInterpreter(path)
-    )
-    end = time.perf_counter()
+    interpreter = ASTInterpreter(path)
+    res = interp_with_error_handling(interp_func, src, interpreter)
     match res:
         case UnexpectedInput() | BLError():
             return 1
         case Value():
             if args.expression:
-                print(res.dump(None).value)
-    print()
-    print('Execution time:', end - start)
+                print(res.dump(interpreter, None).value)
     return 0
 
 
@@ -188,9 +193,9 @@ def main_interactive() -> int:
             try:
                 match res := interpret_expr(input_):
                     case Value():
-                        print(res.dump(None).value)
+                        print(res.dump(default_interp, None).value)
                     case BLError():
-                        handle_runtime_errors(default_interp, input_, res)
+                        handle_runtime_errors(default_interp, res)
             except UnexpectedInput:
                 interp_with_error_handling(interpret, input_, default_interp)
         except KeyboardInterrupt:

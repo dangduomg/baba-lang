@@ -22,11 +22,19 @@ class Random {
         );
         return this.state;
     }
+
+    fun __str__() {
+        return '<pseudorandom number generator with seed '
+             + to_string(this.state)
+             + '>';
+    }
 }
 
 
-seed = int(input('seed: '));
+seed = to_int(input('seed: '));
 random = new Random(seed);
+
+print("Random number generator: " + to_string(random));
 
 print('\nthe first 5 random numbers are:');
 for (i = 0; i < 5; i += 1) {

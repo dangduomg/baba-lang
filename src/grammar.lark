@@ -11,17 +11,15 @@ body: stmt*
      | for_stmt
      | break_stmt
      | continue_stmt
+     | try_stmt
      | return_stmt
+     | throw_stmt
      | include_stmt
      | function_stmt
      | module_stmt
      | class_stmt
      | exprs ";"
      | ";" -> nop_stmt
-
-include_stmt: _INCLUDE STRING ";"
-
-return_stmt: _RETURN [expr] ";"
 
 if_stmt: _IF expr "{" body "}"
 
@@ -32,32 +30,46 @@ while_stmt: _WHILE expr "{" body "}"
 do_while_stmt: _DO "{" body "}" _WHILE expr ";"
 
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
+        | _FOR IDENT _IN expr "{" body "}" -> for_each_stmt
 
 break_stmt: _BREAK ";"
 continue_stmt: _CONTINUE ";"
 
-function_stmt: _FUNCTION IDENT "(" form_args ")" "{" body "}"
+try_stmt: _TRY "{" body "}" catch_clause
+catch_clause: _CATCH [pattern] "{" body "}"
 
-module_stmt: _MODULE IDENT "{" body "}"
+return_stmt: _RETURN [expr] ";"
+throw_stmt: _THROW expr ";"
 
-class_stmt: _CLASS IDENT "{" body "}"
+function_stmt: _FUN IDENT "(" form_args ")" "{" body "}"
+
+module_stmt: _MODULE IDENT "{" module_entries "}"
+module_entries: module_entry*
+?module_entry: module_var_stmt | function_stmt | class_stmt
+module_var_stmt: IDENT "=" expr ";"
+
+class_stmt: _CLASS IDENT [_EXTENDS IDENT] "{" class_entries "}"
+class_entries: class_entry*
+?class_entry: module_var_stmt | function_stmt
+
+include_stmt: _INCLUDE STRING ";"
 
 // Expression grammar
 
 ?exprs: _comma_list{expr}
 
-?expr: _FUNCTION "(" form_args ")" "->" expr -> short_fn_literal
+?expr: _FUN "(" form_args ")" "->" expr -> short_fn_literal
      | assign
 
 ?assign: pattern "=" expr
        | pattern INPLACE_OP expr -> inplace
        | or
-INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%=" | "%/%=" | "**=" | "&=" | "|="
-          | "^=" | "<<=" | ">>="
+INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%/%=" | "%=" | "&=" | "|=" | "^="
+          | "<<=" | ">>="
 
 ?pattern: IDENT -> var_pattern
-        | postfix "[" expr "]" -> subscript_pattern
         | postfix "." IDENT -> dot_pattern
+        | postfix "[" expr "]" -> subscript_pattern
 
 ?or: and OR_OP or
    | and
@@ -89,7 +101,7 @@ SUM_OP: "+" | "-"
 
 ?prod: prod PROD_OP prefix -> binary_op
      | prefix
-PROD_OP: "*" /(?!\*)/ | "/" | "%/%" | "%"
+PROD_OP: /\*(?!\*)/ | "/" | "%/%" | "%"
 
 ?prefix: PREFIX_OP prefix
        | postfix
@@ -105,7 +117,7 @@ POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
-     | _NEW IDENT "(" spec_args ")" -> new
+     | _NEW IDENT ["(" spec_args ")"] -> new
      | "(" expr ")"
 
 literal: STRING -> string
@@ -114,7 +126,7 @@ literal: STRING -> string
        | _TRUE -> true_literal
        | _FALSE -> false_literal
        | _NULL -> null_literal
-       | _FUNCTION "(" form_args ")" "{" body "}" -> function_literal
+       | _FUN "(" form_args ")" "{" body "}" -> function_literal
        | "[" _comma_list{expr}? "]" -> list
        | "{" _comma_list{pair}? "}" -> dict
 
@@ -139,13 +151,14 @@ _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
 IDENT: /(?!/ RESERVED  /)/ CNAME /\b/
 
-RESERVED: _TRUE | _FALSE | _NULL | _FUNCTION | _RETURN | _IF | _ELSE | _WHILE
-        | _DO | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE | _CLASS | _NEW
+RESERVED: _TRUE | _FALSE | _NULL | _FUN | _RETURN | _IF | _ELSE | _WHILE | _DO
+        | _FOR | _BREAK | _CONTINUE | _INCLUDE | _MODULE | _CLASS | _NEW | _IN
+        | _EXTENDS | _THROW | _TRY | _CATCH | _FINALLY
 _TRUE: /true\b/
 _FALSE: /false\b/
 _NULL: /null\b/
 _NEW: /new\b/
-_FUNCTION: /fun\b/
+_FUN: /fun\b/
 _RETURN: /return\b/
 _IF: /if\b/
 _ELSE: /else\b/
@@ -157,6 +170,12 @@ _CONTINUE: /continue\b/
 _INCLUDE: /include\b/
 _MODULE: /module\b/
 _CLASS: /class\b/
+_EXTENDS: /extends\b/
+_IN: /in\b/
+_THROW: /throw\b/
+_TRY: /try\b/
+_CATCH: /catch\b/
+_FINALLY: /finally\b/
 
 %import common.CNAME
 %import common.INT

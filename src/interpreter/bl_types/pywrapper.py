@@ -3,31 +3,24 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 from importlib import import_module
-from typing import Any, TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .base import ExpressionResult
-from .value import (
-    BOOLS, NULL, Bool, Float, Int, Null, String, Value
+from .essentials import (
+    ExpressionResult, PythonFunction, Value, BLError, cast_to_instance,
+    NotImplementedException, String, Bool, BOOLS, Null, NULL, PythonValue,
 )
-from . import BLDict, BLList
-from .errors import error_not_implemented
-from . import PythonFunction
+from .numbers import Int, Float
+from .colls import BLList, BLDict
 
 if TYPE_CHECKING:
+    from .essentials import Instance
     from ..main import ASTInterpreter
 
 
-@dataclass(frozen=True)
-class PythonValue(Value):
-    """Python value. Returned by calling ConvenientPythonWrapper"""
-
-    value: object
-
-
-@dataclass(frozen=True)
+@dataclass
 class ConvenientPythonWrapper(PythonFunction):
     """Convenient wrapper for Python functions to baba-lang"""
 
@@ -43,7 +36,9 @@ class ConvenientPythonWrapper(PythonFunction):
                 ConvenientPythonWrapper.unwrap_arg(a) for a in args
             ]
         except ValueError:
-            return error_not_implemented.copy().set_meta(meta)
+            return BLError(cast_to_instance(
+                NotImplementedException.new([], interpreter, meta)
+            ), meta, interpreter.path)
         return ConvenientPythonWrapper.wrap_res(
             self.function(*unwrapped_args)
         )
@@ -94,7 +89,7 @@ class ConvenientPythonWrapper(PythonFunction):
 
 def py_function(
     meta: Meta | None, interpreter: "ASTInterpreter", /,
-    module: String, name: String, *_
+    this: "Instance | None", module: String, name: String, *_
 ) -> ConvenientPythonWrapper:
     """Function to get a Python function from baba-lang"""
     # pylint: disable=unused-argument
@@ -105,7 +100,7 @@ def py_function(
 
 def py_method(
     meta: Meta | None, interpreter: "ASTInterpreter", /,
-    module: String, class_: String, name: String, *_
+    this: "Instance | None", module: String, class_: String, name: String, *_
 ) -> ConvenientPythonWrapper:
     """Function to get a Python method from baba-lang"""
     # pylint: disable=unused-argument
@@ -119,7 +114,7 @@ def py_method(
 
 def py_constant(
     meta: Meta | None, interpreter: "ASTInterpreter", /,
-    module: String, name: String, *_
+    this: "Instance | None", module: String, name: String, *_
 ) -> Value:
     """Function to get a Python constant to baba-lang"""
     # pylint: disable=unused-argument

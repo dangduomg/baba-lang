@@ -3,7 +3,7 @@
 import ast
 from pathlib import Path
 
-from lark import Lark, ast_utils, v_args
+from lark import Lark, ast_utils, v_args, Token
 from lark.visitors import Transformer, Discard, _DiscardType
 from lark.tree import Meta
 
@@ -13,7 +13,7 @@ from . import nodes
 grammar_path = Path(__file__).parent.parent / "grammar.lark"
 common_opts = {
     "grammar_filename": grammar_path,
-    "parser": "lalr",
+    "parser": "earley",
     "propagate_positions": True,
 }
 body_parser = Lark.open(start="body", **common_opts)
@@ -32,17 +32,30 @@ class Extras(Transformer):
     def do_while_stmt(
         self, meta: Meta, body: nodes.Body, cond: nodes._Expr
     ) -> nodes.WhileStmt:
-        return nodes.WhileStmt(meta, cond, body, eval_condition_after=True)
+        return nodes.WhileStmt(meta, cond, body, eval_cond_after_body=True)
 
     @v_args(inline=True, meta=True)
     def for_stmt(
-        self,
-        meta: Meta,
+        self, meta: Meta,
         initializer: nodes._Expr | None,
         condition: nodes._Expr | None,
         updater: nodes._Expr | None,
         body: nodes.Body,
     ) -> nodes.Body:
+        """C-style for statement desugar
+
+        Rough expansion result:
+
+        for (<initializer>; <condition>; <updater>) { ... }
+
+        ==>
+
+        <initializer>
+        while <condition> {
+            ...
+            <updater>
+        }
+        """
         statements = []
         loop_body_statements: list[nodes._Stmt] = [body]
         if initializer is not None:
@@ -55,6 +68,12 @@ class Extras(Transformer):
         loop = nodes.WhileStmt(meta, condition, loop_body)
         statements.append(loop)
         return nodes.Body(meta, statements)
+
+    @v_args(inline=True, meta=True)
+    def module_var_stmt(
+        self, meta: Meta, name: Token, value: nodes._Expr
+    ) -> nodes.Assign:
+        return nodes.Assign(meta, nodes.VarPattern(meta, name), value)
 
     def nop_stmt(self, children: list) -> _DiscardType:
         return Discard

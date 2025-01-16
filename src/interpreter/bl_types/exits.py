@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass
 
-from .base import Exit
-from .value import Value
+from .essentials import Exit
 
 
 # pylint: disable=too-few-public-methods
@@ -17,9 +16,3 @@ class Break(Exit):
 @dataclass(frozen=True)
 class Continue(Exit):
     """Continue statement"""
-
-
-@dataclass(frozen=True)
-class Return(Exit):
-    """Return statement"""
-    value: Value

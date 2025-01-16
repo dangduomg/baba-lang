@@ -1,8 +1,8 @@
 """AST node classes"""
 
 
+from abc import ABC
 from dataclasses import dataclass
-from typing import Optional
 
 from lark import Token
 from lark.ast_utils import AsList
@@ -17,7 +17,7 @@ from .base import _AstNode
 # Statements
 
 
-class _Stmt(_AstNode):
+class _Stmt(_AstNode, ABC):
     """Statement base class"""
     meta: Meta
 
@@ -29,21 +29,7 @@ class Body(_Stmt, AsList):
     statements: list[_Stmt]
 
 
-@dataclass(frozen=True)
-class IncludeStmt(_Stmt):
-    """Include statement"""
-    meta: Meta
-    path: str
-
-
-@dataclass(frozen=True)
-class ReturnStmt(_Stmt):
-    """Return statement"""
-    meta: Meta
-    value: Optional['_Expr']
-
-
-@dataclass(frozen=True)
+@dataclass
 class IfStmt(_Stmt):
     """If statements"""
     meta: Meta
@@ -51,22 +37,31 @@ class IfStmt(_Stmt):
     body: Body
 
 
-@dataclass(frozen=True)
+@dataclass
 class IfElseStmt(_Stmt):
     """If..else statements"""
     meta: Meta
     condition: '_Expr'
     then_body: Body
-    else_body: Body
+    else_body: _Stmt
 
 
-@dataclass(frozen=True)
+@dataclass
 class WhileStmt(_Stmt):
     """While (and do..while) statements"""
     meta: Meta
     condition: '_Expr'
     body: Body
-    eval_condition_after: bool = False
+    eval_cond_after_body: bool = False
+
+
+@dataclass(frozen=True)
+class ForEachStmt(_Stmt):
+    """Iterator for statements"""
+    meta: Meta
+    pattern: "_Pattern"
+    iterable: "_Expr"
+    body: Body
 
 
 @dataclass(frozen=True)
@@ -82,6 +77,36 @@ class ContinueStmt(_Stmt):
 
 
 @dataclass(frozen=True)
+class ReturnStmt(_Stmt):
+    """Return statement"""
+    meta: Meta
+    value: '_Expr | None'
+
+
+@dataclass(frozen=True)
+class ThrowStmt(_Stmt):
+    """Throw statement"""
+    meta: Meta
+    value: "_Expr"
+
+
+@dataclass(frozen=True)
+class TryStmt(_Stmt):
+    """Try-catch statement"""
+    meta: Meta
+    body: Body
+    catch: "CatchClause"
+
+
+@dataclass(frozen=True)
+class CatchClause(_AstNode):
+    """A single catch clause"""
+    meta: Meta
+    pattern: "_Pattern | None"
+    body: Body
+
+
+@dataclass
 class FunctionStmt(_Stmt):
     """Function declaration"""
     meta: Meta
@@ -102,7 +127,14 @@ class ModuleStmt(_Stmt):
     """Module"""
     meta: Meta
     name: Token
-    body: Body
+    entries: "ModuleEntries"
+
+
+@dataclass(frozen=True)
+class ModuleEntries(_AstNode, AsList):
+    """Class entries"""
+    meta: Meta
+    entries: list[_Stmt]
 
 
 @dataclass(frozen=True)
@@ -110,13 +142,34 @@ class ClassStmt(_Stmt):
     """Class"""
     meta: Meta
     name: Token
-    body: Body
+    super: Token | None
+    entries: "ClassEntries"
+
+
+@dataclass(frozen=True)
+class ClassEntries(_AstNode, AsList):
+    """Class entries"""
+    meta: Meta
+    entries: list[_Stmt]
+
+
+@dataclass(frozen=True)
+class IncludeStmt(_Stmt):
+    """Include statement"""
+    meta: Meta
+    path: str
+
+
+@dataclass(frozen=True)
+class NopStmt(_Stmt):
+    """No-op statement"""
+    meta: Meta
 
 
 # Expressions
 
 
-class _Expr(_Stmt):
+class _Expr(_Stmt, ABC):
     """Expression base class"""
     meta: Meta
 
@@ -148,7 +201,7 @@ class Inplace(_Expr):
     right: _Expr
 
 
-class _Pattern(_AstNode):
+class _Pattern(_AstNode, ABC):
     """Assignment pattern base class"""
 
 
@@ -179,17 +232,8 @@ class DotPattern(_Pattern):
 
 
 @dataclass(frozen=True)
-class Or(_Expr):
-    """Or operation"""
-    meta: Meta
-    left: _Expr
-    op: Token
-    right: _Expr
-
-
-@dataclass(frozen=True)
-class And(_Expr):
-    """And operation"""
+class Logical(_Expr):
+    """Logical operations"""
     meta: Meta
     left: _Expr
     op: Token
@@ -236,7 +280,7 @@ class New(_Expr):
     """Instantiation operation"""
     meta: Meta
     class_name: Token
-    args: SpecArgs
+    args: SpecArgs | None
 
 
 # Subscript
@@ -244,7 +288,7 @@ class New(_Expr):
 
 @dataclass(frozen=True)
 class Subscript(_Expr):
-    """Subscript operation"""
+    """Subscript operator"""
     meta: Meta
     subscriptee: _Expr
     index: _Expr
@@ -310,7 +354,7 @@ class NullLiteral(_Expr):
     meta: Meta
 
 
-@dataclass(frozen=True)
+@dataclass
 class FunctionLiteral(_Expr):
     """Function literal"""
     meta: Meta

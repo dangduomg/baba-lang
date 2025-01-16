@@ -3,6 +3,7 @@
 from typing import Any
 from abc import ABC, abstractmethod
 
+from lark.tree import Meta
 from lark.ast_utils import Ast, WithMeta
 
 
@@ -12,6 +13,7 @@ from lark.ast_utils import Ast, WithMeta
 
 class _AstNode(Ast, WithMeta):
     """AST node base class"""
+    meta: Meta
 
 
 class ASTVisitor(ABC):
