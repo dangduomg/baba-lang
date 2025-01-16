@@ -111,21 +111,25 @@ def handle_runtime_errors(
             for i, frame in enumerate(interpreter.traceback[1:], 1):
                 match frame:
                     case Call(path=path, meta=meta):
-                        path = path if path is not None else "<none>"
+                        pass
                     case Script(meta=meta):
                         prev_frame = interpreter.traceback[i-1]
                         path = (
                             prev_frame.path if prev_frame.path is not None
-                            else "<none>"
+                            else None
                         )
                 line = meta.line if meta is not None else 0
                 column = meta.column if meta is not None else 0
-                print(f"At {path}, line {line}, col {column}:")
+                print(
+                    f"At {path if path is not None else "<none>"}, " +
+                    f"line {line}, col {column}:"
+                )
                 print()
-                with open(path, encoding='utf-8') as f:
-                    path_src = f.read()
-                if meta is not None:
-                    print(get_context(meta, path_src))
+                if path is not None:
+                    with open(path, encoding='utf-8') as f:
+                        path_src = f.read()
+                    if meta is not None:
+                        print(get_context(meta, path_src))
 
 
 def interp_with_error_handling(
