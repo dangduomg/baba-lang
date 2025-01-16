@@ -149,6 +149,27 @@ class ASTInterpreter(ASTVisitor):
                     return res
                 if isinstance(res, Value):
                     return Return(res)
+            case nodes.ThrowStmt(meta=meta, value=value):
+                res = self.visit_expr(value)
+                if isinstance(res, BLError):
+                    return res
+                if not isinstance(res, bl_types.Instance):
+                    return BLError(cast_to_instance(
+                        NotImplementedException.new(
+                            [bl_types.String("You can only throw instances")],
+                            self, meta,
+                        )
+                    ), meta, self.path)
+                return BLError(res, meta, self.path)
+            case nodes.TryStmt(meta=meta, body=body, catch=catch):
+                res = self.visit_stmt(body)
+                if not isinstance(res, BLError):
+                    return Success()
+                match catch:
+                    case nodes.CatchClause(pattern=pattern):
+                        if pattern is not None:
+                            self.assign(meta, pattern, res.value)
+                        return self.visit_stmt(catch.body)
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
                 self.globals.new_var(

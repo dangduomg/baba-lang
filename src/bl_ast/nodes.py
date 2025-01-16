@@ -29,20 +29,6 @@ class Body(_Stmt, AsList):
     statements: list[_Stmt]
 
 
-@dataclass(frozen=True)
-class IncludeStmt(_Stmt):
-    """Include statement"""
-    meta: Meta
-    path: str
-
-
-@dataclass(frozen=True)
-class ReturnStmt(_Stmt):
-    """Return statement"""
-    meta: Meta
-    value: '_Expr | None'
-
-
 @dataclass
 class IfStmt(_Stmt):
     """If statements"""
@@ -90,6 +76,36 @@ class ContinueStmt(_Stmt):
     meta: Meta
 
 
+@dataclass(frozen=True)
+class ReturnStmt(_Stmt):
+    """Return statement"""
+    meta: Meta
+    value: '_Expr | None'
+
+
+@dataclass(frozen=True)
+class ThrowStmt(_Stmt):
+    """Throw statement"""
+    meta: Meta
+    value: "_Expr"
+
+
+@dataclass(frozen=True)
+class TryStmt(_Stmt):
+    """Try-catch statement"""
+    meta: Meta
+    body: Body
+    catch: "CatchClause"
+
+
+@dataclass(frozen=True)
+class CatchClause(_AstNode):
+    """A single catch clause"""
+    meta: Meta
+    pattern: "_Pattern | None"
+    body: Body
+
+
 @dataclass
 class FunctionStmt(_Stmt):
     """Function declaration"""
@@ -135,6 +151,13 @@ class ClassEntries(_AstNode, AsList):
     """Class entries"""
     meta: Meta
     entries: list[_Stmt]
+
+
+@dataclass(frozen=True)
+class IncludeStmt(_Stmt):
+    """Include statement"""
+    meta: Meta
+    path: str
 
 
 @dataclass(frozen=True)

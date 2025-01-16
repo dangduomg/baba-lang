@@ -13,7 +13,7 @@ from . import nodes
 grammar_path = Path(__file__).parent.parent / "grammar.lark"
 common_opts = {
     "grammar_filename": grammar_path,
-    "parser": "lalr",
+    "parser": "earley",
     "propagate_positions": True,
 }
 body_parser = Lark.open(start="body", **common_opts)
