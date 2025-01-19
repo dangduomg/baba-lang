@@ -8,7 +8,7 @@ The site is **under construction**
 
 ## What is baba-lang?
 
-baba-lang is a programming language created with Python (with a bytecode interpreter planned to be written in Rust). Right now, it's still incomplete, but has supported most control flow operators, closures, modules and easy Python integration via `py_*` functions. It is currently in version `0.4.5-testing-2`.
+baba-lang is a programming language created with Python (with a bytecode interpreter planned to be written in Rust). Right now, it's still incomplete, but has supported most control flow operators, closures, modules and easy Python integration via `py_*` functions. It is currently in version `0.5.0-testing`.
 
 baba-lang is written for educational purposes only, and is not production-ready.
 

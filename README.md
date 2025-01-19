@@ -2,7 +2,7 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.4.5-testing-2`.
+Right now in version `0.5.0-testing`.
 
 ## Notes
 
@@ -66,9 +66,10 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
 ```
 
 ## To-do list
+- A bytecode interpreter in Rust (compiler will still be written in Python)
 - Rest and keyword arguments
-- OOP (Inheritance)
-- Iterators
-- Exceptions
+- Traits/mixins
 - Algebraic data types
+- `import` instead of `include`
+- Static/Gradual type checking
 - Package manager
