@@ -3,12 +3,17 @@
   */
 
 
+include '../std/perf_counter.bl';
+
 fun speedTest() {
-    max = 2000;
+    max = 20000;
     print("speedtest");
     print("started");
+    start = perf_counter();
     testNumbers(max);
+    end = perf_counter();
     print("done");
+    print(to_string(end - start) + 's');
 }
 
 fun testNumbers(n) {

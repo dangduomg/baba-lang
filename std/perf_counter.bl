@@ -1,0 +1,5 @@
+/**
+  * perf_counter.bl -- Performance counter
+  */
+
+perf_counter = py_function('time', 'perf_counter');
