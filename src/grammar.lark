@@ -117,7 +117,7 @@ POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
-     | _NEW IDENT ["(" spec_args ")"] -> new
+     | _NEW IDENT "(" spec_args ")" -> new
      | "(" expr ")"
 
 literal: STRING -> string

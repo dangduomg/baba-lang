@@ -67,8 +67,8 @@ class ASTInterpreter(ASTVisitor):
 
     def run_src(self, src: str) -> Result:
         """Run baba-lang source code as a string"""
-        raw_ast = parse_to_ast(src)
-        ast_ = StaticChecker().visit(raw_ast)
+        ast_ = parse_to_ast(src)
+        ast_ = StaticChecker().visit(ast_)
         return self.visit(ast_)
 
     def visit(self, node: nodes._AstNode) -> Result:
