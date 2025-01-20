@@ -36,7 +36,7 @@ break_stmt: _BREAK ";"
 continue_stmt: _CONTINUE ";"
 
 try_stmt: _TRY "{" body "}" catch_clause
-catch_clause: _CATCH [pattern] "{" body "}"
+catch_clause: _CATCH IDENT "{" body "}"
 
 return_stmt: _RETURN [expr] ";"
 throw_stmt: _THROW expr ";"
@@ -117,7 +117,7 @@ POW_OP: "**"
 
 ?atom: literal
      | IDENT -> var
-     | _NEW IDENT "(" spec_args ")" -> new
+     | _NEW IDENT ["(" spec_args ")"] -> new
      | "(" expr ")"
 
 literal: STRING -> string
