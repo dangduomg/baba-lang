@@ -4,7 +4,6 @@
 from abc import ABC, abstractmethod
 from typing import Self, TYPE_CHECKING, override, cast
 from dataclasses import dataclass, field
-from collections.abc import Callable
 
 from lark import Token
 from lark.tree import Meta
@@ -1543,12 +1542,10 @@ class Instance(Value):
         return res
 
     @override
-    def to_bool(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Bool | BLError:
+    def to_bool(self, interpreter: "ASTInterpreter", meta: Meta | None):
         return cast(
             Bool | BLError, self._overloaded_typechecked_unary_op(
-                "__bool__", "to_bool", Bool
+                "to_bool", "to_bool", Bool
             )(interpreter, meta)
         )
 
@@ -1556,33 +1553,39 @@ class Instance(Value):
     def to_iter(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> ExpressionResult:
-        return self._overloaded_unary_op("__iter__", "to_iter")(
+        return self._overloaded_unary_op("iter", "to_iter")(
             interpreter, meta
         )
 
     @override
-    def dump(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> String | BLError:
+    def next(self, interpreter: "ASTInterpreter", meta: Meta | None):
+        from .iterator import Item  # pylint: disable=import-outside-toplevel
         return cast(
-            String | BLError, self._overloaded_typechecked_unary_op(
-                "__dump__", "dump", String
+            Item | Null | BLError, self._overloaded_typechecked_unary_op(
+                "next", "next", (Item, Null)
             )(interpreter, meta)
         )
 
     @override
-    def to_string(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> String | BLError:
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None):
         return cast(
             String | BLError, self._overloaded_typechecked_unary_op(
-                "__str__", "to_string", String
+                "dump", "dump", String
+            )(interpreter, meta)
+        )
+
+    @override
+    def to_string(self, interpreter: "ASTInterpreter", meta: Meta | None):
+        return cast(
+            String | BLError, self._overloaded_typechecked_unary_op(
+                "to_string", "to_string", String
             )(interpreter, meta)
         )
 
     def _overloaded_typechecked_unary_op(
-        self, name: str, fallback_name: str, expected_type: type
-    ) -> Callable[["ASTInterpreter", Meta | None], ExpressionResult]:
+        self, name: str, fallback_name: str,
+        expected_type: type | tuple[type, ...]
+    ):
         def _wrapper(
             interpreter: "ASTInterpreter", meta: Meta | None
         ) -> ExpressionResult:
@@ -1600,11 +1603,7 @@ class Instance(Value):
             return res
         return _wrapper
 
-    def _overloaded_binary_op(
-        self, name: str, fallback_name: str
-    ) -> Callable[
-        [ExpressionResult, "ASTInterpreter", Meta | None], ExpressionResult
-    ]:
+    def _overloaded_binary_op(self, name: str, fallback_name: str):
         def _wrapper(
             other: ExpressionResult, interpreter: "ASTInterpreter",
             meta: Meta | None,
@@ -1622,9 +1621,7 @@ class Instance(Value):
             return res
         return _wrapper
 
-    def _overloaded_unary_op(
-        self, name: str, fallback_name: str
-    ) -> Callable[["ASTInterpreter", Meta | None], ExpressionResult]:
+    def _overloaded_unary_op(self, name: str, fallback_name: str):
         def _wrapper(
             interpreter: "ASTInterpreter", meta: Meta | None
         ) -> ExpressionResult:
