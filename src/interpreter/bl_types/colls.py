@@ -2,7 +2,7 @@
 
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, cast
 from operator import methodcaller
 
 from lark.tree import Meta
@@ -13,6 +13,7 @@ from .essentials import (
     IncorrectTypeException,
 )
 from .numbers import Int
+from .iterator import Item
 from .abc_protocols import SupportsBLCall
 
 if TYPE_CHECKING:
@@ -54,6 +55,10 @@ ListClass = Class(String("List"), ObjectClass, {
     ),
     "length": PythonFunction(
         lambda meta, intp, /, this, *_: this.length(meta, intp)
+    ),
+    "iter": PythonFunction(
+        lambda meta, intp, /, this, *_:
+        ListIteratorClass.new([this], intp, meta)
     ),
     "map": PythonFunction(
         lambda meta, intp, /, this, f, *_: this.map(meta, intp, f)
@@ -242,6 +247,37 @@ class BLList(Instance):
                     return res
         return acc
 
+
+def listiter_init(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, lst: BLList, *_
+) -> "ExpressionResult":
+    """Initialize list iterator"""
+    # pylint: disable=unused-argument
+    if this is not None:
+        this.vars["lst"] = lst
+        this.vars["i"] = Int(0)
+    return NULL
+
+
+def listiter_next(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, *_
+) -> Item | Null:
+    """Advance list iterator"""
+    if this is not None:
+        elems = cast(BLList, this.vars["lst"]).elems
+        i = cast(Int, this.vars["i"])
+        this.vars["i"] = cast(Value, i.add(Int(1), interpreter, meta))
+        if i.value < len(elems):
+            return Item(elems[i.value])
+    return NULL
+
+
+ListIteratorClass = Class(String("ListIterator"), ObjectClass, {
+    "__init__": PythonFunction(listiter_init),
+    "next": PythonFunction(listiter_next),
+})
 
 # List errors
 OutOfRangeException = Class(String("OutOfRangeException"), ExceptionClass)
