@@ -53,8 +53,8 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("to_float", PythonFunction(built_ins.to_float))
         self.globals.new_var("dump", PythonFunction(built_ins.dump))
         self.globals.new_var("to_string", PythonFunction(built_ins.to_string))
-        self.globals.new_var("Object", bl_types.ObjectClass)
-        self.globals.new_var("Exception", bl_types.ExceptionClass)
+        self.globals.new_var("to_bool", PythonFunction(built_ins.to_bool))
+        self.globals.new_var("exit", PythonFunction(built_ins.exit_))
         self.globals.new_var("py_function", PythonFunction(
             pywrapper.py_function
         ))
@@ -64,6 +64,8 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("py_constant", PythonFunction(
             pywrapper.py_constant
         ))
+        self.globals.new_var("Object", bl_types.ObjectClass)
+        self.globals.new_var("Exception", bl_types.ExceptionClass)
 
     def run_src(self, src: str) -> Result:
         """Run baba-lang source code as a string"""
@@ -256,29 +258,33 @@ class ASTInterpreter(ASTVisitor):
     def visit_include(self, node: nodes.IncludeStmt) -> Result:
         """Visit an include statement node"""
         if self.path is None:
-            old_path_obj = Path.cwd()
-            new_path_obj = Path(node.path).resolve()
+            old_path = None
         else:
-            old_path_obj = Path(self.path).resolve()
-            cwd = old_path_obj.parent
-            new_path_obj = Path(cwd / node.path).resolve()
+            old_path = Path(self.path).resolve()
+        new_path = self._find_src(node, old_path)
+        if new_path is None:
+            return BLError(cast_to_instance(
+                InvalidIncludeException.new([bl_types.String(
+                    f"Source file '{node.path}' not found"
+                )], self, node.meta)
+            ), node.meta, self.path)
         try:
-            with new_path_obj.open(encoding="utf-8") as f:
+            with new_path.open(encoding="utf-8") as f:
                 src = f.read()
         except FileNotFoundError:
             return BLError(cast_to_instance(
                 InvalidIncludeException.new([bl_types.String(
-                    f"Source file '{new_path_obj}' can't be accessed"
+                    f"Source file '{new_path}' can't be accessed"
                 )], self, node.meta)
             ), node.meta, self.path)
-        self.path = str(new_path_obj)
-        self.traceback.append(Script(str(new_path_obj), node.meta))
+        self.path = str(new_path)
+        self.traceback.append(Script(str(new_path), node.meta))
         try:
             res = self.run_src(src)
         except (UnexpectedInput, StaticError):
             return BLError(cast_to_instance(
                 InvalidIncludeException.new([bl_types.String(
-                    f"Source file {new_path_obj} has a compile-time error. " +
+                    f"Source file {new_path} has a compile-time error. " +
                     "Check it."
                 )], self, node.meta)
             ), node.meta, self.path)
@@ -286,8 +292,18 @@ class ASTInterpreter(ASTVisitor):
             case BLError():
                 return res
         self.traceback.pop()
-        self.path = str(old_path_obj)
+        self.path = str(old_path)
         return res
+
+    def _find_src(
+        self, node: nodes.IncludeStmt, old_path: Path | None
+    ) -> Path | None:
+        if old_path is not None:
+            if (new_path := old_path.parent / node.path).is_file():
+                return new_path
+        project_root = Path(__file__).parent.parent.parent
+        if (new_path := project_root / node.path).is_file():
+            return new_path
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""

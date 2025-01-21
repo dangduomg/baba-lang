@@ -1,11 +1,12 @@
 """Built-in functions"""
 
+import sys
 from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
 from .bl_types import (
-    Value, BLError, Int, Float, String, Null, NULL, Instance,
+    Value, BLError, Int, Float, String, Bool, Null, NULL, Instance,
     IncorrectTypeException, cast_to_instance,
 )
 
@@ -66,6 +67,15 @@ def to_float(
     ), meta, interpreter.path)
 
 
+def to_bool(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
+) -> Bool | BLError:
+    """Convert to boolean"""
+    # pylint: disable=unused-argument
+    return arg.to_bool(interpreter, meta)
+
+
 def dump(
     meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
     /, arg: Value, *_
@@ -82,3 +92,18 @@ def to_string(
     """Convert to string"""
     # pylint: disable=unused-argument
     return arg.to_string(interpreter, meta)
+
+
+def exit_(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, arg: Value, *_
+) -> Null | BLError:
+    """Exit the program"""
+    # pylint: disable=unused-argument
+    match arg:
+        case Int(value=value):
+            sys.exit(value)
+            return NULL  # pylint: disable=unreachable
+    return BLError(cast_to_instance(
+        IncorrectTypeException.new([], interpreter, meta)
+    ), meta, interpreter.path)
