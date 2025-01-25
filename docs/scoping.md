@@ -102,7 +102,7 @@ print(my_counter());  # 3
 ```
 The variable `i` seems to "outlive" its scope (local to `counter`), as it is still accessed and modified by an instance of the `inc` function (`my_counter`), even after `counter` finished executing. However, it does not violate lexical scoping rules, as `i` is in `counter`'s body, therefore in the enclosing scope of `inc`, so are always accessible by `inc`.
 
-baba-lang use closures to make this possible. Closures allow functions to be first-class citizens (can be assigned to variables, passed to arguments and returned from a function just like other )
+baba-lang use closures to make this possible. Closures allow functions to be first-class citizens (can be assigned to variables, passed to arguments and returned from a function just like other values)
 
 
 ## Types of variables
