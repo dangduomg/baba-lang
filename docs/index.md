@@ -45,3 +45,4 @@ pip install -r requirements.txt
 2. [Operators](operators.md)
 3. [Types](types.md)
 4. [Scoping](scoping.md)
+5. [Syntax](syntax.md)
