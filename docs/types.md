@@ -75,7 +75,7 @@ Strings in baba-lang are largely similar to Python's. Strings can be double-quot
 
 ### Syntax
 
-As baba-lang uses `str` to parse a string, the syntax for strings is identical to Python. See https://docs.python.org/3/reference/lexical_analysis.html#strings for details.
+As baba-lang uses `str` to parse a string, the syntax for strings is identical to Python. See [](https://docs.python.org/3/reference/lexical_analysis.html#strings) for details.
 
 ```
 'hello'
