@@ -27,7 +27,7 @@ if importlib.util.find_spec('readline'):
 
 
 PROG = 'baba-lang'
-VERSION = '0.5.0-testing'
+VERSION = '0.5.0'
 VERSION_STRING = f'%(prog)s {VERSION}'
 
 
@@ -60,7 +60,7 @@ def interpret(
 
 
 def interpret_expr(
-        src: str, interpreter: ASTInterpreter = default_interp
+    src: str, interpreter: ASTInterpreter = default_interp
 ) -> ExpressionResult:
     """Interpret an expression"""
     raw_ast = parse_expr_to_ast(src)

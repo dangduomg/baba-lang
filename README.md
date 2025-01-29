@@ -2,7 +2,7 @@
 
 Yet another programming language, made in Python. Has nothing to do with the video game "Baba is You".
 
-Right now in version `0.5.0-testing`.
+Right now in version `0.5.0`.
 
 ## Notes
 

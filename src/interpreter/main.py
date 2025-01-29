@@ -310,6 +310,7 @@ class ASTInterpreter(ASTVisitor):
         project_root = Path(__file__).parent.parent.parent
         if (new_path := project_root / node.path).is_file():
             return new_path
+        return None
 
     def visit_expr(self, node: nodes._Expr) -> ExpressionResult:
         """Visit an expression node"""
@@ -350,9 +351,13 @@ class ASTInterpreter(ASTVisitor):
                         return not_left_res.logical_not(self, left.meta)
                     return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
-                return self.visit_expr(left).binary_op(
-                    op, self.visit_expr(right), self, meta
-                )
+                left = self.visit_expr(left)
+                if isinstance(left, BLError):
+                    return left
+                right = self.visit_expr(right)
+                if isinstance(right, BLError):
+                    return right
+                return left.binary_op(op, right, self, meta)
             case nodes.Subscript(
                 meta=meta, subscriptee=subscriptee, index=index
             ):
@@ -384,7 +389,10 @@ class ASTInterpreter(ASTVisitor):
                     case BLError():
                         return class_
             case nodes.Prefix(meta=meta, op=op, operand=operand):
-                return self.visit_expr(operand).unary_op(op, self, meta)
+                operand = self.visit_expr(operand)
+                if isinstance(operand, BLError):
+                    return operand
+                return operand.unary_op(op, self, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
                 return self.visit_expr(accessee).get_attr(attr, self, meta)
             case nodes.Var(meta=meta, name=name):
