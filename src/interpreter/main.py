@@ -3,6 +3,7 @@
 
 from pathlib import Path
 from dataclasses import dataclass
+from typing import cast
 
 from lark import Token
 from lark.tree import Meta
@@ -97,7 +98,10 @@ class ASTInterpreter(ASTVisitor):
                         return res
                 return Success()
             case nodes.IfStmt(meta=meta, condition=condition, body=body):
-                cond = self.visit_expr(condition).to_bool(self, meta)
+                cond = self.visit_expr(condition)
+                if isinstance(cond, BLError):
+                    return cond
+                cond = cond.to_bool(self, meta)
                 match cond:
                     case BLError():
                         return cond
@@ -109,7 +113,10 @@ class ASTInterpreter(ASTVisitor):
                 meta=meta, condition=condition,
                 then_body=then_body, else_body=else_body
             ):
-                cond = self.visit_expr(condition).to_bool(self, meta)
+                cond = self.visit_expr(condition)
+                if isinstance(cond, BLError):
+                    return cond
+                cond = cond.to_bool(self, meta)
                 match cond:
                     case BLError():
                         return cond
@@ -124,7 +131,10 @@ class ASTInterpreter(ASTVisitor):
                 eval_condition = not eval_cond_after_body
                 while True:
                     if eval_condition:
-                        cond = self.visit_expr(condition).to_bool(self, meta)
+                        cond = self.visit_expr(condition)
+                        if isinstance(cond, BLError):
+                            return cond
+                        cond = cond.to_bool(self, meta)
                         match cond:
                             case BLError():
                                 return cond
@@ -140,7 +150,12 @@ class ASTInterpreter(ASTVisitor):
             case nodes.ForEachStmt(
                 meta=meta, ident=ident, iterable=iterable, body=body
             ):
-                iterator_ = self.visit_expr(iterable).to_iter(self, meta)
+                iterable = self.visit_expr(iterable)
+                if isinstance(iterable, BLError):
+                    return iterable
+                iterator_ = iterable.to_iter(self, meta)
+                if isinstance(iterator_, BLError):
+                    return iterator_
                 while True:
                     match el := iterator_.next(self, meta):
                         case BLError():
@@ -336,20 +351,19 @@ class ASTInterpreter(ASTVisitor):
                     return rhs_result
                 if isinstance(rhs_result, Value):
                     return self.inplace(meta, pattern, op, rhs_result)
-            case nodes.LogicalOp(left=left, op=op, right=right):
-                not_left_res = (
-                    self.visit_expr(left).logical_not(self, left.meta)
-                )
-                if isinstance(not_left_res, BLError):
-                    return not_left_res
-                if isinstance(not_left_res, essentials.Bool):
-                    left_value = not not_left_res.value
-                    if (
-                        op == "&&" and left_value
-                        or op == "||" and not left_value
-                    ):
-                        return not_left_res.logical_not(self, left.meta)
-                    return self.visit_expr(right)
+            case nodes.LogicalOp(left=left_node, op=op, right=right):
+                left = self.visit_expr(left_node)
+                if isinstance(left, BLError):
+                    return left
+                left_bool = left.to_bool(self, left_node.meta)
+                if isinstance(left_bool, BLError):
+                    return left_bool
+                if (
+                    op == "&&" and not left_bool.value
+                    or op == "||" and left_bool.value
+                ):
+                    return left
+                return self.visit_expr(right)
             case nodes.BinaryOp(meta=meta, left=left, op=op, right=right):
                 left = self.visit_expr(left)
                 if isinstance(left, BLError):
@@ -361,9 +375,13 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Subscript(
                 meta=meta, subscriptee=subscriptee, index=index
             ):
-                return self.visit_expr(subscriptee).get_item(
-                    self.visit_expr(index), self, meta
-                )
+                subscriptee = self.visit_expr(subscriptee)
+                if isinstance(subscriptee, BLError):
+                    return subscriptee
+                index = self.visit_expr(index)
+                if isinstance(index, BLError):
+                    return index
+                return subscriptee.get_item(index, self, meta)
             case nodes.Call(meta=meta, callee=callee, args=args_in_ast):
                 # Visit all args, stop if one is an error
                 args = []
@@ -373,6 +391,8 @@ class ASTInterpreter(ASTVisitor):
                         return arg_visited
                     args.append(arg_visited)
                 callee = self.visit_expr(callee)
+                if isinstance(callee, BLError):
+                    return callee
                 return callee.call(args, self, meta)
             case nodes.New(meta=meta, class_name=name, args=args_):
                 # Visit all args, stop if one is an error
@@ -394,7 +414,10 @@ class ASTInterpreter(ASTVisitor):
                     return operand
                 return operand.unary_op(op, self, meta)
             case nodes.Dot(meta=meta, accessee=accessee, attr_name=attr):
-                return self.visit_expr(accessee).get_attr(attr, self, meta)
+                accessee = self.visit_expr(accessee)
+                if isinstance(accessee, BLError):
+                    return accessee
+                return accessee.get_attr(attr, self, meta)
             case nodes.Var(meta=meta, name=name):
                 return self._get_var(name, meta)
             case nodes.String(value=value):
@@ -445,12 +468,18 @@ class ASTInterpreter(ASTVisitor):
                 subscriptee=subscriptee, index=index
             ):
                 subscriptee = self.visit_expr(subscriptee)
+                if isinstance(subscriptee, BLError):
+                    return subscriptee
                 index = self.visit_expr(index)
+                if isinstance(index, BLError):
+                    return index
                 return subscriptee.set_item(index, value, self, meta)
             case nodes.DotPattern(
-                accessee=accessee_, attr_name=attr
+                accessee=accessee, attr_name=attr
             ):
-                accessee = self.visit_expr(accessee_)
+                accessee = self.visit_expr(accessee)
+                if isinstance(accessee, BLError):
+                    return accessee
                 return accessee.set_attr(attr, value, self, meta)
         return BLError(cast_to_instance(
             NotImplementedException.new([], self, meta)
@@ -461,19 +490,24 @@ class ASTInterpreter(ASTVisitor):
     ) -> ExpressionResult:
         """Visit an in-place assignment node"""
         # to solve the unbound problem
-        accessee = essentials.ObjectClass.new([], self, meta)
+        accessee = cast(Value, essentials.ObjectClass.new([], self, meta))
         if isinstance(pattern, nodes.VarPattern):
             old_value_get_result = self._get_var(pattern.name, meta)
         elif isinstance(pattern, nodes.DotPattern):
             accessee = self.visit_expr(pattern.accessee)
+            if isinstance(accessee, BLError):
+                return accessee
             old_value_get_result = accessee.get_attr(
                 pattern.attr_name, self, meta
             )
         elif isinstance(pattern, nodes.SubscriptPattern):
             accessee = self.visit_expr(pattern.subscriptee)
-            old_value_get_result = accessee.get_item(
-                self.visit_expr(pattern.index), self, meta
-            )
+            if isinstance(accessee, BLError):
+                return accessee
+            index = self.visit_expr(pattern.index)
+            if isinstance(index, BLError):
+                return index
+            old_value_get_result = accessee.get_item(index, self, meta)
         else:
             return BLError(cast_to_instance(
                 NotImplementedException.new([], self, meta)

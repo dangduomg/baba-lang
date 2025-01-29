@@ -5,7 +5,7 @@ from pytest import fixture
 from main import interpret, interpret_expr
 from interpreter import ASTInterpreter
 from interpreter.bl_types import essentials, numbers
-from interpreter.bl_types.essentials import ExpressionResultABC
+from interpreter.bl_types.essentials import Value
 
 
 @fixture
@@ -20,7 +20,7 @@ def example_interp() -> ASTInterpreter:
 def test_expression(example_interp: ASTInterpreter):
     """Test for expression parsing"""
     res = interpret_expr("2 + 3", example_interp)
-    assert isinstance(res, ExpressionResultABC)
+    assert isinstance(res, numbers.Int)
     assert res.is_equal(numbers.Int(5), example_interp, meta=None)
 
 
@@ -66,7 +66,9 @@ def test_error(example_interp: ASTInterpreter):
 def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
     interpret("a = 3;", example_interp)
-    assert example_interp.globals.get_var("a", meta=None).is_equal(
+    a = example_interp.globals.get_var("a", meta=None)
+    assert isinstance(a, essentials.Value)
+    assert a.is_equal(
         numbers.Int(3), example_interp, meta=None
     )
 
@@ -88,7 +90,9 @@ def test_if(example_interp: ASTInterpreter):
         """,
         example_interp,
     )
-    assert example_interp.globals.get_var("res", meta=None).is_equal(
+    res = example_interp.globals.get_var("res", meta=None)
+    assert isinstance(res, Value)
+    assert res.is_equal(
         essentials.String("adult"), example_interp, meta=None
     )
 
@@ -104,7 +108,9 @@ def test_loops(example_interp: ASTInterpreter):
         """,
         example_interp,
     )
-    assert example_interp.globals.get_var("res", meta=None).is_equal(
+    res = example_interp.globals.get_var("res", meta=None)
+    assert isinstance(res, Value)
+    assert res.is_equal(
         numbers.Int(45), example_interp, meta=None
     )
 
@@ -124,7 +130,9 @@ def test_function(example_interp: ASTInterpreter):
         """,
         example_interp,
     )
-    assert example_interp.globals.get_var("res", meta=None).is_equal(
+    res = example_interp.globals.get_var("res", meta=None)
+    assert isinstance(res, Value)
+    assert res.is_equal(
         numbers.Int(3628800), example_interp, meta=None
     )
 
@@ -147,7 +155,9 @@ def test_closure(example_interp: ASTInterpreter):
         """,
         example_interp,
     )
-    assert example_interp.globals.get_var("res", meta=None).is_equal(
+    res = example_interp.globals.get_var("res", meta=None)
+    assert isinstance(res, Value)
+    assert res.is_equal(
         numbers.Int(3), example_interp, meta=None
     )
 
@@ -174,10 +184,9 @@ def test_object(example_interp: ASTInterpreter):
     assert isinstance(cls, essentials.Class)
     assert isinstance(res, essentials.Instance)
     assert res.class_ == cls
-    assert (
-        res.get_attr("x", example_interp, None)
-        .is_equal(numbers.Float(1.), example_interp, meta=None)
-    )
+    x = res.get_attr("x", example_interp, None)
+    assert isinstance(x, Value)
+    assert x.is_equal(numbers.Float(1.), example_interp, meta=None)
 
 
 def test_op_overloading(example_interp: ASTInterpreter):
@@ -233,6 +242,8 @@ def test_op_overloading(example_interp: ASTInterpreter):
         """,
         example_interp,
     )
-    example_interp.globals.get_var("res", meta=None).is_equal(
+    res = example_interp.globals.get_var("res", meta=None)
+    assert isinstance(res, Value)
+    assert res.is_equal(
         essentials.Bool(True), example_interp, meta=None
     )

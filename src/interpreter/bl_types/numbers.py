@@ -28,7 +28,7 @@ class Int(Value):
 
     @override
     def add(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -40,7 +40,7 @@ class Int(Value):
 
     @override
     def subtract(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -52,7 +52,7 @@ class Int(Value):
 
     @override
     def multiply(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -64,7 +64,7 @@ class Int(Value):
 
     @override
     def divide(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -79,7 +79,7 @@ class Int(Value):
 
     @override
     def floor_div(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -94,7 +94,7 @@ class Int(Value):
 
     @override
     def modulo(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -109,7 +109,7 @@ class Int(Value):
 
     @override
     def power(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -126,7 +126,7 @@ class Int(Value):
 
     @override
     def bit_and(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
         match other:
@@ -136,7 +136,7 @@ class Int(Value):
 
     @override
     def bit_or(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
         match other:
@@ -146,7 +146,7 @@ class Int(Value):
 
     @override
     def bit_xor(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
         match other:
@@ -156,7 +156,7 @@ class Int(Value):
 
     @override
     def left_shift(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
         match other:
@@ -166,7 +166,7 @@ class Int(Value):
 
     @override
     def right_shift(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None
     ) -> ExpressionResult:
         match other:
@@ -176,7 +176,7 @@ class Int(Value):
 
     @override
     def is_equal(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> Bool | BLError:
         match other:
@@ -186,7 +186,7 @@ class Int(Value):
 
     @override
     def is_less(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -196,7 +196,7 @@ class Int(Value):
 
     @override
     def is_less_or_equal(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -206,7 +206,7 @@ class Int(Value):
 
     @override
     def is_greater(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -216,7 +216,7 @@ class Int(Value):
 
     @override
     def is_greater_or_equal(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -263,7 +263,7 @@ class Float(Value):
 
     @override
     def add(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -273,7 +273,7 @@ class Float(Value):
 
     @override
     def subtract(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -283,7 +283,7 @@ class Float(Value):
 
     @override
     def multiply(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -293,7 +293,7 @@ class Float(Value):
 
     @override
     def divide(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -308,7 +308,7 @@ class Float(Value):
 
     @override
     def floor_div(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -323,7 +323,7 @@ class Float(Value):
 
     @override
     def modulo(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -338,7 +338,7 @@ class Float(Value):
 
     @override
     def power(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -353,7 +353,7 @@ class Float(Value):
 
     @override
     def is_equal(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> Bool | BLError:
         match other:
@@ -363,7 +363,7 @@ class Float(Value):
 
     @override
     def is_less(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -373,7 +373,7 @@ class Float(Value):
 
     @override
     def is_less_or_equal(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -383,7 +383,7 @@ class Float(Value):
 
     @override
     def is_greater(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -393,7 +393,7 @@ class Float(Value):
 
     @override
     def is_greater_or_equal(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:

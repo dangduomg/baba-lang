@@ -100,7 +100,7 @@ class BLList(Instance):
 
     @override
     def add(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -110,7 +110,7 @@ class BLList(Instance):
 
     @override
     def multiply(
-        self, other: ExpressionResult, interpreter: "ASTInterpreter",
+        self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
         match other:
@@ -212,13 +212,10 @@ class BLList(Instance):
         # pylint: disable=unused-argument
         elems = []
         for elem in self.elems:
-            res = (
-                f.call([elem], interpreter, meta)
-                .logical_not(interpreter, meta)
-            )
+            res = f.call([elem], interpreter, meta)
             match res:
                 case Bool(value=value):
-                    if not value:
+                    if value:
                         elems.append(elem)
                 case BLError():
                     return res
