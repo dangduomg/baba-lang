@@ -142,4 +142,5 @@ The rest of the types will have their separate pages to detail them:
 
 ## Next
 
-[Scoping](scoping.md)
+- [Functions](function.md)
+- [Scoping](scoping.md)
