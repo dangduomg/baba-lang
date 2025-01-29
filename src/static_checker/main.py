@@ -129,7 +129,7 @@ class SyntaxChecker(ASTVisitor):
             ):
                 self.visit(right)
             case (
-                nodes.Logical(left=left, right=right)
+                nodes.LogicalOp(left=left, right=right)
                 | nodes.BinaryOp(left=left, right=right)
             ):
                 self.visit(left)

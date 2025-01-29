@@ -71,11 +71,11 @@ INPLACE_OP: "+=" | "-=" | "*=" | "/=" | "%/%=" | "%=" | "&=" | "|=" | "^="
         | postfix "." IDENT -> dot_pattern
         | postfix "[" expr "]" -> subscript_pattern
 
-?or: and OR_OP or
+?or: and OR_OP or  -> logical_op
    | and
 OR_OP: "||"
 
-?and: comp AND_OP and
+?and: comp AND_OP and  -> logical_op
     | comp
 AND_OP: "&&"
 

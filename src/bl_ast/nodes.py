@@ -59,7 +59,7 @@ class WhileStmt(_Stmt):
 class ForEachStmt(_Stmt):
     """Iterator for statements"""
     meta: Meta
-    pattern: "_Pattern"
+    ident: Token
     iterable: "_Expr"
     body: Body
 
@@ -102,7 +102,7 @@ class TryStmt(_Stmt):
 class CatchClause(_AstNode):
     """A single catch clause"""
     meta: Meta
-    pattern: "_Pattern | None"
+    ident: Token | None
     body: Body
 
 
@@ -232,7 +232,7 @@ class DotPattern(_Pattern):
 
 
 @dataclass(frozen=True)
-class Logical(_Expr):
+class LogicalOp(_Expr):
     """Logical operations"""
     meta: Meta
     left: _Expr
