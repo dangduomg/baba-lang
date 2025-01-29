@@ -96,6 +96,8 @@ class Value(Result, ABC):
                 return self.floor_div(other, interpreter, meta)
             case "%":
                 return self.modulo(other, interpreter, meta)
+            case "**":
+                return self.power(other, interpreter, meta)
             case "&":
                 return self.bit_and(other, interpreter, meta)
             case "|":
@@ -120,7 +122,7 @@ class Value(Result, ABC):
                 return self.is_greater_or_equal(other, interpreter, meta)
         return BLError(cast_to_instance(
             NotImplementedException.new(
-                [String(f"Operator {op!r} is not supported")], interpreter,
+                [String(f"Operator '{op}' is not supported")], interpreter,
                 meta
             )
         ), meta, interpreter.path)

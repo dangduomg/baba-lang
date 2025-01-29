@@ -36,6 +36,7 @@ class ASTInterpreter(ASTVisitor):
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
 
     globals: Env
     locals: Env | None = None
