@@ -1070,6 +1070,17 @@ class String(Value):
         return super().is_greater_or_equal(other, interpreter, meta)
 
     @override
+    def get_item(
+        self, index: Value | BLError, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> Value | BLError:
+        from .numbers import Int  # pylint: disable=import-outside-toplevel
+        match index:
+            case Int(other_val):
+                return String(self.value[other_val])
+        return super().get_item(index, interpreter, meta)
+
+    @override
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Bool | BLError:
@@ -1278,7 +1289,7 @@ def exc_dump(
 
 exc_methods: dict[str, Value] = {
     "__init__": PythonFunction(exc_init),
-    "__dump__": PythonFunction(exc_dump),
+    "dump": PythonFunction(exc_dump),
 }
 
 ExceptionClass = Class(String("Exception"), ObjectClass, exc_methods)
