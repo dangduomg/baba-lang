@@ -48,6 +48,7 @@ class ASTInterpreter(ASTVisitor):
         self.globals = Env(self)
         # Populate some builtins
         self.globals.new_var("print", PythonFunction(built_ins.print_))
+        self.globals.new_var("printf", PythonFunction(built_ins.printf))
         self.globals.new_var("input", PythonFunction(built_ins.input_))
         self.globals.new_var("to_int", PythonFunction(built_ins.to_int))
         self.globals.new_var("to_float", PythonFunction(built_ins.to_float))
@@ -136,7 +137,7 @@ class ASTInterpreter(ASTVisitor):
                     if eval_cond_after_body:
                         eval_condition = True
             case nodes.ForEachStmt(
-                meta=meta, pattern=pattern, iterable=iterable, body=body
+                meta=meta, ident=ident, iterable=iterable, body=body
             ):
                 iterator = self.visit_expr(iterable).to_iter(self, meta)
                 while (el := iterator.next(self, meta)) is not bl_types.NULL:
@@ -144,7 +145,9 @@ class ASTInterpreter(ASTVisitor):
                         case BLError():
                             return el
                         case bl_types.Item(vars={"value": value}):
-                            self.assign(meta, pattern, el)
+                            self.assign(
+                                meta, nodes.VarPattern(meta, ident), el
+                            )
                             res = self.visit_stmt(body)
                             if isinstance(res, exits.Continue):
                                 pass
@@ -178,9 +181,11 @@ class ASTInterpreter(ASTVisitor):
                 if not isinstance(res, BLError):
                     return Success()
                 match catch:
-                    case nodes.CatchClause(pattern=pattern):
-                        if pattern is not None:
-                            self.assign(meta, pattern, res.value)
+                    case nodes.CatchClause(ident=ident):
+                        if ident is not None:
+                            self.assign(
+                                meta, nodes.VarPattern(meta, ident), res.value
+                            )
                         return self.visit_stmt(catch.body)
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
@@ -329,7 +334,7 @@ class ASTInterpreter(ASTVisitor):
                     return rhs_result
                 if isinstance(rhs_result, Value):
                     return self.inplace(meta, pattern, op, rhs_result)
-            case nodes.Logical(left=left, op=op, right=right):
+            case nodes.LogicalOp(left=left, op=op, right=right):
                 not_left_res = (
                     self.visit_expr(left).logical_not(self, left.meta)
                 )
@@ -425,6 +430,12 @@ class ASTInterpreter(ASTVisitor):
             case nodes.VarPattern(name=name):
                 self._new_var(name, value)
                 return value
+            case nodes.SubscriptPattern(
+                subscriptee=subscriptee, index=index
+            ):
+                subscriptee = self.visit_expr(subscriptee)
+                index = self.visit_expr(index)
+                return subscriptee.set_item(index, value, self, meta)
             case nodes.DotPattern(
                 accessee=accessee_, attr_name=attr
             ):

@@ -24,6 +24,19 @@ def print_(
     return NULL
 
 
+def printf(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
+    /, fmt: String, *args: Value
+) -> Null:
+    """Print formatted string, following Python old-style string formatting"""
+    # pylint: disable=unused-argument
+    converted_args = tuple(
+        arg.to_string(interpreter, meta).value for arg in args
+    )
+    print(fmt.value % converted_args, end="")
+    return NULL
+
+
 def input_(
     meta: Meta | None, interpreter: "ASTInterpreter", this: Instance | None,
     /, *args: Value
