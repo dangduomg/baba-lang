@@ -3,8 +3,9 @@
 from pytest import fixture
 
 from main import interpret, interpret_expr
-from interpreter import ASTInterpreter, bl_types
-from interpreter.bl_types import ExpressionResultABC
+from interpreter import ASTInterpreter
+from interpreter.bl_types import essentials, numbers
+from interpreter.bl_types.essentials import ExpressionResultABC
 
 
 @fixture
@@ -20,53 +21,53 @@ def test_expression(example_interp: ASTInterpreter):
     """Test for expression parsing"""
     res = interpret_expr("2 + 3", example_interp)
     assert isinstance(res, ExpressionResultABC)
-    assert res.is_equal(bl_types.Int(5), example_interp, meta=None)
+    assert res.is_equal(numbers.Int(5), example_interp, meta=None)
 
 
 def test_all_operators_int(example_interp: ASTInterpreter):
     """Test all integer operators"""
     def is_equal(a, b):
         return a.is_equal(b, example_interp, meta=None)
-    assert is_equal(interpret_expr("2 + 3", example_interp), bl_types.Int(5))
-    assert is_equal(interpret_expr("2 - 3", example_interp), bl_types.Int(-1))
-    assert is_equal(interpret_expr("2 * 3", example_interp), bl_types.Int(6))
+    assert is_equal(interpret_expr("2 + 3", example_interp), numbers.Int(5))
+    assert is_equal(interpret_expr("2 - 3", example_interp), numbers.Int(-1))
+    assert is_equal(interpret_expr("2 * 3", example_interp), numbers.Int(6))
     assert is_equal(
-        interpret_expr("2 / 3", example_interp), bl_types.Float(2 / 3)
+        interpret_expr("2 / 3", example_interp), numbers.Float(2 / 3)
     )
     assert is_equal(
-        interpret_expr("2 == 3", example_interp), bl_types.Bool(False)
+        interpret_expr("2 == 3", example_interp), essentials.Bool(False)
     )
     assert is_equal(
-        interpret_expr("2 != 3", example_interp), bl_types.Bool(True)
+        interpret_expr("2 != 3", example_interp), essentials.Bool(True)
     )
     assert is_equal(
-        interpret_expr("2 < 3", example_interp), bl_types.Bool(True)
+        interpret_expr("2 < 3", example_interp), essentials.Bool(True)
     )
     assert is_equal(
-        interpret_expr("2 <= 3", example_interp), bl_types.Bool(True)
+        interpret_expr("2 <= 3", example_interp), essentials.Bool(True)
     )
     assert is_equal(
-        interpret_expr("2 > 3", example_interp), bl_types.Bool(False)
+        interpret_expr("2 > 3", example_interp), essentials.Bool(False)
     )
     assert is_equal(
-        interpret_expr("2 >= 3", example_interp), bl_types.Bool(False)
+        interpret_expr("2 >= 3", example_interp), essentials.Bool(False)
     )
-    assert is_equal(interpret_expr("2 && 3", example_interp), bl_types.Int(3))
-    assert is_equal(interpret_expr("2 || 3", example_interp), bl_types.Int(2))
+    assert is_equal(interpret_expr("2 && 3", example_interp), numbers.Int(3))
+    assert is_equal(interpret_expr("2 || 3", example_interp), numbers.Int(2))
 
 
 def test_error(example_interp: ASTInterpreter):
     """Test for errors"""
     res = interpret_expr("1 / 0", example_interp)
-    assert isinstance(res, bl_types.BLError)
-    assert res.value.class_ == bl_types.numbers.DivByZeroException
+    assert isinstance(res, essentials.BLError)
+    assert res.value.class_ == numbers.DivByZeroException
 
 
 def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
     interpret("a = 3;", example_interp)
     assert example_interp.globals.get_var("a", meta=None).is_equal(
-        bl_types.Int(3), example_interp, meta=None
+        numbers.Int(3), example_interp, meta=None
     )
 
 
@@ -88,7 +89,7 @@ def test_if(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        bl_types.String("adult"), example_interp, meta=None
+        essentials.String("adult"), example_interp, meta=None
     )
 
 
@@ -104,7 +105,7 @@ def test_loops(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        bl_types.Int(45), example_interp, meta=None
+        numbers.Int(45), example_interp, meta=None
     )
 
 
@@ -124,7 +125,7 @@ def test_function(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        bl_types.Int(3628800), example_interp, meta=None
+        numbers.Int(3628800), example_interp, meta=None
     )
 
 
@@ -147,7 +148,7 @@ def test_closure(example_interp: ASTInterpreter):
         example_interp,
     )
     assert example_interp.globals.get_var("res", meta=None).is_equal(
-        bl_types.Int(3), example_interp, meta=None
+        numbers.Int(3), example_interp, meta=None
     )
 
 
@@ -170,12 +171,12 @@ def test_object(example_interp: ASTInterpreter):
     cls = example_interp.globals.get_var("Vector3D", meta=None)
     res = example_interp.globals.get_var("res", meta=None)
 
-    assert isinstance(cls, bl_types.Class)
-    assert isinstance(res, bl_types.Instance)
+    assert isinstance(cls, essentials.Class)
+    assert isinstance(res, essentials.Instance)
     assert res.class_ == cls
     assert (
         res.get_attr("x", example_interp, None)
-        .is_equal(bl_types.Float(1.), example_interp, meta=None)
+        .is_equal(numbers.Float(1.), example_interp, meta=None)
     )
 
 
@@ -233,5 +234,5 @@ def test_op_overloading(example_interp: ASTInterpreter):
         example_interp,
     )
     example_interp.globals.get_var("res", meta=None).is_equal(
-        bl_types.Bool(True), example_interp, meta=None
+        essentials.Bool(True), example_interp, meta=None
     )

@@ -5,10 +5,11 @@ from typing import TYPE_CHECKING
 
 from lark.tree import Meta
 
-from .bl_types import (
-    Value, BLError, Int, Float, String, Bool, Null, NULL, Instance,
+from .bl_types.essentials import (
+    Value, BLError, String, Bool, Null, NULL, Instance,
     IncorrectTypeException, cast_to_instance,
 )
+from .bl_types.numbers import Int, Float
 
 if TYPE_CHECKING:
     from .main import ASTInterpreter

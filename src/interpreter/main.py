@@ -13,10 +13,11 @@ from bl_ast.base import ASTVisitor
 
 from static_checker import StaticChecker, StaticError
 
-from . import built_ins, bl_types
-from .bl_types import (
-    pywrapper, Result, ExpressionResult, Success, BLError, Value,
-    PythonFunction, Call, NotImplementedException, exits, Env, Return,
+from . import built_ins
+from .bl_types import pywrapper, exits, essentials, iterator, colls, numbers
+from .bl_types.essentials import (
+    Result, ExpressionResult, Success, BLError, Value,
+    PythonFunction, Call, NotImplementedException, Env, Return,
     cast_to_instance,
 )
 
@@ -65,8 +66,8 @@ class ASTInterpreter(ASTVisitor):
         self.globals.new_var("py_constant", PythonFunction(
             pywrapper.py_constant
         ))
-        self.globals.new_var("Object", bl_types.ObjectClass)
-        self.globals.new_var("Exception", bl_types.ExceptionClass)
+        self.globals.new_var("Object", essentials.ObjectClass)
+        self.globals.new_var("Exception", essentials.ExceptionClass)
 
     def run_src(self, src: str) -> Result:
         """Run baba-lang source code as a string"""
@@ -100,9 +101,9 @@ class ASTInterpreter(ASTVisitor):
                 match cond:
                     case BLError():
                         return cond
-                    case bl_types.Bool(True):
+                    case essentials.Bool(True):
                         return self.visit_stmt(body)
-                    case bl_types.Bool(False):
+                    case essentials.Bool(False):
                         return Success()
             case nodes.IfElseStmt(
                 meta=meta, condition=condition,
@@ -112,9 +113,9 @@ class ASTInterpreter(ASTVisitor):
                 match cond:
                     case BLError():
                         return cond
-                    case bl_types.Bool(True):
+                    case essentials.Bool(True):
                         return self.visit_stmt(then_body)
-                    case bl_types.Bool(False):
+                    case essentials.Bool(False):
                         return self.visit_stmt(else_body)
             case nodes.WhileStmt(
                 meta=meta, condition=condition, body=body,
@@ -127,7 +128,7 @@ class ASTInterpreter(ASTVisitor):
                         match cond:
                             case BLError():
                                 return cond
-                            case bl_types.Bool(False):
+                            case essentials.Bool(False):
                                 return Success()
                     res = self.visit_stmt(body)
                     if isinstance(res, exits.Continue):
@@ -139,21 +140,22 @@ class ASTInterpreter(ASTVisitor):
             case nodes.ForEachStmt(
                 meta=meta, ident=ident, iterable=iterable, body=body
             ):
-                iterator = self.visit_expr(iterable).to_iter(self, meta)
-                while (el := iterator.next(self, meta)) is not bl_types.NULL:
-                    match el:
+                iterator_ = self.visit_expr(iterable).to_iter(self, meta)
+                while True:
+                    match el := iterator_.next(self, meta):
                         case BLError():
                             return el
-                        case bl_types.Item(vars={"value": value}):
+                        case iterator.Item(vars={"value": value}):
                             self.assign(
-                                meta, nodes.VarPattern(meta, ident), el
+                                meta, nodes.VarPattern(meta, ident), value
                             )
                             res = self.visit_stmt(body)
                             if isinstance(res, exits.Continue):
                                 pass
                             elif isinstance(res, exits.Exit):
                                 return res
-                return Success()
+                        case essentials.Null():
+                            return Success()
             case nodes.BreakStmt():
                 return exits.Break()
             case nodes.ContinueStmt():
@@ -168,12 +170,11 @@ class ASTInterpreter(ASTVisitor):
                 res = self.visit_expr(value)
                 if isinstance(res, BLError):
                     return res
-                if not isinstance(res, bl_types.Instance):
+                if not isinstance(res, essentials.Instance):
                     return BLError(cast_to_instance(
-                        NotImplementedException.new(
-                            [bl_types.String("You can only throw instances")],
-                            self, meta,
-                        )
+                        NotImplementedException.new([essentials.String(
+                            "You can only throw instances"
+                        )], self, meta)
                     ), meta, self.path)
                 return BLError(res, meta, self.path)
             case nodes.TryStmt(meta=meta, body=body, catch=catch):
@@ -189,9 +190,9 @@ class ASTInterpreter(ASTVisitor):
                         return self.visit_stmt(catch.body)
             case nodes.FunctionStmt(name=name, form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
-                self.globals.new_var(
-                    name, bl_types.BLFunction(str(name), form_args, body, env)
-                )
+                self.globals.new_var(name, essentials.BLFunction(
+                    str(name), form_args, body, env
+                ))
                 return Success()
             case nodes.ModuleStmt(name=name, entries=entries):
                 # Create new environment
@@ -208,7 +209,7 @@ class ASTInterpreter(ASTVisitor):
                 # Clean up
                 if self.globals.parent is not None:
                     self.globals = self.globals.parent
-                self.globals.new_var(name, bl_types.Module(name, vars_))
+                self.globals.new_var(name, colls.Module(name, vars_))
                 return Success()
             case nodes.ClassStmt():
                 return self.visit_class(node)
@@ -216,7 +217,7 @@ class ASTInterpreter(ASTVisitor):
                 return self.visit_include(node)
         return BLError(cast_to_instance(
             NotImplementedException.new(
-                [bl_types.String("Statement type not supported")], self,
+                [essentials.String("Statement type not supported")], self,
                 node.meta
             )
         ), node.meta, self.path)
@@ -243,21 +244,21 @@ class ASTInterpreter(ASTVisitor):
             self.globals = self.globals.parent
         # Create the class
         if super_ is None:
-            superclass_res = bl_types.ObjectClass
+            superclass_res = essentials.ObjectClass
         else:
             superclass_res = self._get_var(super_, meta)
             match superclass_res:
-                case bl_types.Class():
+                case essentials.Class():
                     pass
                 case BLError():
                     return superclass_res
                 case _:
                     return BLError(cast_to_instance(
-                        bl_types.IncorrectTypeException.new([], self, meta)
+                        essentials.IncorrectTypeException.new([], self, meta)
                     ), meta, self.path)
-        self.globals.new_var(
-            name, bl_types.Class(bl_types.String(name), superclass_res, vars_)
-        )
+        self.globals.new_var(name, essentials.Class(
+            essentials.String(name), superclass_res, vars_
+        ))
         return Success()
 
     def visit_include(self, node: nodes.IncludeStmt) -> Result:
@@ -269,7 +270,7 @@ class ASTInterpreter(ASTVisitor):
         new_path = self._find_src(node, old_path)
         if new_path is None:
             return BLError(cast_to_instance(
-                InvalidIncludeException.new([bl_types.String(
+                InvalidIncludeException.new([essentials.String(
                     f"Source file '{node.path}' not found"
                 )], self, node.meta)
             ), node.meta, self.path)
@@ -278,7 +279,7 @@ class ASTInterpreter(ASTVisitor):
                 src = f.read()
         except FileNotFoundError:
             return BLError(cast_to_instance(
-                InvalidIncludeException.new([bl_types.String(
+                InvalidIncludeException.new([essentials.String(
                     f"Source file '{new_path}' can't be accessed"
                 )], self, node.meta)
             ), node.meta, self.path)
@@ -288,7 +289,7 @@ class ASTInterpreter(ASTVisitor):
             res = self.run_src(src)
         except (UnexpectedInput, StaticError):
             return BLError(cast_to_instance(
-                InvalidIncludeException.new([bl_types.String(
+                InvalidIncludeException.new([essentials.String(
                     f"Source file {new_path} has a compile-time error. " +
                     "Check it."
                 )], self, node.meta)
@@ -314,7 +315,7 @@ class ASTInterpreter(ASTVisitor):
         """Visit an expression node"""
         match node:
             case nodes.Exprs(expressions=expressions):
-                final_res = bl_types.NULL
+                final_res = essentials.NULL
                 for expr in expressions:
                     res = self.visit_expr(expr)
                     if isinstance(res, BLError):
@@ -340,7 +341,7 @@ class ASTInterpreter(ASTVisitor):
                 )
                 if isinstance(not_left_res, BLError):
                     return not_left_res
-                if isinstance(not_left_res, bl_types.Bool):
+                if isinstance(not_left_res, essentials.Bool):
                     left_value = not not_left_res.value
                     if (
                         op == "&&" and left_value
@@ -378,7 +379,7 @@ class ASTInterpreter(ASTVisitor):
                             return arg_visited
                         args.append(arg_visited)
                 match class_ := self._get_var(name, meta):
-                    case bl_types.Class():
+                    case essentials.Class():
                         return class_.new(args, self, meta)
                     case BLError():
                         return class_
@@ -389,17 +390,17 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Var(meta=meta, name=name):
                 return self._get_var(name, meta)
             case nodes.String(value=value):
-                return bl_types.String(value)
+                return essentials.String(value)
             case nodes.Int(value=value):
-                return bl_types.Int(value)
+                return numbers.Int(value)
             case nodes.Float(value=value):
-                return bl_types.Float(value)
+                return numbers.Float(value)
             case nodes.TrueLiteral():
-                return bl_types.BOOLS[True]
+                return essentials.BOOLS[True]
             case nodes.FalseLiteral():
-                return bl_types.BOOLS[False]
+                return essentials.BOOLS[False]
             case nodes.NullLiteral():
-                return bl_types.NULL
+                return essentials.NULL
             case nodes.List(elems=elems_in_ast):
                 elems = []
                 for e in elems_in_ast:
@@ -407,17 +408,19 @@ class ASTInterpreter(ASTVisitor):
                     if not isinstance(e_visited, Value):
                         return e_visited
                     elems.append(e_visited)
-                return bl_types.BLList(elems)
+                return colls.BLList(elems)
             case nodes.Dict(pairs=pairs):
                 content = {}
                 for pair in pairs:
                     k_visited = self.visit(pair.key)
                     v_visited = self.visit(pair.value)
                     content[k_visited] = v_visited
-                return bl_types.BLDict(content)
+                return colls.BLDict(content)
             case nodes.FunctionLiteral(form_args=form_args, body=body):
                 env = None if self.locals is None else self.locals.copy()
-                return bl_types.BLFunction("<anonymous>", form_args, body, env)
+                return essentials.BLFunction(
+                    "<anonymous>", form_args, body, env
+                )
         return BLError(cast_to_instance(
             NotImplementedException.new([], self, node.meta)
         ), node.meta, self.path)
@@ -450,7 +453,7 @@ class ASTInterpreter(ASTVisitor):
     ) -> ExpressionResult:
         """Visit an in-place assignment node"""
         # to solve the unbound problem
-        accessee = bl_types.ObjectClass.new([], self, meta)
+        accessee = essentials.ObjectClass.new([], self, meta)
         if isinstance(pattern, nodes.VarPattern):
             old_value_get_result = self._get_var(pattern.name, meta)
         elif isinstance(pattern, nodes.DotPattern):
@@ -501,7 +504,7 @@ class ASTInterpreter(ASTVisitor):
             res = self.locals.set_var(name, value, meta)
             match res:
                 case BLError(value=value):
-                    if value.class_ == bl_types.VarNotFoundException:
+                    if value.class_ == essentials.VarNotFoundException:
                         return self.globals.set_var(name, value, meta)
                     return res
         return self.globals.set_var(name, value, meta)
@@ -515,12 +518,12 @@ class ASTInterpreter(ASTVisitor):
 
 
 # Interpreter errors
-InvalidIncludeException = bl_types.Class(
-    bl_types.String("InvalidIncludeException"), bl_types.ExceptionClass
+InvalidIncludeException = essentials.Class(
+    essentials.String("InvalidIncludeException"), essentials.ExceptionClass
 )
-IncludeSyntaxErrException = bl_types.Class(
-    bl_types.String("IncludeSyntaxErrException"), bl_types.ExceptionClass
+IncludeSyntaxErrException = essentials.Class(
+    essentials.String("IncludeSyntaxErrException"), essentials.ExceptionClass
 )
-IncludeRuntimeErrException = bl_types.Class(
-    bl_types.String("IncludeRuntimeErrException"), bl_types.ExceptionClass
+IncludeRuntimeErrException = essentials.Class(
+    essentials.String("IncludeRuntimeErrException"), essentials.ExceptionClass
 )
