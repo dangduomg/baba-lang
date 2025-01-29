@@ -1,11 +1,12 @@
 """Unit tests"""
 
+from typing import cast
 from pytest import fixture
 
 from main import interpret, interpret_expr
 from interpreter import ASTInterpreter
 from interpreter.bl_types import essentials, numbers
-from interpreter.bl_types.essentials import Value
+from interpreter.bl_types.essentials import Value, Bool
 
 
 @fixture
@@ -21,39 +22,55 @@ def test_expression(example_interp: ASTInterpreter):
     """Test for expression parsing"""
     res = interpret_expr("2 + 3", example_interp)
     assert isinstance(res, numbers.Int)
-    assert res.is_equal(numbers.Int(5), example_interp, meta=None)
+    assert cast(Bool, res.is_equal(
+        numbers.Int(5), example_interp, meta=None
+    )).value
 
 
 def test_all_operators_int(example_interp: ASTInterpreter):
     """Test all integer operators"""
     def is_equal(a, b):
-        return a.is_equal(b, example_interp, meta=None)
+        return cast(Bool, cast(Value, a).is_equal(
+            cast(Value, b), example_interp, meta=None
+        )).value
     assert is_equal(interpret_expr("2 + 3", example_interp), numbers.Int(5))
     assert is_equal(interpret_expr("2 - 3", example_interp), numbers.Int(-1))
     assert is_equal(interpret_expr("2 * 3", example_interp), numbers.Int(6))
     assert is_equal(
         interpret_expr("2 / 3", example_interp), numbers.Float(2 / 3)
     )
+    assert is_equal(interpret_expr("2 %/% 3", example_interp), numbers.Int(0))
+    assert is_equal(interpret_expr("2 % 3", example_interp), numbers.Int(2))
+    assert is_equal(interpret_expr("2 ** 3", example_interp), numbers.Int(8))
+    assert is_equal(interpret_expr("2 & 3", example_interp), numbers.Int(2))
+    assert is_equal(interpret_expr("2 | 3", example_interp), numbers.Int(3))
+    assert is_equal(interpret_expr("2 ^ 3", example_interp), numbers.Int(1))
     assert is_equal(
-        interpret_expr("2 == 3", example_interp), essentials.Bool(False)
+        interpret_expr("2 == 3", example_interp), essentials.BOOLS[False]
     )
     assert is_equal(
-        interpret_expr("2 != 3", example_interp), essentials.Bool(True)
+        interpret_expr("2 != 3", example_interp), essentials.BOOLS[True]
     )
     assert is_equal(
-        interpret_expr("2 < 3", example_interp), essentials.Bool(True)
+        interpret_expr("2 < 3", example_interp), essentials.BOOLS[True]
     )
     assert is_equal(
-        interpret_expr("2 <= 3", example_interp), essentials.Bool(True)
+        interpret_expr("2 <= 3", example_interp), essentials.BOOLS[True]
     )
     assert is_equal(
-        interpret_expr("2 > 3", example_interp), essentials.Bool(False)
+        interpret_expr("2 > 3", example_interp), essentials.BOOLS[False]
     )
     assert is_equal(
-        interpret_expr("2 >= 3", example_interp), essentials.Bool(False)
+        interpret_expr("2 >= 3", example_interp), essentials.BOOLS[False]
     )
     assert is_equal(interpret_expr("2 && 3", example_interp), numbers.Int(3))
     assert is_equal(interpret_expr("2 || 3", example_interp), numbers.Int(2))
+    assert is_equal(
+        interpret_expr("!2", example_interp), essentials.BOOLS[False]
+    )
+    assert is_equal(interpret_expr("+2", example_interp), numbers.Int(2))
+    assert is_equal(interpret_expr("-2", example_interp), numbers.Int(-2))
+    assert is_equal(interpret_expr("~2", example_interp), numbers.Int(-3))
 
 
 def test_error(example_interp: ASTInterpreter):
@@ -67,10 +84,10 @@ def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
     interpret("a = 3;", example_interp)
     a = example_interp.globals.get_var("a", meta=None)
-    assert isinstance(a, essentials.Value)
-    assert a.is_equal(
+    assert isinstance(a, Value)
+    assert cast(Bool, a.is_equal(
         numbers.Int(3), example_interp, meta=None
-    )
+    )).value
 
 
 def test_if(example_interp: ASTInterpreter):
@@ -92,9 +109,9 @@ def test_if(example_interp: ASTInterpreter):
     )
     res = example_interp.globals.get_var("res", meta=None)
     assert isinstance(res, Value)
-    assert res.is_equal(
+    assert cast(Bool, res.is_equal(
         essentials.String("adult"), example_interp, meta=None
-    )
+    )).value
 
 
 def test_loops(example_interp: ASTInterpreter):
@@ -110,9 +127,9 @@ def test_loops(example_interp: ASTInterpreter):
     )
     res = example_interp.globals.get_var("res", meta=None)
     assert isinstance(res, Value)
-    assert res.is_equal(
+    assert cast(Bool, res.is_equal(
         numbers.Int(45), example_interp, meta=None
-    )
+    )).value
 
 
 def test_function(example_interp: ASTInterpreter):
@@ -132,9 +149,9 @@ def test_function(example_interp: ASTInterpreter):
     )
     res = example_interp.globals.get_var("res", meta=None)
     assert isinstance(res, Value)
-    assert res.is_equal(
+    assert cast(Bool, res.is_equal(
         numbers.Int(3628800), example_interp, meta=None
-    )
+    )).value
 
 
 def test_closure(example_interp: ASTInterpreter):
@@ -157,9 +174,9 @@ def test_closure(example_interp: ASTInterpreter):
     )
     res = example_interp.globals.get_var("res", meta=None)
     assert isinstance(res, Value)
-    assert res.is_equal(
+    assert cast(Bool, res.is_equal(
         numbers.Int(3), example_interp, meta=None
-    )
+    )).value
 
 
 def test_object(example_interp: ASTInterpreter):
@@ -186,7 +203,9 @@ def test_object(example_interp: ASTInterpreter):
     assert res.class_ == cls
     x = res.get_attr("x", example_interp, None)
     assert isinstance(x, Value)
-    assert x.is_equal(numbers.Float(1.), example_interp, meta=None)
+    assert cast(Bool, x.is_equal(
+        numbers.Float(1.), example_interp, meta=None
+    )).value
 
 
 def test_op_overloading(example_interp: ASTInterpreter):
@@ -244,6 +263,6 @@ def test_op_overloading(example_interp: ASTInterpreter):
     )
     res = example_interp.globals.get_var("res", meta=None)
     assert isinstance(res, Value)
-    assert res.is_equal(
-        essentials.Bool(True), example_interp, meta=None
-    )
+    assert cast(Bool, res.is_equal(
+        essentials.BOOLS[True], example_interp, meta=None
+    )).value
