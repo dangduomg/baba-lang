@@ -46,27 +46,27 @@ def test_all_operators_int(example_interp: ASTInterpreter):
     assert is_equal(interpret_expr("2 | 3", example_interp), numbers.Int(3))
     assert is_equal(interpret_expr("2 ^ 3", example_interp), numbers.Int(1))
     assert is_equal(
-        interpret_expr("2 == 3", example_interp), essentials.BOOLS[False]
+        interpret_expr("2 == 3", example_interp), essentials.FALSE
     )
     assert is_equal(
-        interpret_expr("2 != 3", example_interp), essentials.BOOLS[True]
+        interpret_expr("2 != 3", example_interp), essentials.TRUE
     )
     assert is_equal(
-        interpret_expr("2 < 3", example_interp), essentials.BOOLS[True]
+        interpret_expr("2 < 3", example_interp), essentials.TRUE
     )
     assert is_equal(
-        interpret_expr("2 <= 3", example_interp), essentials.BOOLS[True]
+        interpret_expr("2 <= 3", example_interp), essentials.TRUE
     )
     assert is_equal(
-        interpret_expr("2 > 3", example_interp), essentials.BOOLS[False]
+        interpret_expr("2 > 3", example_interp), essentials.FALSE
     )
     assert is_equal(
-        interpret_expr("2 >= 3", example_interp), essentials.BOOLS[False]
+        interpret_expr("2 >= 3", example_interp), essentials.FALSE
     )
     assert is_equal(interpret_expr("2 && 3", example_interp), numbers.Int(3))
     assert is_equal(interpret_expr("2 || 3", example_interp), numbers.Int(2))
     assert is_equal(
-        interpret_expr("!2", example_interp), essentials.BOOLS[False]
+        interpret_expr("!2", example_interp), essentials.FALSE
     )
     assert is_equal(interpret_expr("+2", example_interp), numbers.Int(2))
     assert is_equal(interpret_expr("-2", example_interp), numbers.Int(-2))
@@ -264,5 +264,5 @@ def test_op_overloading(example_interp: ASTInterpreter):
     res = example_interp.globals.get_var("res", meta=None)
     assert isinstance(res, Value)
     assert cast(Bool, res.is_equal(
-        essentials.BOOLS[True], example_interp, meta=None
+        essentials.TRUE, example_interp, meta=None
     )).value

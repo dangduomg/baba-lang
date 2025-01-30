@@ -396,7 +396,7 @@ class Value(Result, ABC):
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> "Bool | BLError":
         """Convert to boolean"""
-        return BOOLS[True]
+        return TRUE
 
     def to_iter(
         self, interpreter: "ASTInterpreter", meta: Meta | None
@@ -459,7 +459,9 @@ class Bool(Value):
         return String("true") if self.value else String("false")
 
 
-BOOLS = Bool(False), Bool(True)
+FALSE = Bool(False)
+TRUE = Bool(True)
+BOOLS = FALSE, TRUE
 
 
 @dataclass(frozen=True)
@@ -470,7 +472,7 @@ class Null(Value):
     def to_bool(
         self, interpreter: "ASTInterpreter", meta: Meta | None
     ) -> Bool:
-        return BOOLS[False]
+        return FALSE
 
     @override
     def dump(

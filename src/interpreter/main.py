@@ -428,9 +428,9 @@ class ASTInterpreter(ASTVisitor):
             case nodes.Float(value=value):
                 return numbers.Float(value)
             case nodes.TrueLiteral():
-                return essentials.BOOLS[True]
+                return essentials.TRUE
             case nodes.FalseLiteral():
-                return essentials.BOOLS[False]
+                return essentials.FALSE
             case nodes.NullLiteral():
                 return essentials.NULL
             case nodes.List(elems=elems_in_ast):
