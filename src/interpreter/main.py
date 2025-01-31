@@ -69,7 +69,29 @@ class ASTInterpreter(ASTVisitor):
             pywrapper.py_constant
         ))
         self.globals.new_var("Object", essentials.ObjectClass)
+        self.globals.new_var("Item", iterator.ItemClass)
         self.globals.new_var("Exception", essentials.ExceptionClass)
+        self.globals.new_var(
+            "NotImplementedException", essentials.NotImplementedException
+        )
+        self.globals.new_var(
+            "AttrNotFoundException", essentials.AttrNotFoundException
+        )
+        self.globals.new_var(
+            "VarNotFoundException", essentials.VarNotFoundException
+        )
+        self.globals.new_var(
+            "IncorrectTypeException", essentials.IncorrectTypeException
+        )
+        self.globals.new_var(
+            "OutOfRangeException", colls.OutOfRangeException
+        )
+        self.globals.new_var(
+            "KeyNotFoundException", colls.KeyNotFoundException
+        )
+        self.globals.new_var(
+            "ModuleVarNotFoundException", colls.ModuleVarNotFoundException
+        )
 
     def run_src(self, src: str) -> Result:
         """Run baba-lang source code as a string"""
