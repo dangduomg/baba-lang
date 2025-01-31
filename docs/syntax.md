@@ -8,7 +8,7 @@ layout: default
 
 # Syntax
 
-This is the explanation of all syntactic rules in baba-lang, based on `grammar.lark`.
+This is the explanation of all syntactic rules and their uses in baba-lang, based on `grammar.lark`.
 
 
 ## Body
@@ -89,7 +89,7 @@ do_while_stmt: _DO "{" body "}" _WHILE expr ";"
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
         | _FOR IDENT _IN expr "{" body "}" -> for_each_stmt
 ```
-There are 2 types of `for` statements
+There are 2 types of `for` statements.
 
 ### C-style `for` statement
 ```
@@ -107,4 +107,26 @@ for x in some_iterable {
     ...
 }
 ```
-Iterator `for` converts the expression after `in` from an iterable to an iterator (using the `.iter` method), then consumes it (using `.next` method) and assigns the consumed value to the identifier. The `.next` method must either return an `Item`, which contains the consumed value, or `None`, signaling the end of iteration. 
+Iterator `for` converts the expression after `in` from an iterable to an iterator (using the `.iter` method), then consumes it (using `.next` method) and assigns the consumed value to the identifier. The `.next` method must either return an `Item`, which contains the consumed value, or `null`, signaling the end of iteration.
+
+### `break` and `continue` statement
+```
+break_stmt: _BREAK ";"
+continue_stmt: _CONTINUE ";"
+```
+`break` and `continue` statements are early exit statements for loops. Right now, they only consists of a single keyword and mandatory semicolon, as nested `break` and `continue` haven't been added yet.
+
+### `try..catch` statement
+```
+try_stmt: _TRY "{" body "}" catch_clause
+catch_clause: _CATCH IDENT "{" body "}"
+```
+`try..catch` is baba-lang's exception handling facility. Any exceptions raised in `try` blocks (including from functions called inside it) are handled in the corresponding `catch` block. `try` follows the same syntax as in JavaScript, but without parentheses around the `catch` capture variable. There are no `finally` yet.
+
+### `return` statement
+```
+return_stmt: _RETURN [expr] ";"
+```
+`return` statements are straightforward and follow C syntax.
+
+### `throw` statement
