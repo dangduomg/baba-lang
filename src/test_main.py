@@ -85,7 +85,7 @@ def test_variable(example_interp: ASTInterpreter):
     """Test for variable handling"""
     interpret("a = 3;", example_interp)
     a = example_interp.globals.get_var("a", meta=None)
-    assert isinstance(a, Value)
+    assert isinstance(a, Int)
     assert cast(Bool, a.is_equal(
         Int(3), example_interp, meta=None
     )).value
@@ -109,7 +109,7 @@ def test_if(example_interp: ASTInterpreter):
         example_interp,
     )
     res = example_interp.globals.get_var("res", meta=None)
-    assert isinstance(res, Value)
+    assert isinstance(res, essentials.String)
     assert cast(Bool, res.is_equal(
         essentials.String("adult"), example_interp, meta=None
     )).value
@@ -127,7 +127,7 @@ def test_loops(example_interp: ASTInterpreter):
         example_interp,
     )
     res = example_interp.globals.get_var("res", meta=None)
-    assert isinstance(res, Value)
+    assert isinstance(res, Int)
     assert cast(Bool, res.is_equal(
         Int(45), example_interp, meta=None
     )).value
@@ -149,7 +149,7 @@ def test_function(example_interp: ASTInterpreter):
         example_interp,
     )
     res = example_interp.globals.get_var("res", meta=None)
-    assert isinstance(res, Value)
+    assert isinstance(res, Int)
     assert cast(Bool, res.is_equal(
         Int(3628800), example_interp, meta=None
     )).value
@@ -174,7 +174,7 @@ def test_closure(example_interp: ASTInterpreter):
         example_interp,
     )
     res = example_interp.globals.get_var("res", meta=None)
-    assert isinstance(res, Value)
+    assert isinstance(res, Int)
     assert cast(Bool, res.is_equal(
         Int(3), example_interp, meta=None
     )).value
@@ -202,8 +202,8 @@ def test_object(example_interp: ASTInterpreter):
     assert isinstance(cls, essentials.Class)
     assert isinstance(res, essentials.Instance)
     assert res.class_ == cls
-    x = res.get_attr("x", example_interp, None)
-    assert isinstance(x, Value)
+    x = res.get_attr("x", example_interp, meta=None)
+    assert isinstance(x, numbers.Float)
     assert cast(Bool, x.is_equal(
         numbers.Float(1.), example_interp, meta=None
     )).value
@@ -263,7 +263,7 @@ def test_op_overloading(example_interp: ASTInterpreter):
         example_interp,
     )
     res = example_interp.globals.get_var("res", meta=None)
-    assert isinstance(res, Value)
+    assert isinstance(res, Bool)
     assert cast(Bool, res.is_equal(
         essentials.TRUE, example_interp, meta=None
     )).value
