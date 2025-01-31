@@ -5,7 +5,7 @@ from pytest import fixture
 
 from main import interpret, interpret_expr
 from interpreter import ASTInterpreter
-from interpreter.bl_types import essentials, numbers
+from interpreter.bl_types import essentials, numbers, colls
 from interpreter.bl_types.essentials import Value, Bool
 from interpreter.bl_types.numbers import Int
 
@@ -266,4 +266,30 @@ def test_op_overloading(example_interp: ASTInterpreter):
     assert isinstance(res, Bool)
     assert cast(Bool, res.is_equal(
         essentials.TRUE, example_interp, meta=None
+    )).value
+
+
+def test_foreach(example_interp: ASTInterpreter):
+    """Test for iterator for"""
+    interpret(
+        """
+        fun filter(f, lst) {
+            acc = [];
+            for x in lst {
+                if f(x) {
+                    acc.push(x);
+                }
+            }
+            return acc;
+        }
+
+        res = filter(fun(x) -> x % 2 == 0, [1, 2, 3, 4, 5, 6, 7, 8]);
+        """,
+        example_interp,
+    )
+    res = example_interp.globals.get_var("res", meta=None)
+    assert isinstance(res, colls.BLList)
+    assert cast(Bool, res.is_equal(
+        colls.BLList([Int(2), Int(4), Int(6), Int(8)]),
+        example_interp, meta=None
     )).value
