@@ -293,3 +293,52 @@ def test_foreach(example_interp: ASTInterpreter):
         colls.BLList([Int(2), Int(4), Int(6), Int(8)]),
         example_interp, meta=None
     )).value
+
+
+def test_custom_iter(example_interp: ASTInterpreter):
+    """Test for custom iterators"""
+    interpret(
+        """
+        class Range {
+            fun __init__(start, stop, step) {
+                this.i = start;
+                this.stop = stop;
+                this.step = step;
+            }
+
+            fun iter() {
+                return this;
+            }
+
+            fun next() {
+                if (this.i >= this.stop) {
+                    return null;
+                }
+                i = this.i;
+                this.i += this.step;
+                return new Item(i);
+            }
+        }
+
+        fun collect(iter) {
+            res = [];
+            for x in iter {
+                res.push(x);
+            }
+            return res;
+        }
+
+        lst1 = collect(new Range(0, 10, 1));
+        truth_1 = lst1 == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+        it1 = new Range(1, 6, 3);
+        truth_2 = it1.next().value == 1 && it1.next().value == 4;
+
+        res = truth_1 && truth_2;
+        """,
+        example_interp,
+    )
+
+    res = example_interp.globals.get_var("res", meta=None)
+    assert isinstance(res, Bool)
+    assert res.is_equal(essentials.TRUE, example_interp, meta=None)
