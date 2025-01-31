@@ -1096,8 +1096,8 @@ class Instance(Value):
             if not isinstance(res, expected_type):
                 if isinstance(res, BLError):
                     if res.value.class_ == AttrNotFoundException:
-                        return getattr(super(type(self), self), fallback_name)(
-                            interpreter, meta
+                        return getattr(Value, fallback_name)(
+                            self, interpreter, meta
                         )
                     return res
                 return BLError(cast_to_instance(
@@ -1118,8 +1118,8 @@ class Instance(Value):
             )
             if isinstance(res, BLError):
                 if res.value.class_ == AttrNotFoundException:
-                    return getattr(super(type(self), self), fallback_name)(
-                        other, interpreter, meta
+                    return getattr(Value, fallback_name)(
+                        self, other, interpreter, meta
                     )
             return res
         return _wrapper
@@ -1131,8 +1131,8 @@ class Instance(Value):
             res = self._call_method_if_exists(name, [], interpreter, meta)
             if isinstance(res, BLError):
                 if res.value.class_ == AttrNotFoundException:
-                    return getattr(super(type(self), self), fallback_name)(
-                        interpreter, meta
+                    return getattr(Value, fallback_name)(
+                        self, interpreter, meta
                     )
             return res
         return _wrapper
