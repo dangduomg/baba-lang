@@ -103,9 +103,8 @@ class BLList(Instance):
         self, other: Value, interpreter: "ASTInterpreter",
         meta: Meta | None,
     ) -> ExpressionResult:
-        match other:
-            case BLList(elems=other_elems):
-                return BLList(self.elems + other_elems)
+        if isinstance(other, BLList):
+            return BLList(self.elems + other.elems)
         return super().add(other, interpreter, meta)
 
     @override
@@ -117,6 +116,15 @@ class BLList(Instance):
             case Int(times):
                 return BLList(self.elems * times)
         return super().add(other, interpreter, meta)
+
+    @override
+    def is_equal(
+        self, other: Value, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> Bool | BLError:
+        if isinstance(other, BLList):
+            return BOOLS[self.elems == other.elems]
+        return super().is_equal(other, interpreter, meta)
 
     @override
     def to_bool(
@@ -152,9 +160,9 @@ class BLList(Instance):
     ) -> ExpressionResult:
         """Set an element in a list"""
         match index, value:
-            case Int(index_val), Value():
+            case Int(i), Value():
                 try:
-                    self.elems[index_val] = value
+                    self.elems[i] = value
                     return value
                 except IndexError:
                     return BLError(cast_to_instance(
@@ -334,6 +342,15 @@ class BLDict(Instance):
     def __init__(self, content: dict[Value, Value]) -> None:
         super().__init__(DictClass, {})
         self.content = content
+
+    @override
+    def is_equal(
+        self, other: Value, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> Bool | BLError:
+        if isinstance(other, BLDict):
+            return BOOLS[self.content == other.content]
+        return super().is_equal(other, interpreter, meta)
 
     @override
     def to_bool(
