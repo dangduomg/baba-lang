@@ -83,7 +83,7 @@ the source code. See [Scoping](scoping.md) for details.
 
 ### How does functions work
 
-When a function is declared, the current local environment is shallow copied,
+When a function is defined, the current local environment is shallow copied,
 if it exists, to support closures.
 
 When a function is called, these will happen:
@@ -98,6 +98,15 @@ unified stack frame)
     - Throw an error
 5. The traceback (if the function succeeds) and local environment frame are
 cleaned before finally actually returning.
+
+### Python (native) functions
+
+baba-lang supports calling a Python function, provide that it supports the
+`SupportsWrappedByPythonFunction` protocol and is wrapped in a
+`PythonFunction` object at the interpreter level. A Python function doesn't
+create a new environment or traceback frame, and is free to do any action with
+the interpreter. It should also have robust error handling, as any uncaught
+exception in the function will crash the interpreter.
 
 
 ## Next
