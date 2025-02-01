@@ -35,12 +35,10 @@ pip install -r requirements.txt
 6. Run `src/main.py` without arguments to open an interactive prompt. To run a source file, enter `src/main.py <file>`. Source files are of extension `.bl`. Run `src/main.py -h` for further help.
 
 ## Features
+- Familiar JS-like syntax
 - First-class functions
-- Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%/%`, `%`, `**`, `&`, `|`, `^`, `<<`, `>>`, `~`, unary `+`, unary `-`, function call, subscripting
-- Logical operators: `&&`, `||`, `!`
-- In-place operators: `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `%/%=`, `**=`, `&=`, `|=`, `^=`, `<<=`, `>>=`
-- Control flow constructs: `if`, `while`, `do..while`, C-style `for`, `break`, `continue`, functions
-- Data types: integers, floats, strings, booleans, lists, dictionaries
+- Classes with inheritance
+- Exceptions
 - Modules
 - Easy Python interop with `py_function` and `py_method`
 
@@ -67,6 +65,7 @@ for (i = 0; i < min(subjects, verbs, objects); i += 1) {
 
 ## To-do list
 - A bytecode interpreter in Rust (compiler will still be written in Python)
+- More tests
 - Rest and keyword arguments
 - Traits/mixins
 - Algebraic data types
