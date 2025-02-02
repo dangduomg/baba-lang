@@ -3,7 +3,7 @@
   */
 
 
-include 'std/perf_counter.bl';
+include 'std/time.bl';
 
 fun speedTest() {
     max = 20000;
