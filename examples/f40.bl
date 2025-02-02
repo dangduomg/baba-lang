@@ -1,0 +1,24 @@
+/**
+  * f40.bl -- Calculate the 40th Fibonacci number
+  */
+
+include 'std/time.bl';
+
+
+fun f40() {
+    start = perf_counter();
+    res = fib(40);
+    end = perf_counter();
+    print('fib(40) = ' + to_string(res));
+    print(to_string(end - start) + 's');
+}
+
+fun fib(n) {
+    if (n < 2) {
+        return n;
+    } else {
+        return fib(n - 1) + fib(n - 2);
+    }
+}
+
+f40();
