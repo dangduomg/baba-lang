@@ -1,0 +1,8 @@
+/**
+  * time.bl -- Timing-related functions
+  */
+
+
+sleep = py_function('time', 'sleep');
+
+perf_counter = py_function('time', 'perf_counter');
