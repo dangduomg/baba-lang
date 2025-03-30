@@ -1,15 +1,15 @@
 /**
-  * f40.bl -- Calculate the 40th Fibonacci number
+  * f25.bl -- Calculate the 25th Fibonacci number
   */
 
 include 'std/time.bl';
 
 
-fun f40() {
+fun f25() {
     start = perf_counter();
-    res = fib(40);
+    res = fib(25);
     end = perf_counter();
-    print('fib(40) = ' + to_string(res));
+    print('fib(25) = ' + to_string(res));
     print(to_string(end - start) + 's');
 }
 
@@ -21,4 +21,4 @@ fun fib(n) {
     }
 }
 
-f40();
+f25();
