@@ -336,7 +336,7 @@ class ASTInterpreter(ASTVisitor):
             case BLError():
                 return res
         self.traceback.pop()
-        self.path = str(old_path)
+        self.path = None if old_path is None else str(old_path)
         return res
 
     def _find_src(

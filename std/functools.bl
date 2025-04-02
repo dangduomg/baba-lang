@@ -3,18 +3,36 @@
   */
 
 
-fun map(f, lst) {
-    res = [];
-    for (i = 0; i < lst.length(); i += 1) {
-        res.insert(res.length(), f(lst[i]));
+class MapIterator {
+    fun __init__(f, lst) {
+        this.f = f;
+        this.lst = lst;
+        this.i = 0;
     }
-    return res;
+
+    fun iter() {
+        return this;
+    }
+
+    fun next() {
+        if this.i < this.lst.length() {
+            item = new Item(this.f(this.lst[this.i]));
+            this.i += 1;
+            return item;
+        }
+        return null;
+    }
+}
+
+
+fun map(f, lst) {
+    return new MapIterator(f, lst);
 }
 
 fun filter(f, lst) {
     res = [];
     for (i = 0; i < lst.length(); i += 1) {
-        if (f(lst[i])) {
+        if f(lst[i]) {
             res.insert(res.length(), lst[i]);
         }
     }

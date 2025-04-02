@@ -46,12 +46,20 @@ ListClass = Class(String("List"), ObjectClass, {
         lambda meta, intp, /, this, index, value, *_:
         this.set(meta, intp, index, value)
     ),
-    "get": PythonFunction(
-        lambda meta, intp, /, this, index, *_: this.get(meta, intp, index)
+    "__add__": PythonFunction(
+        lambda meta, intp, /, this, other, *_: this.add(meta, intp, other)
     ),
-    "set": PythonFunction(
-        lambda meta, intp, /, this, index, value, *_:
-        this.set(meta, intp, index, value)
+    "__mul__": PythonFunction(
+        lambda meta, intp, /, this, other, *_: this.multiply(meta, intp, other)
+    ),
+    "__eq__": PythonFunction(
+        lambda meta, intp, /, this, other, *_: this.is_equal(meta, intp, other)
+    ),
+    "to_bool": PythonFunction(
+        lambda meta, intp, /, this, *_: this.to_bool(meta, intp)
+    ),
+    "dump": PythonFunction(
+        lambda meta, intp, /, this, *_: this.dump(meta, intp)
     ),
     "length": PythonFunction(
         lambda meta, intp, /, this, *_: this.length(meta, intp)

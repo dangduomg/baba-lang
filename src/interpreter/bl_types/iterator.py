@@ -8,9 +8,15 @@ until it returns null. The for loop has to check for other types too, but
 that's about it"""
 
 
+from typing import TYPE_CHECKING, cast
 from dataclasses import dataclass
 
+from lark.tree import Meta
+
 from .essentials import Value, String, Class, ObjectClass, Instance
+
+if TYPE_CHECKING:
+    from ..main import ASTInterpreter
 
 
 ItemClass = Class(String("Item"), ObjectClass, {})
@@ -23,3 +29,7 @@ class Item(Instance):
 
     def __init__(self, value: Value) -> None:
         super().__init__(ItemClass, {"value": value})
+
+    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
+        value = cast(Value, self.get_attr("value", interpreter, meta))
+        return String(f"<item: {value.dump(interpreter, meta)}>")
