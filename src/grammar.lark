@@ -4,22 +4,26 @@ body: stmt*
 
 // Statement grammar
 
-?stmt: if_stmt
-     | if_else_stmt
-     | while_stmt
-     | do_while_stmt
-     | for_stmt
-     | break_stmt
-     | continue_stmt
-     | try_stmt
-     | return_stmt
-     | throw_stmt
-     | include_stmt
-     | function_stmt
-     | module_stmt
-     | class_stmt
-     | exprs ";"
+?stmt: blk_stmt
+     | rest_stmt
      | ";" -> nop_stmt
+
+?blk_stmt: if_stmt
+         | if_else_stmt
+         | while_stmt
+         | for_stmt
+         | try_stmt
+         | function_stmt
+         | module_stmt
+         | class_stmt
+
+?rest_stmt: do_while_stmt
+          | break_stmt
+          | continue_stmt
+          | return_stmt
+          | throw_stmt
+          | include_stmt
+          | exprs
 
 if_stmt: _IF expr "{" body "}"
 
@@ -27,19 +31,19 @@ if_else_stmt: _IF expr "{" body "}" _ELSE (if_else_stmt | if_stmt | "{" body "}"
 
 while_stmt: _WHILE expr "{" body "}"
 
-do_while_stmt: _DO "{" body "}" _WHILE expr ";"
+do_while_stmt: _DO "{" body "}" _WHILE expr
 
 for_stmt: _FOR "(" [exprs] ";" [expr] ";" [exprs] ")" "{" body "}"
         | _FOR IDENT _IN expr "{" body "}" -> for_each_stmt
 
-break_stmt: _BREAK ";"
-continue_stmt: _CONTINUE ";"
+break_stmt: _BREAK
+continue_stmt: _CONTINUE
 
 try_stmt: _TRY "{" body "}" catch_clause
 catch_clause: _CATCH IDENT "{" body "}"
 
-return_stmt: _RETURN [expr] ";"
-throw_stmt: _THROW expr ";"
+return_stmt: _RETURN [expr]
+throw_stmt: _THROW expr
 
 function_stmt: _FUN IDENT "(" form_args ")" "{" body "}"
 
@@ -52,7 +56,7 @@ class_stmt: _CLASS IDENT [_EXTENDS IDENT] "{" class_entries "}"
 class_entries: class_entry*
 ?class_entry: module_var_stmt | function_stmt
 
-include_stmt: _INCLUDE STRING ";"
+include_stmt: _INCLUDE STRING
 
 // Expression grammar
 

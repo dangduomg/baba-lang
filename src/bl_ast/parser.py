@@ -4,7 +4,7 @@ import ast
 from pathlib import Path
 
 from lark import Lark, ast_utils, v_args, Token
-from lark.visitors import Transformer, Discard, _DiscardType
+from lark.visitors import Transformer
 from lark.tree import Meta
 
 from . import nodes
@@ -74,9 +74,6 @@ class Extras(Transformer):
         self, meta: Meta, name: Token, value: nodes._Expr
     ) -> nodes.Assign:
         return nodes.Assign(meta, nodes.VarPattern(meta, name), value)
-
-    def nop_stmt(self, children: list) -> _DiscardType:
-        return Discard
 
     @v_args(inline=True, meta=True)
     def short_fn_literal(
