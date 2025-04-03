@@ -665,14 +665,15 @@ class BLFunction(Value):
         # Clean it up
         interpreter.locals = old_env
         # Return!
+        if isinstance(res, BLError):
+            return res
+        interpreter.traceback.pop()
         match res:
             case Success():
-                interpreter.traceback.pop()
                 return NULL
             case Return(value=value):
-                interpreter.traceback.pop()
                 return value
-            case BLError():
+            case Value():
                 return res
         return BLError(cast_to_instance(
             NotImplementedException.new([], interpreter, meta)

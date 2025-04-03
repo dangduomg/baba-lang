@@ -116,10 +116,12 @@ class ASTInterpreter(ASTVisitor):
             case nodes.NopStmt():
                 return Success()
             case nodes.Body(statements=statements):
+                res = Success()
                 for stmt in statements:
-                    if isinstance(res := self.visit(stmt), exits.Exit):
+                    res = self.visit(stmt)
+                    if isinstance(res, exits.Exit):
                         return res
-                return Success()
+                return res
             case nodes.IfStmt(meta=meta, condition=condition, body=body):
                 cond = self.visit_expr(condition)
                 if isinstance(cond, BLError):
