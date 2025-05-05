@@ -1,12 +1,14 @@
 ?start: body
 
-body: stmt*
+body: (stmt* stmt_opt_sc)?
 
 // Statement grammar
 
 ?stmt: blk_stmt
-     | rest_stmt
-     | ";" -> nop_stmt
+     | rest_stmt ";"
+
+?stmt_opt_sc: blk_stmt
+            | rest_stmt ";"?
 
 ?blk_stmt: if_stmt
          | if_else_stmt
