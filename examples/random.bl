@@ -13,7 +13,8 @@ class Random {
     BITS = 31;
 
     fun __init__(seed) {
-        this.state = seed;
+        this.seed = seed;
+        this.state = this.seed;
     }
 
     fun next() {
@@ -25,7 +26,7 @@ class Random {
 
     fun __str__() {
         return '<pseudorandom number generator with seed '
-             + to_string(this.state)
+             + to_string(this.seed)
              + '>';
     }
 }

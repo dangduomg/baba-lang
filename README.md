@@ -43,23 +43,38 @@ pip install -r requirements.txt
 - Easy Python interop with `py_function` and `py_method`
 
 ## Example
-Here is an example snippet to get started:
+Here is an example snippet that demonstrates most of baba-lang's features:
 ```js
-min = py_function('builtins', 'min');
+class Random {
+    MULTIPLIER = 1103515245;
+    CONSTANT = 12345;
+    BITS = 31;
 
-subjects = ['BABA', 'KEKE', 'DOOR', 'FLAG'];
-verbs = ['HAS', 'HAS', 'IS', 'IS'];
-objects = ['YOU', 'KEY', 'LOCK', 'WIN'];
-
-// zipper
-for (i = 0; i < min(subjects, verbs, objects); i += 1) {
-    subject = subjects[i];
-    verb = verbs[i];
-    object = objects[i];
-    if subject == 'BABA' && verb == 'HAS' {
-        verb = 'IS';
+    fun __init__(seed) {
+        this.seed = seed;
+        this.state = this.seed;
     }
-    print(subject + ' ' + verb + ' ' + object);
+
+    fun next() {
+        this.state = (
+            this.MULTIPLIER * this.state + this.CONSTANT & (1 << this.BITS) - 1
+        );
+        return this.state;
+    }
+
+    fun __str__() {
+        return '<pseudorandom number generator with seed '
+             + to_string(this.seed)
+             + '>';
+    }
+}
+
+seed = to_int(input('seed: '));
+random = new Random(seed);
+print("Random number generator: " + to_string(random));
+print('\nthe first 5 random numbers are:');
+for (i = 0; i < 5; i += 1) {
+    print(random.next());
 }
 ```
 
