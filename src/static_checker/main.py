@@ -259,7 +259,7 @@ class SyntaxChecker(ASTVisitor):
 
 class StaticChecker(ASTVisitor):
     """
-    Static checker for the mini-baba-lang language.
+    Static checker for the baba-lang language.
 
     Methods
     -------
@@ -274,8 +274,3 @@ class StaticChecker(ASTVisitor):
         """Visit an AST node"""
         pass1 = SyntaxChecker()
         return pass1.visit(node)
-
-    def visit_expr(self, node: nodes._Expr) -> nodes._Expr:
-        """Visit an expression node"""
-        pass1 = SyntaxChecker()
-        return pass1.visit_expr(node)

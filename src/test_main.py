@@ -3,7 +3,7 @@
 from typing import cast
 from pytest import fixture
 
-from main import interpret, interpret_expr
+from main import interpret
 from interpreter import ASTInterpreter
 from interpreter.bl_types import essentials, numbers, colls
 from interpreter.bl_types.essentials import Value, Bool
@@ -21,7 +21,7 @@ def example_interp() -> ASTInterpreter:
 
 def test_expression(example_interp: ASTInterpreter):
     """Test for expression parsing"""
-    res = interpret_expr("2 + 3", example_interp)
+    res = interpret("2 + 3", example_interp)
     assert isinstance(res, Int)
     assert cast(Bool, res.is_equal(
         Int(5), example_interp, meta=None
@@ -34,49 +34,49 @@ def test_all_operators_int(example_interp: ASTInterpreter):
         return cast(Bool, cast(Value, a).is_equal(
             cast(Value, b), example_interp, meta=None
         )).value
-    assert is_equal(interpret_expr("2 + 3", example_interp), Int(5))
-    assert is_equal(interpret_expr("2 - 3", example_interp), Int(-1))
-    assert is_equal(interpret_expr("2 * 3", example_interp), Int(6))
+    assert is_equal(interpret("2 + 3", example_interp), Int(5))
+    assert is_equal(interpret("2 - 3", example_interp), Int(-1))
+    assert is_equal(interpret("2 * 3", example_interp), Int(6))
     assert is_equal(
-        interpret_expr("2 / 3", example_interp), numbers.Float(2 / 3)
+        interpret("2 / 3", example_interp), numbers.Float(2 / 3)
     )
-    assert is_equal(interpret_expr("2 %/% 3", example_interp), Int(0))
-    assert is_equal(interpret_expr("2 % 3", example_interp), Int(2))
-    assert is_equal(interpret_expr("2 ** 3", example_interp), Int(8))
-    assert is_equal(interpret_expr("2 & 3", example_interp), Int(2))
-    assert is_equal(interpret_expr("2 | 3", example_interp), Int(3))
-    assert is_equal(interpret_expr("2 ^ 3", example_interp), Int(1))
+    assert is_equal(interpret("2 %/% 3", example_interp), Int(0))
+    assert is_equal(interpret("2 % 3", example_interp), Int(2))
+    assert is_equal(interpret("2 ** 3", example_interp), Int(8))
+    assert is_equal(interpret("2 & 3", example_interp), Int(2))
+    assert is_equal(interpret("2 | 3", example_interp), Int(3))
+    assert is_equal(interpret("2 ^ 3", example_interp), Int(1))
     assert is_equal(
-        interpret_expr("2 == 3", example_interp), essentials.FALSE
-    )
-    assert is_equal(
-        interpret_expr("2 != 3", example_interp), essentials.TRUE
+        interpret("2 == 3", example_interp), essentials.FALSE
     )
     assert is_equal(
-        interpret_expr("2 < 3", example_interp), essentials.TRUE
+        interpret("2 != 3", example_interp), essentials.TRUE
     )
     assert is_equal(
-        interpret_expr("2 <= 3", example_interp), essentials.TRUE
+        interpret("2 < 3", example_interp), essentials.TRUE
     )
     assert is_equal(
-        interpret_expr("2 > 3", example_interp), essentials.FALSE
+        interpret("2 <= 3", example_interp), essentials.TRUE
     )
     assert is_equal(
-        interpret_expr("2 >= 3", example_interp), essentials.FALSE
+        interpret("2 > 3", example_interp), essentials.FALSE
     )
-    assert is_equal(interpret_expr("2 && 3", example_interp), Int(3))
-    assert is_equal(interpret_expr("2 || 3", example_interp), Int(2))
     assert is_equal(
-        interpret_expr("!2", example_interp), essentials.FALSE
+        interpret("2 >= 3", example_interp), essentials.FALSE
     )
-    assert is_equal(interpret_expr("+2", example_interp), Int(2))
-    assert is_equal(interpret_expr("-2", example_interp), Int(-2))
-    assert is_equal(interpret_expr("~2", example_interp), Int(-3))
+    assert is_equal(interpret("2 && 3", example_interp), Int(3))
+    assert is_equal(interpret("2 || 3", example_interp), Int(2))
+    assert is_equal(
+        interpret("!2", example_interp), essentials.FALSE
+    )
+    assert is_equal(interpret("+2", example_interp), Int(2))
+    assert is_equal(interpret("-2", example_interp), Int(-2))
+    assert is_equal(interpret("~2", example_interp), Int(-3))
 
 
 def test_error(example_interp: ASTInterpreter):
     """Test for errors"""
-    res = interpret_expr("1 / 0", example_interp)
+    res = interpret("1 / 0", example_interp)
     assert isinstance(res, essentials.BLError)
     assert res.value.class_ == numbers.DivByZeroException
 
