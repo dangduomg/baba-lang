@@ -17,6 +17,7 @@ from .abc_protocols import (
 if TYPE_CHECKING:
     from .iterator import Item
     from ..main import ASTInterpreter
+    from .numbers import Int
 
 
 # pylint: disable=too-few-public-methods
@@ -484,113 +485,6 @@ class Null(Value):
 NULL = Null()
 
 
-@dataclass(frozen=True)
-class String(Value):
-    """String type"""
-
-    value: str
-
-    @override
-    def add(
-        self, other: "Value", interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        match other:
-            case String(other_val):
-                return String(self.value + other_val)
-        return super().add(other, interpreter, meta)
-
-    @override
-    def multiply(
-        self, other: "Value", interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        from .numbers import Int  # pylint: disable=import-outside-toplevel
-        match other:
-            case Int(times):
-                return String(self.value * times)
-        return super().multiply(other, interpreter, meta)
-
-    @override
-    def is_equal(
-        self, other: "Value", interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Bool | BLError:
-        match other:
-            case String(other_val):
-                return BOOLS[self.value == other_val]
-        return super().is_equal(other, interpreter, meta)
-
-    @override
-    def is_less(
-        self, other: "Value", interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        match other:
-            case String(other_val):
-                return BOOLS[self.value < other_val]
-        return super().is_less(other, interpreter, meta)
-
-    @override
-    def is_less_or_equal(
-        self, other: "Value", interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        match other:
-            case String(other_val):
-                return BOOLS[self.value <= other_val]
-        return super().is_less_or_equal(other, interpreter, meta)
-
-    @override
-    def is_greater(
-        self, other: "Value", interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        match other:
-            case String(other_val):
-                return BOOLS[self.value > other_val]
-        return super().is_greater(other, interpreter, meta)
-
-    @override
-    def is_greater_or_equal(
-        self, other: "Value", interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> ExpressionResult:
-        match other:
-            case String(other_val):
-                return BOOLS[self.value >= other_val]
-        return super().is_greater_or_equal(other, interpreter, meta)
-
-    @override
-    def get_item(
-        self, index: Value, interpreter: "ASTInterpreter",
-        meta: Meta | None,
-    ) -> Value | BLError:
-        from .numbers import Int  # pylint: disable=import-outside-toplevel
-        match index:
-            case Int(other_val):
-                return String(self.value[other_val])
-        return super().get_item(index, interpreter, meta)
-
-    @override
-    def to_bool(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Bool | BLError:
-        return BOOLS[bool(self.value)]
-
-    @override
-    def dump(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> "String":
-        return String(repr(self.value))
-
-    @override
-    def to_string(
-        self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> Self:
-        return self
-
-
 # section Functions
 
 
@@ -623,7 +517,7 @@ class PythonFunction(Value):
     @override
     def dump(
         self, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> String:
+    ) -> "String":
         return String(f"<python function {self.function!r}>")
 
 
@@ -686,7 +580,9 @@ class BLFunction(Value):
         )
 
     @override
-    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String":
         if self.this is not None:
             this_to_str = self.this.dump(interpreter, meta).value
             return String(f"<method '{self.name}' bound to {this_to_str}>")
@@ -696,124 +592,18 @@ class BLFunction(Value):
 # section OOP
 
 
-@dataclass
-class Class(Value):
-    """baba-lang class"""
-
-    name: String
-    super: "Class | None" = None
-    vars: dict[str, Value] = field(default_factory=dict)
-
-    @override
-    def get_attr(
-        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
-    ) -> ExpressionResult:
-        try:
-            return self.vars[attr]
-        except KeyError:
-            if self.super is not None:
-                return self.super.get_attr(attr, interpreter, meta)
-            return BLError(cast_to_instance(
-                AttrNotFoundException.new([], interpreter, meta)
-            ), meta, interpreter.path)
-
-    def has_attr(self, attr: str) -> bool:
-        """Check if a class has an attribute"""
-        if attr in self.vars:
-            return True
-        if self.super is not None:
-            return self.super.has_attr(attr)
-        return False
-
-    @override
-    def new(
-        self, args: list[Value], interpreter: "ASTInterpreter",
-        meta: Meta | None
-    ) -> ExpressionResult:
-        inst = Instance(self, {})
-        if self.has_attr("__init__"):  # __init__ is the constructor method
-            constr = inst.get_attr("__init__", interpreter, meta)
-            if isinstance(constr, BLError):
-                return constr
-            match res := constr.call(args, interpreter, meta):
-                case BLError():
-                    return res
-        return inst
-
-    @override
-    def dump(self, interpreter: "ASTInterpreter", meta: Meta | None) -> String:
-        return String(f"<class {self.name.value}>")
-
-
-# Base class for all objects
-ObjectClass = Class(String("Object"), None, {
-    "dump": PythonFunction(
-        lambda meta, intp, this, /, *_:
-        String(f"<object of class {cast(Instance, this).class_.name.value}>")
-    ),
-})
-
-
-# Exception objects
-
-
-def exc_init(
-    meta: Meta | None, interpreter: "ASTInterpreter", this: "Instance | None",
-    /, *args
-) -> Null | BLError:
-    """Initialize an exception"""
-    if this is not None:
-        if args:
-            msg, *_ = args
-            this.vars["msg"] = msg
-        return NULL
-    return BLError(cast_to_instance(
-        NotImplementedException.new([], interpreter, meta)
-    ), meta, interpreter.path)
-
-
-def exc_dump(
-    meta: Meta | None, interpreter: "ASTInterpreter", this: "Instance | None",
-    /, *_
-) -> String | BLError:
-    """Debugging representation of exception"""
-    if this is None:
-        return BLError(cast_to_instance(
-            NotImplementedException.new([], interpreter, meta)
-        ), meta, interpreter.path)
-    if "msg" not in this.vars:
-        return String(f"{this.class_.name.value}")
-    msg = this.vars['msg'].dump(interpreter, meta).value
-    return String(f"{this.class_.name.value}: {msg}")
-
-
-exc_methods: dict[str, Value] = {
-    "__init__": PythonFunction(exc_init),
-    "dump": PythonFunction(exc_dump),
-}
-
-ExceptionClass = Class(String("Exception"), ObjectClass, exc_methods)
-
-NotImplementedException = Class(
-    String("NotImplementedException"), ExceptionClass
-)
-AttrNotFoundException = Class(String("AttrNotFoundException"), ExceptionClass)
-VarNotFoundException = Class(String("VarNotFoundException"), ExceptionClass)
-IncorrectTypeException = Class(
-    String("IncorrectTypeException"), ExceptionClass
-)
-
-
 @dataclass(init=False)
 class Instance(Value):
     """baba-lang instance"""
 
     # pylint: disable=too-many-public-methods
 
-    class_: Class
+    __match_args__ = ("class_", "vars_")
+
+    class_: "Class"
     vars: dict[str, Value]
 
-    def __init__(self, class_: Class, vars_: dict[str, Value]):
+    def __init__(self, class_: "Class", vars_: dict[str, Value]):
         self.class_ = class_
         self.vars = vars_
 
@@ -1151,6 +941,282 @@ class Instance(Value):
         if isinstance(res, SupportsBLCall):
             return res.bind(self).call(args, interpreter, meta)
         return res
+
+
+@dataclass
+class Class(Value):
+    """baba-lang class"""
+
+    name: "String"
+    super: "Class | None" = None
+    vars: dict[str, Value] = field(default_factory=dict)
+
+    @override
+    def get_attr(
+        self, attr: str, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> ExpressionResult:
+        try:
+            return self.vars[attr]
+        except KeyError:
+            if self.super is not None:
+                return self.super.get_attr(attr, interpreter, meta)
+            return BLError(cast_to_instance(
+                AttrNotFoundException.new([], interpreter, meta)
+            ), meta, interpreter.path)
+
+    def has_attr(self, attr: str) -> bool:
+        """Check if a class has an attribute"""
+        if attr in self.vars:
+            return True
+        if self.super is not None:
+            return self.super.has_attr(attr)
+        return False
+
+    @override
+    def new(
+        self, args: list[Value], interpreter: "ASTInterpreter",
+        meta: Meta | None
+    ) -> ExpressionResult:
+        inst = Instance(self, {})
+        if self.has_attr("__init__"):  # __init__ is the constructor method
+            constr = inst.get_attr("__init__", interpreter, meta)
+            if isinstance(constr, BLError):
+                return constr
+            match res := constr.call(args, interpreter, meta):
+                case BLError():
+                    return res
+        return inst
+
+    @override
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String":
+        return String(f"<class {self.name.value}>")
+
+
+# section String
+
+
+class String(Instance):
+    """String type"""
+
+    __match_args__ = ("value",)
+
+    value: str
+
+    def __init__(self, value: str) -> None:
+        super().__init__(StringClass, {})
+        self.value = value
+
+    @override
+    def add(
+        self, other: "Value", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case String(other_val):
+                return String(self.value + other_val)
+        return super().add(other, interpreter, meta)
+
+    @override
+    def multiply(
+        self, other: "Value", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        from .numbers import Int  # pylint: disable=import-outside-toplevel
+        match other:
+            case Int(times):
+                return String(self.value * times)
+        return super().multiply(other, interpreter, meta)
+
+    @override
+    def is_equal(
+        self, other: "Value", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> Bool | BLError:
+        match other:
+            case String(other_val):
+                return BOOLS[self.value == other_val]
+        return super().is_equal(other, interpreter, meta)
+
+    @override
+    def is_less(
+        self, other: "Value", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case String(other_val):
+                return BOOLS[self.value < other_val]
+        return super().is_less(other, interpreter, meta)
+
+    @override
+    def is_less_or_equal(
+        self, other: "Value", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case String(other_val):
+                return BOOLS[self.value <= other_val]
+        return super().is_less_or_equal(other, interpreter, meta)
+
+    @override
+    def is_greater(
+        self, other: "Value", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case String(other_val):
+                return BOOLS[self.value > other_val]
+        return super().is_greater(other, interpreter, meta)
+
+    @override
+    def is_greater_or_equal(
+        self, other: "Value", interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> ExpressionResult:
+        match other:
+            case String(other_val):
+                return BOOLS[self.value >= other_val]
+        return super().is_greater_or_equal(other, interpreter, meta)
+
+    @override
+    def get_item(
+        self, index: Value, interpreter: "ASTInterpreter",
+        meta: Meta | None,
+    ) -> Value | BLError:
+        from .numbers import Int  # pylint: disable=import-outside-toplevel
+        match index:
+            case Int(other_val):
+                return String(self.value[other_val])
+        return super().get_item(index, interpreter, meta)
+
+    @override
+    def to_bool(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Bool | BLError:
+        return BOOLS[bool(self.value)]
+
+    @override
+    def dump(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> "String":
+        return String(repr(self.value))
+
+    @override
+    def to_string(
+        self, interpreter: "ASTInterpreter", meta: Meta | None
+    ) -> Self:
+        return self
+
+    def length(
+        self, intp: "ASTInterpreter", meta: Meta | None
+    ) -> "Int":
+        """Return the length of the string"""
+        from .numbers import Int  # pylint: disable=import-outside-toplevel
+        return Int(len(self.value))
+
+
+# section Classes
+
+
+ObjectClass = Class(cast(String, None), None, {
+    "dump": PythonFunction(
+        lambda meta, intp, this, /, *_:
+        String(f"<object of class {cast(Instance, this).class_.name.value}>")
+    ),
+})
+
+StringClass = Class(cast(String, None), None, {
+    "__getitem__": PythonFunction(
+        lambda meta, intp, /, this, index, *_: this.get_item(index, intp, meta)
+    ),
+    "__add__": PythonFunction(
+        lambda meta, intp, /, this, other, *_: this.add(other, intp, meta)
+    ),
+    "__mul__": PythonFunction(
+        lambda meta, intp, /, this, other, *_: this.multiply(other, intp, meta)
+    ),
+    "__eq__": PythonFunction(
+        lambda meta, intp, /, this, other, *_: this.is_equal(other, intp, meta)
+    ),
+    "__lt__": PythonFunction(
+        lambda meta, intp, /, this, other, *_: this.is_less(other, intp, meta)
+    ),
+    "__le__": PythonFunction(
+        lambda meta, intp, /, this, other, *_:
+        this.is_less_or_equal(other, intp, meta)
+    ),
+    "__gt__": PythonFunction(
+        lambda meta, intp, /, this, other, *_:
+        this.is_greater(other, intp, meta)
+    ),
+    "__ge__": PythonFunction(
+        lambda meta, intp, /, this, other, *_:
+        this.is_greater_or_equal(other, intp, meta)
+    ),
+    "to_bool": PythonFunction(
+        lambda meta, intp, /, this, *_: this.to_bool(intp, meta)
+    ),
+    "dump": PythonFunction(
+        lambda meta, intp, /, this, *_: this.dump(intp, meta)
+    ),
+    "length": PythonFunction(
+        lambda meta, intp, /, this, *_: this.length(intp, meta)
+    )
+})
+
+ObjectClass.super = ObjectClass
+StringClass.super = ObjectClass
+ObjectClass.name = String("Object")
+StringClass.name = String("String")
+
+
+# Exception objects
+
+
+def exc_init(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: "Instance | None",
+    /, *args
+) -> Null | BLError:
+    """Initialize an exception"""
+    if this is not None:
+        if args:
+            msg, *_ = args
+            this.vars["msg"] = msg
+        return NULL
+    return BLError(cast_to_instance(
+        NotImplementedException.new([], interpreter, meta)
+    ), meta, interpreter.path)
+
+
+def exc_dump(
+    meta: Meta | None, interpreter: "ASTInterpreter", this: "Instance | None",
+    /, *_
+) -> String | BLError:
+    """Debugging representation of exception"""
+    if this is None:
+        return BLError(cast_to_instance(
+            NotImplementedException.new([], interpreter, meta)
+        ), meta, interpreter.path)
+    if "msg" not in this.vars:
+        return String(f"{this.class_.name.value}")
+    msg = this.vars['msg'].dump(interpreter, meta).value
+    return String(f"{this.class_.name.value}: {msg}")
+
+
+ExceptionClass = Class(String("Exception"), ObjectClass, {
+    "__init__": PythonFunction(exc_init),
+    "dump": PythonFunction(exc_dump),
+})
+
+NotImplementedException = Class(
+    String("NotImplementedException"), ExceptionClass
+)
+AttrNotFoundException = Class(String("AttrNotFoundException"), ExceptionClass)
+VarNotFoundException = Class(String("VarNotFoundException"), ExceptionClass)
+IncorrectTypeException = Class(
+    String("IncorrectTypeException"), ExceptionClass
+)
 
 
 # section Environment
