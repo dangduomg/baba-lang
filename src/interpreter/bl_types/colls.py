@@ -47,19 +47,19 @@ ListClass = Class(String("List"), ObjectClass, {
         this.set(meta, intp, index, value)
     ),
     "__add__": PythonFunction(
-        lambda meta, intp, /, this, other, *_: this.add(meta, intp, other)
+        lambda meta, intp, /, this, other, *_: this.add(other, intp, meta)
     ),
     "__mul__": PythonFunction(
-        lambda meta, intp, /, this, other, *_: this.multiply(meta, intp, other)
+        lambda meta, intp, /, this, other, *_: this.multiply(other, intp, meta)
     ),
     "__eq__": PythonFunction(
-        lambda meta, intp, /, this, other, *_: this.is_equal(meta, intp, other)
+        lambda meta, intp, /, this, other, *_: this.is_equal(other, intp, meta)
     ),
     "to_bool": PythonFunction(
-        lambda meta, intp, /, this, *_: this.to_bool(meta, intp)
+        lambda meta, intp, /, this, *_: this.to_bool(intp, meta)
     ),
     "dump": PythonFunction(
-        lambda meta, intp, /, this, *_: this.dump(meta, intp)
+        lambda meta, intp, /, this, *_: this.dump(intp, meta)
     ),
     "length": PythonFunction(
         lambda meta, intp, /, this, *_: this.length(meta, intp)
