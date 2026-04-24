@@ -746,7 +746,12 @@ class Class(Value):
 
 
 # Base class for all objects
-ObjectClass = Class(String("Object"))
+ObjectClass = Class(String("Object"), None, {
+    "dump": PythonFunction(
+        lambda meta, intp, this, /, *_:
+        String(f"<object of class {cast(Instance, this).class_.name.value}>")
+    ),
+})
 
 
 # Exception objects
