@@ -1165,7 +1165,6 @@ StringClass = Class(cast(String, None), None, {
     )
 })
 
-ObjectClass.super = ObjectClass
 StringClass.super = ObjectClass
 ObjectClass.name = String("Object")
 StringClass.name = String("String")
